@@ -8,7 +8,7 @@ public class SolicitudRequest {
     private LocalDate fechaSolicitud;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
-    private String depto;
+    private Long depto;
     private String tipoSolicitud;
     private String jornadaInicio;
     private String jornadaTermino;
@@ -61,11 +61,11 @@ public class SolicitudRequest {
         this.fechaFin = fechaFin;
     }
 
-    public String getDepto() {
+    public Long getDepto() {
         return depto;
     }
 
-    public void setDepto(String depto) {
+    public void setDepto(Long depto) {
         this.depto = depto;
     }
 

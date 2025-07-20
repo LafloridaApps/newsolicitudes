@@ -21,12 +21,9 @@ public class Funcionario {
     private String email;
     private Character vrut;
 
-
     @ManyToOne
     @JoinColumn(name = "departamento_id")
     private Departamento departamento;
-
-    
 
     public Long getId() {
         return id;
@@ -91,4 +88,11 @@ public class Funcionario {
         this.departamento = departamento;
     }
 
+    public String getNombreDepartamento() {
+        return departamento != null ? departamento.getNombreDepartamento() : null;
+    }
+
+    public Long getIdDepto() {
+        return departamento != null ? departamento.getId() : null;
+    }
 }

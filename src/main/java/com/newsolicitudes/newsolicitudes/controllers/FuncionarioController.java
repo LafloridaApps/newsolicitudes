@@ -3,13 +3,11 @@ package com.newsolicitudes.newsolicitudes.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.newsolicitudes.newsolicitudes.dto.ApiFuncionarioResponse;
-import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
 import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
-import com.newsolicitudes.newsolicitudes.utlils.PersonaUtils;
+import com.newsolicitudes.newsolicitudes.services.interfaces.SearchFunc;
 
 @RestController
 @RequestMapping("/api/funcionario")
@@ -18,27 +16,29 @@ public class FuncionarioController {
 
     private final FuncionarioService funcionarioService;
 
-    public FuncionarioController(FuncionarioService funcionarioService) {
+    private final SearchFunc searchFunc;
+
+    public FuncionarioController(FuncionarioService funcionarioService, SearchFunc searchFunc) {
         this.funcionarioService = funcionarioService;
+        this.searchFunc = searchFunc;
     }
 
-    @GetMapping("{rut}")
-    public ApiFuncionarioResponse obtenerDetalleColaborador(@PathVariable Integer rut) {
+    @GetMapping
+    public ResponseEntity<Object> obtenerDetalleColaborador(@RequestParam Integer rut, String vRut) {
 
-        return funcionarioService.getFuncionarioInfo(rut);
+        return ResponseEntity.ok(funcionarioService.getFuncionarioInfo(rut, vRut));
     }
 
-    @GetMapping("/local/{rut}")
-    public ResponseEntity<Object> getFuncionarioByRut(@PathVariable Integer rut) {
+    @GetMapping("/buscar")
+    public ResponseEntity<Object> searchFuncByDeptoAndNombre(@RequestParam Long id, String nombre) {
 
-        boolean rutValido = PersonaUtils.validateRut(rut.toString());
+        return ResponseEntity.ok(searchFunc.searchFuncionario(nombre, id));
+    }
 
-        if (!rutValido) {
-            throw new FuncionarioException("Rut inválido");
-        }
-        rut = Integer.parseInt(rut.toString().substring(0, rut.toString().length() - 1));
-        return ResponseEntity.ok(funcionarioService.getFuncionarioByRut(rut));
+    @GetMapping("/buscar-director")
+    public ResponseEntity<Object> searchDirectorByDepto(@RequestParam Long id) {
 
+        return ResponseEntity.ok(searchFunc.getDirectorActivo(id));
     }
 
 }

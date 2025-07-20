@@ -1,5 +1,6 @@
 package com.newsolicitudes.newsolicitudes.services;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -14,24 +15,26 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
+import com.newsolicitudes.newsolicitudes.repositories.DepartamentoRepository;
+import com.newsolicitudes.newsolicitudes.repositories.FuncionarioRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.ApiFuncionarioService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.CodigoExternoService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.SolicitudService;
+import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudServiceImpl implements SolicitudService {
 
+    private final FuncionarioRepository funcionarioRepository;
+
     private final ApiFuncionarioService apiFuncionarioService;
 
     private final FuncionarioService funcionarioService;
-
-    private final CodigoExternoService codigoExternoService;
 
     private final SolicitudRepository solicitudRepository;
 
@@ -39,15 +42,21 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     private final SubroganciaRepository subroganciaRepository;
 
+    private final DepartamentoRepository departamentoRepository;
+
+    
+
     public SolicitudServiceImpl(ApiFuncionarioService apiFuncionarioService, FuncionarioService funcionarioService,
-            CodigoExternoService codigoExternoService, DerivacionService derivacionService,
-            SolicitudRepository solicitudRepository, SubroganciaRepository subroganciaRepository) {
+            DerivacionService derivacionService,
+            SolicitudRepository solicitudRepository, SubroganciaRepository subroganciaRepository,
+            DepartamentoRepository departamentoRepository, FuncionarioRepository funcionarioRepository) {
         this.apiFuncionarioService = apiFuncionarioService;
         this.funcionarioService = funcionarioService;
-        this.codigoExternoService = codigoExternoService;
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaRepository = subroganciaRepository;
+        this.departamentoRepository = departamentoRepository;
+        this.funcionarioRepository = funcionarioRepository;
     }
 
     @Override
@@ -58,7 +67,7 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         Funcionario solicitante = funcionarioService.getOrCreateFuncionario(funcionario);
 
-        Departamento departamento = codigoExternoService.findByCodigoEx(request.getDepto());
+        Departamento departamento = getDepartamentoById(request.getDepto());
 
         Solicitud solicitud = new Solicitud();
         solicitud.setSolicitante(solicitante);
@@ -77,12 +86,13 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         solicitud = solicitudRepository.save(solicitud);
 
-        Derivacion derivacion = derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamento, EstadoDerivacion.PENDIENTE);
-
+        Derivacion derivacion = derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamento,
+                EstadoDerivacion.PENDIENTE);
 
         return new SolicitudResponse(solicitud.getId(), derivacion.getNombreDepartamento());
 
     }
+
     public TipoDerivacion getTipoDerivacion(Departamento departamento, Funcionario solicitante, Solicitud solicitud) {
         if (departamento == null) {
             return TipoDerivacion.VISACION;
@@ -151,5 +161,26 @@ public class SolicitudServiceImpl implements SolicitudService {
             case ALCALDIA, DIRECCION, SUBDIRECCION, ADMINISTRACION -> TipoDerivacion.FIRMA;
             default -> TipoDerivacion.VISACION;
         };
+    }
+
+    private Departamento getDepartamentoById(Long id) {
+        return RepositoryUtils.findOrThrow(departamentoRepository.findById(id),
+                String.format("Departamento %d no encontrado", id));
+    }
+
+
+    private Funcionario getFuncionarioByRut(Integer rut) {
+        return RepositoryUtils.findOrThrow(funcionarioRepository.findByRut(rut),
+                String.format("Funcionario con rut %d no encontrado", rut));
+    }
+
+    @Override
+    public boolean existeSolicitudByFechaAndTipo(Integer rut,LocalDate fechaInicio, String tipo) {
+
+        Funcionario funcionario  = getFuncionarioByRut(rut);
+       
+        return solicitudRepository.findBySolicitanteAndFechaInicioAndTipoSolicitud(funcionario,fechaInicio,
+                Solicitud.TipoSolicitud.valueOf(tipo)).isPresent();
+        
     }
 }

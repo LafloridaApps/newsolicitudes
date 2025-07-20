@@ -113,6 +113,10 @@ public class Departamento {
         return this.jefe != null && this.jefe.getRut() != null ? this.jefe.getRut() : null;
     }
 
+    public NivelDepartamento getNivelDeprtamentoSuperior() {
+        return this.departamentoSuperior != null ? this.departamentoSuperior.getNivel() : null;
+    }
+
     public Character getVrutJefe() {
         return this.jefe != null && this.jefe.getRut() != null ? this.jefe.getVrut() : null;
     }

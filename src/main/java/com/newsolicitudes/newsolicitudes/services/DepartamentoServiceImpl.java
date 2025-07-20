@@ -9,11 +9,9 @@ import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoRequest;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.JefeFunc;
-import com.newsolicitudes.newsolicitudes.entities.CodigoExterno;
 import com.newsolicitudes.newsolicitudes.entities.Departamento;
 import com.newsolicitudes.newsolicitudes.entities.Funcionario;
 import com.newsolicitudes.newsolicitudes.entities.Departamento.NivelDepartamento;
-import com.newsolicitudes.newsolicitudes.repositories.CodigoExternoRepository;
 import com.newsolicitudes.newsolicitudes.repositories.DepartamentoRepository;
 import com.newsolicitudes.newsolicitudes.repositories.FuncionarioRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
@@ -26,13 +24,11 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     private final DepartamentoRepository departamentoRepository;
 
-    private final CodigoExternoRepository codigoExternoRepository;
 
     public DepartamentoServiceImpl(DepartamentoRepository departamentoRepository,
-            FuncionarioRepository funcionarioRepository, CodigoExternoRepository codigoExternoRepository) {
+            FuncionarioRepository funcionarioRepository) {
         this.departamentoRepository = departamentoRepository;
         this.funcionarioRepository = funcionarioRepository;
-        this.codigoExternoRepository = codigoExternoRepository;
     }
 
     @Override
@@ -111,10 +107,7 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     }
 
-    private CodigoExterno getCodigoExternoByCodEx(String codEx) {
-        return RepositoryUtils.findOrThrow(codigoExternoRepository.findByCodigoEx(codEx),
-                String.format("Codigo %s no existe", codEx));
-    }
+   
 
     @Override
     public void updateJefeDeparatmento(Long idDepto, Integer rut) {
@@ -127,16 +120,15 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     }
 
     @Override
-    public JefeFunc isJefeDepartamento(String codEx, Integer rut) {
-        CodigoExterno deptoExterno = getCodigoExternoByCodEx(codEx);
+    public JefeFunc isJefeDepartamento(Long codDepto, Integer rut) {
 
         Funcionario funcionario = getFuncionarioByRut(rut);
 
-        Optional<Departamento> optDepto = departamentoRepository.findByIdAndJefe(deptoExterno.getIdDepto(),
+        Optional<Departamento> optDepto = departamentoRepository.findByIdAndJefe(codDepto,
                 funcionario);
 
-        Departamento depto = RepositoryUtils.findOrThrow(departamentoRepository.findById(deptoExterno.getIdDepto()),
-                String.format("El funcionario %d no es jefe del departamento %d", rut, deptoExterno.getIdDepto()));
+        Departamento depto = RepositoryUtils.findOrThrow(departamentoRepository.findById(codDepto),
+                String.format("El funcionario %d no es jefe del departamento %d", rut, codDepto));
 
         return new JefeFunc(optDepto.isPresent(), (depto.getNivel().equals(NivelDepartamento.DIRECCION)
                 || depto.getNivel().equals(NivelDepartamento.ADMINISTRACION)));

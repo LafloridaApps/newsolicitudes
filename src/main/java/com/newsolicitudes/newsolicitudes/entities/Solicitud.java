@@ -3,7 +3,6 @@ package com.newsolicitudes.newsolicitudes.entities;
 import java.time.LocalDate;
 import java.util.List;
 
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,14 +29,12 @@ public class Solicitud {
     private Departamento departamento;
 
     @OneToMany(mappedBy = "solicitud")
-    
-    private List<Derivacion> derivaciones;
 
-    
+    private List<Derivacion> derivaciones;
 
     private LocalDate fechaSolicitud;
 
-      @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private EstadoSolicitud estado;
 
     private LocalDate fechaInicio;
@@ -164,12 +161,12 @@ public class Solicitud {
         this.derivaciones = derivaciones;
     }
 
-    public String getNombreSolicitante(){
+    public String getNombreSolicitante() {
         return solicitante.getNombre();
-   
+
     }
 
-    public String getNombreDepartamento(){
+    public String getNombreDepartamento() {
         return departamento.getNombreDepartamento();
     }
 

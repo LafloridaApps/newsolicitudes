@@ -54,7 +54,8 @@ public class AprobacionServiceImpl implements AprobacionService {
         // ✅ Obtener funcionario desde la entrada de la derivación
         EntradaDerivacion entrada = derivacion.getEntrada();
         if (entrada == null || entrada.getFuncionario() == null) {
-            throw new AprobacionException("No se puede aprobar: la derivación no ha sido recepcionada por un funcionario.");
+            throw new AprobacionException(
+                    "No se puede aprobar: la derivación no ha sido recepcionada por un funcionario.");
         }
 
         Funcionario funcionario = entrada.getFuncionario();

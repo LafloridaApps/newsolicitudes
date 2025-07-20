@@ -1,15 +1,15 @@
 package com.newsolicitudes.newsolicitudes.services.interfaces;
 
 import com.newsolicitudes.newsolicitudes.dto.ApiFuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.entities.Funcionario;
 
 public interface FuncionarioService {
 
     Funcionario getOrCreateFuncionario(ApiFuncionarioResponse request);
 
-    ApiFuncionarioResponse getFuncionarioInfo(Integer rut);
+    FuncionarioResponse getFuncionarioInfo(Integer rut, String vRut);
 
-    Funcionario getFuncionarioByRut(Integer rut);
 
 
 }

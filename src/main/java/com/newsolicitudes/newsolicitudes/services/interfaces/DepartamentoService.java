@@ -17,5 +17,5 @@ public interface DepartamentoService {
 
     void updateJefeDeparatmento(Long idDepto, Integer rut);
 
-    JefeFunc isJefeDepartamento(String codEx, Integer rut);
+    JefeFunc isJefeDepartamento(Long codDepto, Integer rut);
 }

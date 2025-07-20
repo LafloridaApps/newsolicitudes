@@ -4,34 +4,26 @@ import java.time.LocalDate;
 
 public class SubroganciaRequest {
 
-    private Long subroganteId;
-    private Long jefeDepartamentoId;
-    private Long departamentoId;
+    private Integer rutSubrogante;
+    private Integer rutJefe;
+    private Long codDEpto;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
 
-    public Long getSubroganteId() {
-        return subroganteId;
+    public Integer getRutSubrogante() {
+        return rutSubrogante;
     }
 
-    public void setSubroganteId(Long subroganteId) {
-        this.subroganteId = subroganteId;
+    public void setRutSubrogante(Integer rutSubrogante) {
+        this.rutSubrogante = rutSubrogante;
     }
 
-    public Long getJefeDepartamentoId() {
-        return jefeDepartamentoId;
+    public Integer getRutJefe() {
+        return rutJefe;
     }
 
-    public void setJefeDepartamentoId(Long jefeDepartamentoId) {
-        this.jefeDepartamentoId = jefeDepartamentoId;
-    }
-
-    public Long getDepartamentoId() {
-        return departamentoId;
-    }
-
-    public void setDepartamentoId(Long departamentoId) {
-        this.departamentoId = departamentoId;
+    public void setRutJefe(Integer rutJefe) {
+        this.rutJefe = rutJefe;
     }
 
     public LocalDate getFechaInicio() {
@@ -48,6 +40,14 @@ public class SubroganciaRequest {
 
     public void setFechaFin(LocalDate fechaFin) {
         this.fechaFin = fechaFin;
+    }
+
+    public Long getCodDEpto() {
+        return codDEpto;
+    }
+
+    public void setCodDEpto(Long codDEpto) {
+        this.codDEpto = codDEpto;
     }
 
 }

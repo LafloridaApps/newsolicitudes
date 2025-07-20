@@ -31,21 +31,7 @@ public class SubroganciaServiceImpl implements SubroganciaService {
         @Override
         public Subrogancia createSubrogancia(SubroganciaRequest request) {
 
-                Funcionario subrogante = getFuncionarioById(request.getSubroganteId());
-
-                Funcionario jefeDepartamento = getFuncionarioById(request.getJefeDepartamentoId());
-
-                Departamento departamento = getDepartamentoById(request.getDepartamentoId());
-
-                Subrogancia subrogancia = new Subrogancia();
-                subrogancia.setSubrogante(subrogante);
-                subrogancia.setJefeDepartamento(jefeDepartamento);
-                subrogancia.setDepartamento(departamento);
-                subrogancia.setFechaInicio(request.getFechaInicio());
-                subrogancia.setFechaFin(request.getFechaFin());
-
-                subroganciaRepository.save(subrogancia);
-                return subrogancia;
+                return null;
 
         }
 

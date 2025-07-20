@@ -6,29 +6,20 @@ public class PersonaUtils {
 
     }
 
-    public static Boolean validateRut(String rutString) {
+    public static Boolean validateRut(Integer rut, String vRut) {
         // Asegurarse de que el RUT no sea nulo, no vacío y que el VRUT no sea nulo ni
         // vacío
-        if (rutString == null || rutString.isEmpty()) {
+        if (rut == null || vRut.isEmpty()) {
             return false;
         }
 
-        
-        Integer rut = Integer.parseInt(rutString.substring(0, rutString.length()-1));
-        String vrut = rutString.substring(rutString.length() - 1).toUpperCase();
-      
-
-        // Validar que el RUT solo contenga dígitos
-        if (!rutString.matches("\\d+")) {
-            return false;
-        }
 
         // Calcular el dígito verificador basado en el RUT
         char dvCalculado = calculateVerifyDigit(rut.toString());
 
         // Comparar el dígito verificador calculado con el proporcionado (ignorar
         // mayúsculas/minúsculas)
-        return String.valueOf(dvCalculado).equalsIgnoreCase(vrut);
+        return String.valueOf(dvCalculado).equalsIgnoreCase(vRut);
     }
 
     private static char calculateVerifyDigit(String rutNumeros) {

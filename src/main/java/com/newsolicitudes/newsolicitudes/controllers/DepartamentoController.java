@@ -74,10 +74,10 @@ public class DepartamentoController {
     }
 
     @GetMapping("/esjefe")
-    public ResponseEntity<Object> isJefeDepartamento(@RequestParam String codEx,
+    public ResponseEntity<Object> isJefeDepartamento(@RequestParam Long codDepto,
             @RequestParam Integer rut) {
         try {
-            return ResponseEntity.ok(departamentoService.isJefeDepartamento(codEx, rut));
+            return ResponseEntity.ok(departamentoService.isJefeDepartamento(codDepto, rut));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
