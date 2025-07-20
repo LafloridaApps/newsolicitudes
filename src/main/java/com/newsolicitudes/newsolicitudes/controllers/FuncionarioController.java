@@ -1,5 +1,7 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
+import java.time.LocalDate;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,9 +38,10 @@ public class FuncionarioController {
     }
 
     @GetMapping("/buscar-director")
-    public ResponseEntity<Object> searchDirectorByDepto(@RequestParam Long id) {
+    public ResponseEntity<Object> searchDirectorByDepto(@RequestParam Long id,
+            @RequestParam LocalDate fechaInicio, @RequestParam LocalDate fechaFin) {
 
-        return ResponseEntity.ok(searchFunc.getDirectorActivo(id));
+        return ResponseEntity.ok(searchFunc.getDirectorActivo(id, fechaInicio, fechaFin));
     }
 
 }

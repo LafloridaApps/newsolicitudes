@@ -1,5 +1,6 @@
 package com.newsolicitudes.newsolicitudes.services;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,9 +16,12 @@ import com.newsolicitudes.newsolicitudes.dto.FuncionarioSearchResponse;
 import com.newsolicitudes.newsolicitudes.entities.Departamento;
 import com.newsolicitudes.newsolicitudes.entities.Departamento.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.entities.Funcionario;
+import com.newsolicitudes.newsolicitudes.exceptions.AusenciaException;
 import com.newsolicitudes.newsolicitudes.exceptions.DepartamentoException;
 import com.newsolicitudes.newsolicitudes.repositories.DepartamentoRepository;
 import com.newsolicitudes.newsolicitudes.repositories.FuncionarioRepository;
+import com.newsolicitudes.newsolicitudes.services.interfaces.ApiAusenciasService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.SearchFunc;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
@@ -28,9 +32,16 @@ public class SearcchFuncImpl implements SearchFunc {
 
     private final FuncionarioRepository funcionarioRepository;
 
-    public SearcchFuncImpl(DepartamentoRepository departamentoRepository, FuncionarioRepository funcionarioRepository) {
+    private final FuncionarioService funcionarioService;
+
+    private final ApiAusenciasService apiAusenciasService;
+
+    public SearcchFuncImpl(DepartamentoRepository departamentoRepository, FuncionarioRepository funcionarioRepository,
+            FuncionarioService funcionarioService, ApiAusenciasService apiAusenciasService) {
         this.departamentoRepository = departamentoRepository;
         this.funcionarioRepository = funcionarioRepository;
+        this.funcionarioService = funcionarioService;
+        this.apiAusenciasService = apiAusenciasService;
     }
 
     @Override
@@ -91,7 +102,8 @@ public class SearcchFuncImpl implements SearchFunc {
     }
 
     @Override
-    public FuncionarioResponse getDirectorActivo(Long idDepartamento) {
+    public FuncionarioResponse getDirectorActivo(Long idDepartamento, LocalDate fechaInicioSolicitud,
+            LocalDate fechaFinSolicitud) {
         Departamento departamento = getDepartamentoById(idDepartamento);
 
         while (departamento != null && departamento.getNivel() != NivelDepartamento.DIRECCION) {
@@ -102,14 +114,21 @@ public class SearcchFuncImpl implements SearchFunc {
             throw new DepartamentoException("No se encontró un director activo en la jerarquía.");
         }
 
-        return new FuncionarioResponse.Builder()
-                .nombre(departamento.getNombreJefe())
-                .rut(departamento.getRutJefe())
-                .vrut(Character.toString(departamento.getVrutJefe()))
-                .departamento(departamento.getNombreDepartamento())
-                .codDepto(departamento.getId())
-                .email(departamento.getEmailFuncionario()) // asegúrate de tener este método
-                .nombreJefe(departamento.getNombreJefe())
-                .build();
+        FuncionarioResponse response = funcionarioService.getFuncionarioInfo(departamento.getRutJefe(),
+                departamento.getVrutJefe().toString());
+
+        if (!findAusenciasBetweenDate(response, fechaInicioSolicitud, fechaFinSolicitud)) {
+            throw new AusenciaException("El funcionario tiene ausencias en las fechas solicitadas");
+        }
+
+        return response;
+    }
+
+    private boolean findAusenciasBetweenDate(FuncionarioResponse funcionario,
+            LocalDate fechaInicioSolicitud, LocalDate fechaFinSolicitud) {
+
+        return apiAusenciasService.getAusenciasByRutAndFechas(funcionario.getRut(),
+                funcionario.getIdent(), fechaInicioSolicitud, fechaFinSolicitud).isEmpty();
+
     }
 }

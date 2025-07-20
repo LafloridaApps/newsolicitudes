@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.newsolicitudes.newsolicitudes.dto.ErrorResponse;
 import com.newsolicitudes.newsolicitudes.exceptions.AprobacionException;
+import com.newsolicitudes.newsolicitudes.exceptions.AusenciaException;
 import com.newsolicitudes.newsolicitudes.exceptions.DepartamentoException;
 import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
@@ -54,6 +55,17 @@ public class HandlerExceptions {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 
   }
+
+  @ExceptionHandler(AusenciaException.class)
+  public ResponseEntity<Object> handlerAusenciaException(AusenciaException e,
+      HttpServletRequest request) {
+
+    ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.CONFLICT);
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+
+  }
+
 
   private <T extends Exception> ErrorResponse maptoErrorResponse(T e, HttpServletRequest request, HttpStatus status) {
 
