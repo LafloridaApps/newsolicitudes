@@ -3,6 +3,7 @@ package com.newsolicitudes.newsolicitudes.dto;
 public class ApiFuncionarioResponse {
 
     private Integer rut;
+    private String vrut;
     private String nombres;
     private String paterno;
     private String materno;
@@ -13,6 +14,8 @@ public class ApiFuncionarioResponse {
     private String jefe;
     private int ident;
 
+
+    
     public Integer getRut() {
         return rut;
     }
@@ -91,6 +94,14 @@ public class ApiFuncionarioResponse {
 
     public void setIdent(int ident) {
         this.ident = ident;
+    }
+
+    public String getVrut() {
+        return vrut;
+    }
+
+    public void setVrut(String vrut) {
+        this.vrut = vrut;
     }
 
 }

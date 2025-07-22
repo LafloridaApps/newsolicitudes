@@ -51,6 +51,7 @@ public class FuncionarioServiceImpl implements FuncionarioService {
         funcionario.setRut(request.getRut());
         funcionario.setNombre(request.getNombres().concat(" ").concat(request.getPaterno()));
         funcionario.setEmail(request.getEmail());
+        funcionario.setVrut(request.getVrut().charAt(0));
 
         return funcionarioRepository.save(funcionario);
 
@@ -58,6 +59,7 @@ public class FuncionarioServiceImpl implements FuncionarioService {
 
     @Override
     public FuncionarioResponse getFuncionarioInfo(Integer rut, String vRut) {
+        
 
         boolean rutValido = PersonaUtils.validateRut(rut, vRut);
 

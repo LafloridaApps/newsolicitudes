@@ -80,4 +80,12 @@ public class Subrogancia {
         this.departamento = departamento;
     }
 
+    public Integer getRutSubrogante() {
+        return subrogante.getRut();
+    }
+
+    public String getVrutSubrogante() {
+        return subrogante.getVrut().toString();
+    }
+
 }

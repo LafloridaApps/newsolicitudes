@@ -32,9 +32,10 @@ public class FuncionarioController {
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<Object> searchFuncByDeptoAndNombre(@RequestParam Long id, String nombre) {
+    public ResponseEntity<Object> searchFuncByDeptoAndNombre(@RequestParam Long id, @RequestParam String nombre,
+    @RequestParam LocalDate fechaInicio, @RequestParam LocalDate fechaFin) {
 
-        return ResponseEntity.ok(searchFunc.searchFuncionario(nombre, id));
+        return ResponseEntity.ok(searchFunc.searchFuncionario(nombre, id, fechaInicio, fechaFin));
     }
 
     @GetMapping("/buscar-director")

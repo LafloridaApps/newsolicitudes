@@ -1,6 +1,8 @@
 package com.newsolicitudes.newsolicitudes.repositories;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,5 +15,8 @@ public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long> 
     List<Subrogancia> findByDepartamento(Departamento departamento);
 
     List<Subrogancia> findBySubrogante(Funcionario jefe);
+
+Optional<Subrogancia> findFirstByJefeDepartamentoAndFechaInicioBetween(Funcionario subrogante, LocalDate desde, LocalDate hasta);
+
 
 }

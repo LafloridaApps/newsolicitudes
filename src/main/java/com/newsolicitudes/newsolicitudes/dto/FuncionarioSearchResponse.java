@@ -6,6 +6,8 @@ public class FuncionarioSearchResponse {
     private Integer rut;
     private String vrut;
     private String departamento;
+    private Integer ident;
+    private boolean isAusente;
 
     public String getNombre() {
         return nombre;
@@ -38,5 +40,23 @@ public class FuncionarioSearchResponse {
     public void setVrut(String vrut) {
         this.vrut = vrut;
     }
+
+    public Integer getIdent() {
+        return ident;
+    }
+
+    public void setIdent(Integer ident) {
+        this.ident = ident;
+    }
+
+
+    public boolean isAusente() {
+        return isAusente;
+    }
+
+    public void setIsAusente(boolean isAusente) {
+        this.isAusente = isAusente;
+    }
+ 
 
 }

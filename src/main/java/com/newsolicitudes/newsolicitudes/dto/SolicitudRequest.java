@@ -12,6 +12,7 @@ public class SolicitudRequest {
     private String tipoSolicitud;
     private String jornadaInicio;
     private String jornadaTermino;
+    private SubroganciaRequest subrogancia;
 
     public String getJornadaInicio() {
         return jornadaInicio;
@@ -75,6 +76,14 @@ public class SolicitudRequest {
 
     public void setTipoSolicitud(String tipoSolicitud) {
         this.tipoSolicitud = tipoSolicitud;
+    }
+
+    public SubroganciaRequest getSubrogancia() {
+        return subrogancia;
+    }
+
+    public void setSubrogancia(SubroganciaRequest subrogancia) {
+        this.subrogancia = subrogancia;
     }
 
 }
