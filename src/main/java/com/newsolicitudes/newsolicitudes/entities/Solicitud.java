@@ -170,4 +170,8 @@ public class Solicitud {
         return departamento.getNombreDepartamento();
     }
 
+    public Integer getRutSolicitante() {
+        return solicitante.getRut();
+    }
+
 }

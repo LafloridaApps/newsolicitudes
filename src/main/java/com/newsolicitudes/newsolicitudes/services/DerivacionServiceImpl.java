@@ -32,7 +32,7 @@ public class DerivacionServiceImpl implements DerivacionService {
 
     public DerivacionServiceImpl(
             DerivacionRepository derivacionRepository,
-            FuncionarioRepository funcionarioRepository,DepartamentoRepository departamentoRepository) {
+            FuncionarioRepository funcionarioRepository, DepartamentoRepository departamentoRepository) {
         this.derivacionRepository = derivacionRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.departamentoRepository = departamentoRepository;
@@ -59,18 +59,21 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     @Override
-   public List<SolicitudDto> getDerivacionesByFuncionario(Integer rut) {
-    Funcionario funcionario = getFuncionarioBuRut(rut);
+    public List<SolicitudDto> getDerivacionesByFuncionario(Integer rut) {
+        Funcionario funcionario = getFuncionarioBuRut(rut);
+        List<Departamento> departamentos = departamentoRepository.findByFuncionarios(funcionario);
+        List<Derivacion> derivaciones = derivacionRepository.findByDepartamentoIn(departamentos);
 
-    List<Departamento> departamentos = departamentoRepository.findByFuncionarios(funcionario);
+        Map<Long, List<Derivacion>> agrupadasPorSolicitud = derivaciones.stream()
+                .collect(Collectors.groupingBy(d -> d.getSolicitud().getId()));
 
-    List<Derivacion> derivaciones = derivacionRepository.findByDepartamentoIn(departamentos);
+        return agrupadasPorSolicitud.entrySet().stream()
+                .map(entry -> mapToSolicitudDto(entry.getValue(), funcionario))
+                .toList();
+    }
 
-    Map<Long, List<Derivacion>> agrupadasPorSolicitud = derivaciones.stream()
-        .collect(Collectors.groupingBy(d -> d.getSolicitud().getId()));
-
-    return agrupadasPorSolicitud.entrySet().stream().map(entry -> {
-        Derivacion primera = entry.getValue().get(0);
+    private SolicitudDto mapToSolicitudDto(List<Derivacion> derivaciones, Funcionario funcionario) {
+        Derivacion primera = derivaciones.get(0);
         Solicitud solicitud = primera.getSolicitud();
 
         SolicitudDto dto = new SolicitudDto();
@@ -84,34 +87,31 @@ public class DerivacionServiceImpl implements DerivacionService {
         dto.setJornadaInicio(solicitud.getJornadaInicio() != null ? solicitud.getJornadaInicio().toString() : null);
         dto.setJornadaFin(solicitud.getJornadaTermino() != null ? solicitud.getJornadaTermino().toString() : null);
         dto.setDepartamentoOrigen(solicitud.getNombreDepartamento());
+        dto.setCantidadDias(solicitud.getCantidadDias());
 
-        List<DerivacionDto> derivacionDtos = entry.getValue().stream().map(d -> {
-            DerivacionDto ddto = new DerivacionDto();
-            ddto.setId(d.getId());
-            ddto.setTipoMovimiento(d.getTipo().toString());
-            ddto.setFechaDerivacion(d.getFechaDerivacion().toString());
-            ddto.setNombreDepartamento(d.getNombreDepartamento());
-            ddto.setEstadoDerivacion(d.getEstadoDerivacion().name());
-
-            // Indicar si este funcionario ya recepcionó esta derivación
-            boolean recepcionada = d.getEntrada() != null && 
-                                   d.getEntrada().getFuncionario() != null && 
-                                   d.getEntrada().getFuncionario().equals(funcionario);
-            ddto.setRecepcionada(recepcionada);
-
-            if (d.getEntrada() != null) {
-                ddto.setJefeDestino(d.getEntrada().getFuncionario().getNombre());
-            }
-
-            return ddto;
-        }).toList();
+        List<DerivacionDto> derivacionDtos = derivaciones.stream()
+                .map(d -> mapToDerivacionDto(d, funcionario))
+                .toList();
 
         dto.setDerivaciones(derivacionDtos);
-
         return dto;
-    }).toList();
-}
+    }
 
+    private DerivacionDto mapToDerivacionDto(Derivacion d, Funcionario funcionario) {
+        DerivacionDto ddto = new DerivacionDto();
+        ddto.setId(d.getId());
+        ddto.setTipoMovimiento(d.getTipo().toString());
+        ddto.setFechaDerivacion(d.getFechaDerivacion().toString());
+        ddto.setNombreDepartamento(d.getNombreDepartamento());
+        ddto.setEstadoDerivacion(d.getEstadoDerivacion().name());
+
+        boolean recepcionada = d.getEntrada() != null &&
+                d.getEntrada().getFuncionario() != null &&
+                d.getEntrada().getFuncionario().equals(funcionario);
+        ddto.setRecepcionada(recepcionada);
+
+        return ddto;
+    }
 
     private Funcionario getFuncionarioBuRut(Integer rut) {
         return RepositoryUtils.findOrThrow(funcionarioRepository.findByRut(rut),

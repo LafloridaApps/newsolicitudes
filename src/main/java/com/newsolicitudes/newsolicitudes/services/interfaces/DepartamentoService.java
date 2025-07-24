@@ -6,6 +6,7 @@ import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoRequest;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.JefeFunc;
+import com.newsolicitudes.newsolicitudes.entities.Departamento;
 
 public interface DepartamentoService {
 
@@ -18,4 +19,6 @@ public interface DepartamentoService {
     void updateJefeDeparatmento(Long idDepto, Integer rut);
 
     JefeFunc isJefeDepartamento(Long codDepto, Integer rut);
+
+    Departamento getDepartamentoDestino(Departamento departamento, Integer rutSolicicante);
 }

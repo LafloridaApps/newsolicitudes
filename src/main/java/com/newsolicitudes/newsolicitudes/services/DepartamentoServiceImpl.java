@@ -24,7 +24,6 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     private final DepartamentoRepository departamentoRepository;
 
-
     public DepartamentoServiceImpl(DepartamentoRepository departamentoRepository,
             FuncionarioRepository funcionarioRepository) {
         this.departamentoRepository = departamentoRepository;
@@ -107,8 +106,6 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     }
 
-   
-
     @Override
     public void updateJefeDeparatmento(Long idDepto, Integer rut) {
         Funcionario funcionario = getFuncionarioByRut(rut);
@@ -133,6 +130,21 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         return new JefeFunc(optDepto.isPresent(), (depto.getNivel().equals(NivelDepartamento.DIRECCION)
                 || depto.getNivel().equals(NivelDepartamento.ADMINISTRACION)));
 
+    }
+
+    @Override
+    public Departamento getDepartamentoDestino(Departamento departamento, Integer rutSolicicante) {
+       
+        if (departamento.getRutJefe() == null) {
+            while (departamento.getRutJefe() == null) {
+                departamento = departamento.getDepartamentoSuperior();
+            }
+        }
+
+        if (departamento.getRutJefe().equals(rutSolicicante)) {
+            departamento = departamento.getDepartamentoSuperior();
+        }
+        return departamento;
     }
 
 }

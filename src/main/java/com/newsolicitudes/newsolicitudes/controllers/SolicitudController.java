@@ -2,6 +2,7 @@ package com.newsolicitudes.newsolicitudes.controllers;
 
 import java.time.LocalDate;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,16 +29,15 @@ public class SolicitudController {
     @PostMapping("/crear")
     public ResponseEntity<Object> crearSolicitud(@RequestBody SolicitudRequest solicitud) {
 
-        
-            return ResponseEntity.ok(solicitudService.createSolicitud(solicitud));
-       
+        return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.createSolicitud(solicitud));
+
     }
 
     @GetMapping("/existe")
     public ResponseEntity<Object> existeSolicitud(@RequestParam Integer rut, LocalDate fechaInicio, String tipo) {
-        
-            return ResponseEntity.ok(solicitudService.existeSolicitudByFechaAndTipo(rut, fechaInicio,tipo));
-        
+
+        return ResponseEntity.ok(solicitudService.existeSolicitudByFechaAndTipo(rut, fechaInicio, tipo));
+
     }
 
 }

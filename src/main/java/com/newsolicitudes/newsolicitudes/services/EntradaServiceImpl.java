@@ -21,7 +21,8 @@ public class EntradaServiceImpl implements EntradaService {
     private final EntradaDerivacionRepository entradaRepository;
     private final DerivacionRepository derivacionRepository;
 
-    public EntradaServiceImpl(FuncionarioRepository funcionarioRepository, EntradaDerivacionRepository entradaRepository,
+    public EntradaServiceImpl(FuncionarioRepository funcionarioRepository,
+            EntradaDerivacionRepository entradaRepository,
             DerivacionRepository derivacionRepository) {
         this.funcionarioRepository = funcionarioRepository;
         this.entradaRepository = entradaRepository;

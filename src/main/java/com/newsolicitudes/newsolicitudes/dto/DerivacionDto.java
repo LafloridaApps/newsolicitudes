@@ -6,7 +6,6 @@ public class DerivacionDto {
 
     private String fechaDerivacion;
     private String nombreDepartamento;
-    private String jefeDestino;
     private String tipoMovimiento;
     private String estadoDerivacion;
         private boolean recepcionada;
@@ -29,13 +28,6 @@ public class DerivacionDto {
         this.nombreDepartamento = nombreDepartamento;
     }
 
-    public String getJefeDestino() {
-        return jefeDestino;
-    }
-
-    public void setJefeDestino(String jefeDestino) {
-        this.jefeDestino = jefeDestino;
-    }
 
     public String getTipoMovimiento() {
         return tipoMovimiento;

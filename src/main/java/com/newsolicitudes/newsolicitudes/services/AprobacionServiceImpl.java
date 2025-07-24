@@ -51,7 +51,6 @@ public class AprobacionServiceImpl implements AprobacionService {
         solicitud.setEstado(EstadoSolicitud.APROBADA);
         solicitudRepository.save(solicitud);
 
-        // ✅ Obtener funcionario desde la entrada de la derivación
         EntradaDerivacion entrada = derivacion.getEntrada();
         if (entrada == null || entrada.getFuncionario() == null) {
             throw new AprobacionException(

@@ -59,15 +59,12 @@ public class FuncionarioServiceImpl implements FuncionarioService {
 
     @Override
     public FuncionarioResponse getFuncionarioInfo(Integer rut, String vRut) {
-        
 
         boolean rutValido = PersonaUtils.validateRut(rut, vRut);
 
         if (!rutValido) {
             throw new FuncionarioException("Rut inválido");
         }
-
-        
 
         ApiFuncionarioResponse response = apiFuncionarioService.obtenerDetalleColaborador(rut);
 
@@ -124,7 +121,6 @@ public class FuncionarioServiceImpl implements FuncionarioService {
         return null;
     }
 
-    
     public FuncionarioResponse getFuncionarioByRut(Integer rut) {
 
         Funcionario funcionario = RepositoryUtils.findOrThrow(funcionarioRepository.findByRut(rut),

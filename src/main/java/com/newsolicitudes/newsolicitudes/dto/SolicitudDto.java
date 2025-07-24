@@ -14,7 +14,7 @@ public class SolicitudDto {
     private String tipoSolicitud;
     private String departamentoOrigen;
     private String estadoSolicitud;
-    private int cantidadDias;
+    private double cantidadDias;
 
     private List<DerivacionDto> derivaciones;
 
@@ -90,11 +90,11 @@ public class SolicitudDto {
         this.departamentoOrigen = departamentoOrigen;
     }
 
-    public int getCantidadDias() {
+    public double getCantidadDias() {
         return cantidadDias;
     }
 
-    public void setCantidadDias(int cantidadDias) {
+    public void setCantidadDias(double cantidadDias) {
         this.cantidadDias = cantidadDias;
     }
 

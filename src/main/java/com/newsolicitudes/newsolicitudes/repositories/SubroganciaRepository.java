@@ -14,7 +14,9 @@ public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long> 
 
     List<Subrogancia> findByDepartamento(Departamento departamento);
 
-    List<Subrogancia> findBySubrogante(Funcionario jefe);
+    List<Subrogancia> findBySubrogante(Funcionario subrogante);
+
+    List<Subrogancia> findByJefeDepartamento(Funcionario jefe);
 
 Optional<Subrogancia> findFirstByJefeDepartamentoAndFechaInicioBetween(Funcionario subrogante, LocalDate desde, LocalDate hasta);
 

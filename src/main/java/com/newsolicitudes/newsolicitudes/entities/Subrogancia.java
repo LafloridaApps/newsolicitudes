@@ -24,6 +24,19 @@ public class Subrogancia {
 
     private LocalDate fechaFin;
 
+    public Subrogancia() {
+    }
+
+    public Subrogancia(Funcionario subrogante, LocalDate fechaInicio, LocalDate fechaFin,
+            Funcionario jefeDepartamento, Departamento departamento) {
+
+        this.subrogante = subrogante;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+        this.jefeDepartamento = jefeDepartamento;
+        this.departamento = departamento;
+    }
+
     @ManyToOne
     @JoinColumn(name = "jefe_departamento_id")
     private Funcionario jefeDepartamento;
@@ -86,6 +99,10 @@ public class Subrogancia {
 
     public String getVrutSubrogante() {
         return subrogante.getVrut().toString();
+    }
+
+    public Departamento getDeptoSubrogante(){
+        return this.subrogante.getDepartamento();
     }
 
 }
