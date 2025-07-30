@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioApiService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.SearchFunc;
 
@@ -20,9 +22,12 @@ public class FuncionarioController {
 
     private final SearchFunc searchFunc;
 
-    public FuncionarioController(FuncionarioService funcionarioService, SearchFunc searchFunc) {
+    private final FuncionarioApiService funcionarioApiService;
+
+    public FuncionarioController(FuncionarioService funcionarioService, SearchFunc searchFunc,FuncionarioApiService funcionarioApiService) {
         this.funcionarioService = funcionarioService;
         this.searchFunc = searchFunc;
+        this.funcionarioApiService = funcionarioApiService;
     }
 
     @GetMapping
@@ -43,6 +48,13 @@ public class FuncionarioController {
             @RequestParam LocalDate fechaInicio, @RequestParam LocalDate fechaFin) {
 
         return ResponseEntity.ok(searchFunc.getDirectorActivo(id, fechaInicio, fechaFin));
+    }
+
+
+    @GetMapping("/new")
+    public ResponseEntity<Object> obtenerDetalleColaboradorNew(@RequestParam Integer rut, String vRut) {
+
+        return ResponseEntity.ok(funcionarioApiService.getFuncionarioInfo(rut, vRut));
     }
 
 }

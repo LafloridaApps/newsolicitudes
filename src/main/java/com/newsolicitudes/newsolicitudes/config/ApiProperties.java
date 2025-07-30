@@ -7,12 +7,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "api")
 public class ApiProperties {
 
-
     private String funcionarioUrl;
 
     private String departamentoUrl;
 
-    
+    private String newfuncionarioUrl;
 
     public String getFuncionarioUrl() {
         return funcionarioUrl;
@@ -30,9 +29,12 @@ public class ApiProperties {
         this.departamentoUrl = departamentoUrl;
     }
 
-    
+    public String getNewfuncionarioUrl() {
+        return newfuncionarioUrl;
+    }
 
-
-    
+    public void setNewfuncionarioUrl(String newfuncionarioUrl) {
+        this.newfuncionarioUrl = newfuncionarioUrl;
+    }
 
 }

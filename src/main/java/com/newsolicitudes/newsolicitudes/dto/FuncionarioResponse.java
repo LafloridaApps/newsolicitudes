@@ -13,6 +13,11 @@ public class FuncionarioResponse {
     private String foto;
     private Integer ident;
 
+    
+
+    public FuncionarioResponse() {
+    }
+
     private FuncionarioResponse(Builder builder) {
         this.rut = builder.rut;
         this.nombre = builder.nombre;
