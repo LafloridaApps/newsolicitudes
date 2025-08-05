@@ -6,19 +6,17 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.newsolicitudes.newsolicitudes.entities.Departamento;
-import com.newsolicitudes.newsolicitudes.entities.Funcionario;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 
 public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long> {
 
-    List<Subrogancia> findByDepartamento(Departamento departamento);
+    List<Subrogancia> findByIdDepto(Long idDepto);
 
-    List<Subrogancia> findBySubrogante(Funcionario subrogante);
+    List<Subrogancia> findBySubrogante(Integer subrogante);
 
-    List<Subrogancia> findByJefeDepartamento(Funcionario jefe);
+    List<Subrogancia> findByJefeDepartamento(Integer jefe);
 
-Optional<Subrogancia> findFirstByJefeDepartamentoAndFechaInicioBetween(Funcionario subrogante, LocalDate desde, LocalDate hasta);
-
+    Optional<Subrogancia> findFirstByJefeDepartamentoAndFechaInicioBetween(Integer subrogante, LocalDate desde,
+            LocalDate hasta);
 
 }

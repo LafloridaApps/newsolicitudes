@@ -9,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 
@@ -24,9 +23,7 @@ public class EntradaDerivacion {
     @JoinColumn(name = "derivacion_id", nullable = false, unique = true)
     private Derivacion derivacion;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "funcionario_id", nullable = false)
-    private Funcionario funcionario;
+    private Integer rut;
 
     @Column(name = "fecha_recepcion", nullable = false)
     private LocalDate fechaRecepcion;
@@ -37,10 +34,10 @@ public class EntradaDerivacion {
     public EntradaDerivacion() {
     }
 
-    public EntradaDerivacion(Derivacion derivacion, Funcionario funcionario, LocalDate fechaRecepcion)            {
+    public EntradaDerivacion(Derivacion derivacion, LocalDate fechaRecepcion, Integer rut) {
         this.derivacion = derivacion;
-        this.funcionario = funcionario;
         this.fechaRecepcion = fechaRecepcion;
+        this.rut = rut;
     }
 
     public Long getId() {
@@ -57,14 +54,6 @@ public class EntradaDerivacion {
 
     public void setDerivacion(Derivacion derivacion) {
         this.derivacion = derivacion;
-    }
-
-    public Funcionario getFuncionario() {
-        return funcionario;
-    }
-
-    public void setFuncionario(Funcionario funcionario) {
-        this.funcionario = funcionario;
     }
 
     public LocalDate getFechaRecepcion() {
@@ -86,6 +75,14 @@ public class EntradaDerivacion {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Integer getRut() {
+        return rut;
+    }
+
+    public void setRut(Integer rut) {
+        this.rut = rut;
     }
 
 }

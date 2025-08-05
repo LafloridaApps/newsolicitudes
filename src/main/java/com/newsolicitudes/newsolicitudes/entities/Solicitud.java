@@ -9,8 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
 @Entity
@@ -20,13 +18,9 @@ public class Solicitud {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "solicitante_id")
-    private Funcionario solicitante;
+    private Integer rut;
 
-    @ManyToOne
-    @JoinColumn(name = "departamento_id")
-    private Departamento departamento;
+    private Long idDepto;
 
     @OneToMany(mappedBy = "solicitud")
 
@@ -71,22 +65,6 @@ public class Solicitud {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Funcionario getSolicitante() {
-        return solicitante;
-    }
-
-    public void setSolicitante(Funcionario solicitante) {
-        this.solicitante = solicitante;
-    }
-
-    public Departamento getDepartamento() {
-        return departamento;
-    }
-
-    public void setDepartamento(Departamento departamento) {
-        this.departamento = departamento;
     }
 
     public LocalDate getFechaSolicitud() {
@@ -161,17 +139,20 @@ public class Solicitud {
         this.derivaciones = derivaciones;
     }
 
-    public String getNombreSolicitante() {
-        return solicitante.getNombre();
-
+    public Integer getRut() {
+        return rut;
     }
 
-    public String getNombreDepartamento() {
-        return departamento.getNombreDepartamento();
+    public void setRut(Integer rut) {
+        this.rut = rut;
     }
 
-    public Integer getRutSolicitante() {
-        return solicitante.getRut();
+    public Long getIdDepto() {
+        return idDepto;
+    }
+
+    public void setIdDepto(Long idDepto) {
+        this.idDepto = idDepto;
     }
 
 }

@@ -7,28 +7,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiFuncionarioService;
+import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
 
 import reactor.core.publisher.Mono;
 
 @Service
-public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
+public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     private final WebClient webClient;
 
-    public ApiFuncionarioServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
-        this.webClient = webClientBuilder.baseUrl(apiProperties.getNewfuncionarioUrl()).build();
+    public ApiDepartamentoServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
+        this.webClient = webClientBuilder.baseUrl(apiProperties.getDepartamentoUrl()).build();
     }
 
     @Override
-    public FuncionarioResponse obtenerDetalleColaborador(Integer rut) {
-
-      return  webClient.get()
+    public DepartamentoResponse obtenerDepartamento(Long idDepto) {
+        return webClient.get()
                 .uri(uriBuilder -> {
                     String uri = uriBuilder
-                            .path("/api/funcionario")
-                            .queryParam("rut", rut)
+                            .path("/api/departamentos")
+                            .queryParam("id", idDepto)
                             .build()
                             .toString();
                     return URI.create(uri);
@@ -36,10 +35,9 @@ public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
                 .header("Accept", "application/json")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
-                .bodyToMono(FuncionarioResponse.class)
-                .onErrorResume(Exception.class, e ->  Mono.empty())
+                .bodyToMono(DepartamentoResponse.class)
+                .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
-
 
     }
 

@@ -7,24 +7,19 @@ import org.springframework.stereotype.Service;
 import com.newsolicitudes.newsolicitudes.dto.EntradaRequest;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.EntradaDerivacion;
-import com.newsolicitudes.newsolicitudes.entities.Funcionario;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
-import com.newsolicitudes.newsolicitudes.repositories.FuncionarioRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.EntradaService;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
 public class EntradaServiceImpl implements EntradaService {
 
-    private final FuncionarioRepository funcionarioRepository;
     private final EntradaDerivacionRepository entradaRepository;
     private final DerivacionRepository derivacionRepository;
 
-    public EntradaServiceImpl(FuncionarioRepository funcionarioRepository,
-            EntradaDerivacionRepository entradaRepository,
+    public EntradaServiceImpl(EntradaDerivacionRepository entradaRepository,
             DerivacionRepository derivacionRepository) {
-        this.funcionarioRepository = funcionarioRepository;
         this.entradaRepository = entradaRepository;
         this.derivacionRepository = derivacionRepository;
     }
@@ -34,9 +29,8 @@ public class EntradaServiceImpl implements EntradaService {
 
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
 
-        Funcionario funcionario = getFuncionarioByRut(request.getRutFuncionario());
 
-        entradaRepository.save(new EntradaDerivacion(derivacion, funcionario, LocalDate.now()));
+        entradaRepository.save(new EntradaDerivacion(derivacion,  LocalDate.now(),request.getRutFuncionario()));
 
     }
 
@@ -46,10 +40,6 @@ public class EntradaServiceImpl implements EntradaService {
 
     }
 
-    private Funcionario getFuncionarioByRut(Integer rut) {
-        return RepositoryUtils.findOrThrow(funcionarioRepository.findByRut(rut),
-                String.format("Funcionario %d no existe", rut));
-
-    }
+   
 
 }

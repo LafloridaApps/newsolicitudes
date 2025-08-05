@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 
-import com.newsolicitudes.newsolicitudes.entities.Funcionario;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Visacion;
 import com.newsolicitudes.newsolicitudes.repositories.VisacionRepository;
@@ -20,11 +19,11 @@ public class VisacionServiceImpl implements VisacionService {
     }
 
     @Override
-    public void visarSolicitud(Solicitud solicitud, Funcionario funcionario) {
+    public void visarSolicitud(Solicitud solicitud, Integer rut) {
 
         Visacion visacion = new Visacion();
         visacion.setSolicitud(solicitud);
-        visacion.setFuncionario(funcionario);
+        visacion.setRut(rut);
         visacion.setFechaVisacion(LocalDate.now());
         visacionRepository.save(visacion);
 

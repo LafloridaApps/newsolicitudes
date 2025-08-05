@@ -29,8 +29,7 @@ public class Derivacion {
     @Enumerated(EnumType.STRING)
     private TipoDerivacion tipo;
 
-    @ManyToOne(optional = false)
-    private Departamento departamento;
+    private Long idDepto;
 
     private LocalDate fechaDerivacion;
 
@@ -85,14 +84,6 @@ public class Derivacion {
         this.fechaDerivacion = fechaDerivacion;
     }
 
-    public Departamento getDepartamento() {
-        return departamento;
-    }
-
-    public void setDepartamento(Departamento departamento) {
-        this.departamento = departamento;
-    }
-
     public EstadoDerivacion getEstadoDerivacion() {
         return estadoDerivacion;
     }
@@ -110,10 +101,6 @@ public class Derivacion {
     }
 
     // Métodos auxiliares (se mantienen)
-
-    public String getNombreDepartamento() {
-        return departamento != null ? departamento.getNombreDepartamento() : null;
-    }
 
     public LocalDate getFechaSolicitud() {
         return solicitud != null ? solicitud.getFechaSolicitud() : null;
@@ -137,21 +124,22 @@ public class Derivacion {
 
     public String getJornadaInicioSolicitud() {
         return solicitud != null && solicitud.getJornadaInicio() != null
-            ? solicitud.getJornadaInicio().name()
-            : null;
+                ? solicitud.getJornadaInicio().name()
+                : null;
     }
 
     public String getJornadaTerminoSolicitud() {
         return solicitud != null && solicitud.getJornadaTermino() != null
-            ? solicitud.getJornadaTermino().name()
-            : null;
+                ? solicitud.getJornadaTermino().name()
+                : null;
     }
 
-    public Long getIdSolicitud() {
-        return solicitud != null ? solicitud.getId() : null;
+    public Long getIdDepto() {
+        return idDepto;
     }
 
-    public String getNombreDepartamentoSolicitud() {
-        return solicitud != null ? solicitud.getNombreDepartamento() : null;
+    public void setIdDepto(Long idDepto) {
+        this.idDepto = idDepto;
     }
+
 }

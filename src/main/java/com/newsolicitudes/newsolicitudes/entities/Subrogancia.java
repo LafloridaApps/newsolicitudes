@@ -6,8 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Subrogancia {
@@ -16,34 +14,24 @@ public class Subrogancia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "subrogante_id")
-    private Funcionario subrogante;
+    private Integer subrogante;
 
     private LocalDate fechaInicio;
 
     private LocalDate fechaFin;
 
-    public Subrogancia() {
-    }
+    private Integer jefeDepartamento;
 
-    public Subrogancia(Funcionario subrogante, LocalDate fechaInicio, LocalDate fechaFin,
-            Funcionario jefeDepartamento, Departamento departamento) {
+    private Long idDepto;
 
+    public Subrogancia(Integer subrogante, LocalDate fechaInicio, LocalDate fechaFin, Integer jefeDepartamento,
+            Long idDepto) {
         this.subrogante = subrogante;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.jefeDepartamento = jefeDepartamento;
-        this.departamento = departamento;
+        this.idDepto = idDepto;
     }
-
-    @ManyToOne
-    @JoinColumn(name = "jefe_departamento_id")
-    private Funcionario jefeDepartamento;
-
-    @ManyToOne
-    @JoinColumn(name = "departamento_id")
-    private Departamento departamento; //
 
     public Long getId() {
         return id;
@@ -51,22 +39,6 @@ public class Subrogancia {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Funcionario getJefeDepartamento() {
-        return jefeDepartamento;
-    }
-
-    public void setJefeDepartamento(Funcionario jefeDepartamento) {
-        this.jefeDepartamento = jefeDepartamento;
-    }
-
-    public Funcionario getSubrogante() {
-        return subrogante;
-    }
-
-    public void setSubrogante(Funcionario subrogante) {
-        this.subrogante = subrogante;
     }
 
     public LocalDate getFechaInicio() {
@@ -85,24 +57,28 @@ public class Subrogancia {
         this.fechaFin = fechaFin;
     }
 
-    public Departamento getDepartamento() {
-        return departamento;
+    public Integer getSubrogante() {
+        return subrogante;
     }
 
-    public void setDepartamento(Departamento departamento) {
-        this.departamento = departamento;
+    public void setSubrogante(Integer subrogante) {
+        this.subrogante = subrogante;
     }
 
-    public Integer getRutSubrogante() {
-        return subrogante.getRut();
+    public Integer getJefeDepartamento() {
+        return jefeDepartamento;
     }
 
-    public String getVrutSubrogante() {
-        return subrogante.getVrut().toString();
+    public void setJefeDepartamento(Integer jefeDepartamento) {
+        this.jefeDepartamento = jefeDepartamento;
     }
 
-    public Departamento getDeptoSubrogante(){
-        return this.subrogante.getDepartamento();
+    public Long getIdDepto() {
+        return idDepto;
+    }
+
+    public void setIdDepto(Long idDepto) {
+        this.idDepto = idDepto;
     }
 
 }

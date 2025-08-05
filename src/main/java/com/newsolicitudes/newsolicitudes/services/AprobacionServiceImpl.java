@@ -8,7 +8,6 @@ import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.EntradaDerivacion;
-import com.newsolicitudes.newsolicitudes.entities.Funcionario;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
@@ -52,19 +51,17 @@ public class AprobacionServiceImpl implements AprobacionService {
         solicitudRepository.save(solicitud);
 
         EntradaDerivacion entrada = derivacion.getEntrada();
-        if (entrada == null || entrada.getFuncionario() == null) {
+        if (entrada == null || entrada.getRut() == null) {
             throw new AprobacionException(
                     "No se puede aprobar: la derivación no ha sido recepcionada por un funcionario.");
         }
 
-        Funcionario funcionario = entrada.getFuncionario();
-
         if (!verificaVisacion(solicitud)) {
-            throw new AprobacionException("El funcionario " + funcionario.getNombre()
+            throw new AprobacionException("El funcionario " + solicitud.getRut()
                     + " no tiene visación para la solicitud " + solicitud.getId());
         }
 
-        Aprobacion aprobacion = crearAprobacion(solicitud, funcionario);
+        Aprobacion aprobacion = crearAprobacion(solicitud, request.getAprobadoPor());
         aprobacionRepository.save(aprobacion);
     }
 
@@ -72,11 +69,11 @@ public class AprobacionServiceImpl implements AprobacionService {
         return visacionRepository.existsBySolicitud(solicitud);
     }
 
-    private Aprobacion crearAprobacion(Solicitud solicitud, Funcionario funcionario) {
+    private Aprobacion crearAprobacion(Solicitud solicitud, Integer funcionario) {
         Aprobacion aprobacion = new Aprobacion();
         aprobacion.setFechaAprobacion(LocalDate.now());
         aprobacion.setSolicitud(solicitud);
-        aprobacion.setFuncionario(funcionario);
+        aprobacion.setRut(funcionario);
         return aprobacion;
     }
 

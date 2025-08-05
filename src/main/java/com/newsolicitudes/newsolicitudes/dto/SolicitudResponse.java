@@ -9,9 +9,9 @@ public class SolicitudResponse {
     public SolicitudResponse() {
     }
 
-    public SolicitudResponse(Long id, String nombreDFepartamento) {
+    public SolicitudResponse(Long id, String nombreDepartamento) {
         this.id = id;
-        this.nombreDepartamento = nombreDFepartamento;
+        this.nombreDepartamento = nombreDepartamento;
     }
 
     public Long getId() {
@@ -26,8 +26,8 @@ public class SolicitudResponse {
         return nombreDepartamento;
     }
 
-    public void setNombreDepartamento(String nombreDFepartamento) {
-        this.nombreDepartamento = nombreDFepartamento;
+    public void setNombreDepartamento(String nombreDepartamento) {
+        this.nombreDepartamento = nombreDepartamento;
     }
 
     public String getJefeDestino() {

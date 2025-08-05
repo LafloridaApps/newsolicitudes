@@ -20,9 +20,7 @@ public class Visacion {
     @JoinColumn(name = "solicitud_id")
     private Solicitud solicitud;
 
-    @ManyToOne
-    @JoinColumn(name = "funcionario_id")
-    private Funcionario funcionario;
+    private Integer rut;
 
     private LocalDate fechaVisacion;
 
@@ -42,20 +40,20 @@ public class Visacion {
         this.solicitud = solicitud;
     }
 
-    public Funcionario getFuncionario() {
-        return funcionario;
-    }
-
-    public void setFuncionario(Funcionario funcionario) {
-        this.funcionario = funcionario;
-    }
-
     public LocalDate getFechaVisacion() {
         return fechaVisacion;
     }
 
     public void setFechaVisacion(LocalDate fechaVisacion) {
         this.fechaVisacion = fechaVisacion;
+    }
+
+    public Integer getRut() {
+        return rut;
+    }
+
+    public void setRut(Integer rut) {
+        this.rut = rut;
     }
 
 }
