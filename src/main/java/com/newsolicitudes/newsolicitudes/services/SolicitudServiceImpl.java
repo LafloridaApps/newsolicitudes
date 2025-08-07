@@ -51,9 +51,12 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         FuncionarioResponse funcionario = apiFuncionarioService.obtenerDetalleColaborador(request.getRut());
 
-        DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(funcionario.getCodDepto());
+        DepartamentoResponse departamentoActual = apiDepartamentoService.obtenerDepartamento(funcionario.getCodDepto());
+       
+      
+        DepartamentoResponse departamentoDestino = getDepartamentoDestino(request.getRut(), departamentoActual);
 
-        NivelDepartamento nivelDepartamento = NivelDepartamento.valueOf(departamento.getNivelDepartamento());
+        NivelDepartamento nivelDepartamento = getNivelDepartamento(departamentoDestino);
 
         TipoDerivacion tipoDerivacion = tipoPorNivel(nivelDepartamento);
 
@@ -61,7 +64,7 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         solicitud = solicitudRepository.save(solicitud);
 
-        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, funcionario.getCodDepto(),
+        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamentoDestino.getId(),
                 EstadoDerivacion.PENDIENTE);
 
         if (request.getSubrogancia() != null) {
@@ -70,8 +73,21 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         }
 
-        return new SolicitudResponse(solicitud.getId(), departamento.getNombre());
+        return new SolicitudResponse(solicitud.getId(), departamentoDestino.getNombre());
 
+    }
+
+    private DepartamentoResponse getDepartamentoDestino(Integer rut, DepartamentoResponse departamento) {
+
+        if (rut.equals(departamento.getRutJefe())) {
+            return  apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
+        }
+
+        return departamento;
+    }
+
+    private NivelDepartamento getNivelDepartamento(DepartamentoResponse departamento) {
+        return NivelDepartamento.valueOf(departamento.getNivelDepartamento());
     }
 
     private Solicitud mapToSolicitud(SolicitudRequest request, Integer solicitante, Long idDepto) {

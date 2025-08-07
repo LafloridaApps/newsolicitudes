@@ -1,14 +1,14 @@
 package com.newsolicitudes.newsolicitudes.dto;
 
-public class JefeFunc {
+public class CargoFunc {
 
     private boolean esJefe;
     private boolean esDirector;
 
+    public CargoFunc() {
+    }
 
-    
-
-    public JefeFunc(boolean esJefe, boolean esDirector) {
+    public CargoFunc(boolean esJefe, boolean esDirector) {
         this.esJefe = esJefe;
         this.esDirector = esDirector;
     }

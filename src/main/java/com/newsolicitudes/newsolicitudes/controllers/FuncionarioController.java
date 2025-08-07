@@ -1,5 +1,8 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioApiService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.SearchFuncServcie;
 
 @RestController
 @RequestMapping("/api/funcionario")
@@ -15,21 +20,32 @@ import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioApiServi
 public class FuncionarioController {
 
     private final FuncionarioApiService funcionarioApiService;
+    private final ApiDepartamentoService apiDepartamentoService;
+    private final SearchFuncServcie searchFuncServcie;
 
-    public FuncionarioController(FuncionarioApiService funcionarioApiService) {
+    public FuncionarioController(FuncionarioApiService funcionarioApiService,
+            ApiDepartamentoService apiDepartamentoService,
+            SearchFuncServcie searchFuncServcie) {
         this.funcionarioApiService = funcionarioApiService;
+        this.apiDepartamentoService = apiDepartamentoService;
+        this.searchFuncServcie = searchFuncServcie;
     }
 
     @GetMapping
     public ResponseEntity<Object> obtenerDetalleColaborador(@RequestParam Integer rut, String vRut) {
-
         return ResponseEntity.ok(funcionarioApiService.getFuncionarioInfo(rut, vRut));
     }
 
-    @GetMapping("/new")
-    public ResponseEntity<Object> obtenerDetalleColaboradorNew(@RequestParam Integer rut, String vRut) {
-
-        return ResponseEntity.ok(funcionarioApiService.getFuncionarioInfo(rut, vRut));
+    @GetMapping("/cargofunc")
+    public ResponseEntity<Object> getCargFunc(@RequestParam Long codDepto, Integer rut) {
+        return ResponseEntity.ok(apiDepartamentoService.obtenerJefeFunc(codDepto, rut));
     }
 
+    @GetMapping("/director-activo")
+    public ResponseEntity<Object> getDirectorActivo(
+            @RequestParam Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+        return ResponseEntity.ok(searchFuncServcie.getDirectorActivo(id, fechaInicio, fechaFin));
+    }
 }

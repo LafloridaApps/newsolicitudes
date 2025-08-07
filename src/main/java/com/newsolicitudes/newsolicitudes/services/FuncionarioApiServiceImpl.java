@@ -11,10 +11,10 @@ import com.newsolicitudes.newsolicitudes.utlils.PersonaUtils;
 @Service
 public class FuncionarioApiServiceImpl implements FuncionarioApiService {
 
-    private final ApiFuncionarioService apiNewFuncionarioService;
+    private final ApiFuncionarioService apiFuncionarioService;
 
     public FuncionarioApiServiceImpl(ApiFuncionarioService apiNewFuncionarioService) {
-        this.apiNewFuncionarioService = apiNewFuncionarioService;
+        this.apiFuncionarioService = apiNewFuncionarioService;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class FuncionarioApiServiceImpl implements FuncionarioApiService {
             throw new FuncionarioException("Rut no valido");
         }
 
-        return apiNewFuncionarioService.obtenerDetalleColaborador(rut);
+        return apiFuncionarioService.obtenerDetalleColaborador(rut);
       
     }
 

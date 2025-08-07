@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.dto.CargoFunc;
 import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
 
 import reactor.core.publisher.Mono;
@@ -39,6 +40,26 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
 
+    }
+
+    @Override
+    public CargoFunc obtenerJefeFunc(Long idDepto, Integer rut) {
+       return webClient.get()
+                .uri(uriBuilder -> {
+                    String uri = uriBuilder
+                            .path("/api/departamentos/esjefe")
+                            .queryParam("depto", idDepto)
+                            .queryParam("rut", rut)
+                            .build()
+                            .toString();
+                    return URI.create(uri);
+                })
+                .header("Accept", "application/json")
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
+                .bodyToMono(CargoFunc.class)
+                .onErrorResume(Exception.class, e -> Mono.empty())
+                .block();
     }
 
 }
