@@ -50,8 +50,8 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
 
         FuncionarioResponse director = buscarFuncionarioByRut(departamento.getRutJefe());
 
-        if (hasAusenciasBetweenDates(director, fechaInicioSolicitud, fechaFinSolicitud)) {
-            return findSubrogante(director, fechaInicioSolicitud, fechaFinSolicitud);
+        if (!hasAusenciasBetweenDates(director, fechaInicioSolicitud, fechaFinSolicitud)) {
+            director =  findSubrogante(director, fechaInicioSolicitud, fechaFinSolicitud);
         }
 
         return director;
@@ -77,9 +77,7 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
             Subrogancia subrogancia = optSubrogancia.get();
             return buscarFuncionarioByRut(subrogancia.getSubrogante());
         } else {
-            throw new AusenciaException(
-                    "No se encontró subrogante para el director con RUT: " + director.getRut()
-                            + " en las fechas solicitadas");
+            return director;
         }
     }
 
@@ -127,7 +125,6 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
             LocalDate fechaFinSolicitud, int pageNmber, Long iddepto) {
 
         SearchFuncionarioResponse searchFuncionarioResponse = buscarFuncionarioByNombre(pattern, pageNmber);
-        
 
         List<DepartamentoResponse> departamentoFamilia = apiDepartamentoService
                 .obtenerFamiliaDepto(iddepto);

@@ -52,8 +52,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         FuncionarioResponse funcionario = apiFuncionarioService.obtenerDetalleColaborador(request.getRut());
 
         DepartamentoResponse departamentoActual = apiDepartamentoService.obtenerDepartamento(funcionario.getCodDepto());
-       
-      
+
         DepartamentoResponse departamentoDestino = getDepartamentoDestino(request.getRut(), departamentoActual);
 
         NivelDepartamento nivelDepartamento = getNivelDepartamento(departamentoDestino);
@@ -80,7 +79,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     private DepartamentoResponse getDepartamentoDestino(Integer rut, DepartamentoResponse departamento) {
 
         if (rut.equals(departamento.getRutJefe())) {
-            return  apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
+            return apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
         }
 
         return departamento;

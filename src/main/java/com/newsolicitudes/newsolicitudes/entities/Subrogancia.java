@@ -24,6 +24,11 @@ public class Subrogancia {
 
     private Long idDepto;
 
+    
+
+    public Subrogancia() {
+    }
+
     public Subrogancia(Integer subrogante, LocalDate fechaInicio, LocalDate fechaFin, Integer jefeDepartamento,
             Long idDepto) {
         this.subrogante = subrogante;

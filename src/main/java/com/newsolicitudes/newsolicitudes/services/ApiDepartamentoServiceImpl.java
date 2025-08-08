@@ -45,7 +45,7 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     @Override
     public CargoFunc obtenerJefeFunc(Long idDepto, Integer rut) {
-       return webClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> {
                     String uri = uriBuilder
                             .path("/api/departamentos/esjefe")
@@ -66,12 +66,13 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
     @Override
     public List<DepartamentoResponse> obtenerFamiliaDepto(Long idDepto) {
         return webClient.get()
-            .uri(uriBuilder -> uriBuilder.path("/api/departamentos/familia/{id}").build(idDepto))
-            .retrieve()
-            .onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
-            .bodyToMono(new ParameterizedTypeReference<List<DepartamentoResponse>>() {})
-            .onErrorResume(e -> Mono.empty())
-            .block();
+                .uri(uriBuilder -> uriBuilder.path("/api/departamentos/familia/{id}").build(idDepto))
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
+                .bodyToMono(new ParameterizedTypeReference<List<DepartamentoResponse>>() {
+                })
+                .onErrorResume(e -> Mono.empty())
+                .block();
     }
 
 }

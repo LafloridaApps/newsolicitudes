@@ -24,10 +24,10 @@ public class AprobacionController {
     }
 
     @PostMapping
-    public ResponseEntity<Object>  createAprobacion(@RequestBody AprobacionRequest request){
+    public ResponseEntity<Object> createAprobacion(@RequestBody AprobacionRequest request) {
         try {
             aprobacionService.aprobarSolicitud(request);
-            Map<String,String> response = Map.of("message", "Solicitud aprobada con éxito");
+            Map<String, String> response = Map.of("message", "Solicitud aprobada con éxito");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

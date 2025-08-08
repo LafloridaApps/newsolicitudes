@@ -29,8 +29,7 @@ public class EntradaServiceImpl implements EntradaService {
 
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
 
-
-        entradaRepository.save(new EntradaDerivacion(derivacion,  LocalDate.now(),request.getRutFuncionario()));
+        entradaRepository.save(new EntradaDerivacion(derivacion, LocalDate.now(), request.getRutFuncionario()));
 
     }
 
@@ -39,7 +38,5 @@ public class EntradaServiceImpl implements EntradaService {
                 String.format("Derivacion %d no existe", id));
 
     }
-
-   
 
 }

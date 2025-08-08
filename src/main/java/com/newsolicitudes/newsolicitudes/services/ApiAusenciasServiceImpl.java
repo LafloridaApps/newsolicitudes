@@ -18,27 +18,26 @@ public class ApiAusenciasServiceImpl implements ApiAusenciasService {
 
     private final WebClient webClient;
 
-        public ApiAusenciasServiceImpl(WebClient.Builder webClientBuilder,
-                        ApiProperties apiProperties
-                        ) {
-                this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
-        }
-
+    public ApiAusenciasServiceImpl(WebClient.Builder webClientBuilder,
+            ApiProperties apiProperties) {
+        this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
+    }
 
     @Override
     public List<AusenciasResponse> getAusenciasByRutAndFechas(Integer rut, Integer ident, LocalDate fechaInicio,
             LocalDate fechaFin) {
         return webClient.get()
-                                .uri(uriBuilder -> uriBuilder.path("/api/funcionario/ausencias")
-                                                .queryParam("rut", rut)
-                                                .queryParam("ident", ident)
-                                                .queryParam("fechaInicio", fechaInicio)
-                                                .queryParam("fechaFin", fechaFin)
-                                                .build())
-                                .retrieve()
-                                .bodyToMono(new ParameterizedTypeReference<List<AusenciasResponse>>() {})
-                                .onErrorResume(Exception.class, e -> Mono.empty())
-                                .block();
+                .uri(uriBuilder -> uriBuilder.path("/api/funcionario/ausencias")
+                        .queryParam("rut", rut)
+                        .queryParam("ident", ident)
+                        .queryParam("fechaInicio", fechaInicio)
+                        .queryParam("fechaFin", fechaFin)
+                        .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<AusenciasResponse>>() {
+                })
+                .onErrorResume(Exception.class, e -> Mono.empty())
+                .block();
     }
 
 }

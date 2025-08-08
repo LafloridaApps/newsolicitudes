@@ -29,7 +29,7 @@ public class FuncionarioApiServiceImpl implements FuncionarioApiService {
         }
 
         return apiFuncionarioService.obtenerDetalleColaborador(rut);
-      
+
     }
 
 }

@@ -25,10 +25,10 @@ public class EntradaController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> createEntrada(@RequestBody EntradaRequest request){
-        
+    public ResponseEntity<Object> createEntrada(@RequestBody EntradaRequest request) {
+
         entradaService.createEntrada(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message","Entrada Grada correctamante"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Entrada Grada correctamante"));
     }
 
 }

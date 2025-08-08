@@ -14,9 +14,7 @@ public class SubroganciaServiceImpl implements SubroganciaService {
 
         private final SubroganciaRepository subroganciaRepository;
 
-
-        public SubroganciaServiceImpl(SubroganciaRepository subroganciaRepository
-                       ) {
+        public SubroganciaServiceImpl(SubroganciaRepository subroganciaRepository) {
                 this.subroganciaRepository = subroganciaRepository;
 
         }
@@ -25,8 +23,8 @@ public class SubroganciaServiceImpl implements SubroganciaService {
         public void createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin,
                         Long idDepto) {
 
-
-                Subrogancia subrogancia = new Subrogancia(request.getRutSubrogante(), fechaInicio, fechaFin, request.getRutJefe(),
+                Subrogancia subrogancia = new Subrogancia(request.getRutSubrogante(), fechaInicio, fechaFin,
+                                request.getRutJefe(),
                                 idDepto);
                 subroganciaRepository.save(subrogancia);
 

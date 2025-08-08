@@ -52,8 +52,8 @@ public class FuncionarioController {
     @GetMapping("/subrogante-rut")
     public ResponseEntity<Object> getSubroganteRut(
             @RequestParam Integer rut,
-            @RequestParam  LocalDate fechaInicio,
-            @RequestParam  LocalDate fechaFin) {
+            @RequestParam LocalDate fechaInicio,
+            @RequestParam LocalDate fechaFin) {
         return ResponseEntity.ok(searchFuncServcie.buscarSubroganteByRut(rut, fechaInicio, fechaFin));
     }
 
@@ -64,6 +64,7 @@ public class FuncionarioController {
             @RequestParam LocalDate fechaFin,
             @RequestParam int pageNumber,
             @RequestParam Long idDepto) {
-        return ResponseEntity.ok(searchFuncServcie.buscarFuncionarioByNombre(nombre, fechaInicio, fechaFin, pageNumber, idDepto));
+        return ResponseEntity
+                .ok(searchFuncServcie.buscarFuncionarioByNombre(nombre, fechaInicio, fechaFin, pageNumber, idDepto));
     }
 }

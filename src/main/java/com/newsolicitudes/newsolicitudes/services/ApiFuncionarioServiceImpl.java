@@ -25,7 +25,7 @@ public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
     @Override
     public FuncionarioResponse obtenerDetalleColaborador(Integer rut) {
 
-      return  webClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> {
                     String uri = uriBuilder
                             .path("/api/funcionario")
@@ -38,15 +38,14 @@ public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
                 .bodyToMono(FuncionarioResponse.class)
-                .onErrorResume(Exception.class, e ->  Mono.empty())
+                .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
-
 
     }
 
     @Override
     public SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNmber) {
-       return  webClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> {
                     String uri = uriBuilder
                             .path("/api/funcionario/search")
@@ -60,7 +59,7 @@ public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
                 .bodyToMono(SearchFuncionarioResponse.class)
-                .onErrorResume(Exception.class, e ->  Mono.empty())
+                .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
     }
 

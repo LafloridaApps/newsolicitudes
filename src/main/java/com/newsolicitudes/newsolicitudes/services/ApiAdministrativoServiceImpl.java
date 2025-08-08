@@ -1,6 +1,5 @@
 package com.newsolicitudes.newsolicitudes.services;
 
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,14 +15,13 @@ public class ApiAdministrativoServiceImpl implements ApiAdmistrativoService {
         private final WebClient webClient;
 
         public ApiAdministrativoServiceImpl(WebClient.Builder webClientBuilder,
-                        ApiProperties apiProperties
-                        ) {
+                        ApiProperties apiProperties) {
                 this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
         }
 
         @Override
         public ApiAdministrativoResponse obtenerAdministrativos(Integer rut, Integer ident) {
-               return webClient.get()
+                return webClient.get()
                                 .uri(uriBuilder -> uriBuilder.path("/api/funcionario/administrativos")
                                                 .queryParam("rut", rut)
                                                 .queryParam("ident", ident)
@@ -33,8 +31,6 @@ public class ApiAdministrativoServiceImpl implements ApiAdmistrativoService {
                                 .onErrorResume(Exception.class, e -> Mono.empty())
                                 .block();
 
-
         }
 
-        
 }
