@@ -1,11 +1,7 @@
 package com.newsolicitudes.newsolicitudes.services;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
@@ -13,16 +9,35 @@ import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.exceptions.DerivacionExceptions;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
+import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.ApiFuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DerivacionServiceImpl implements DerivacionService {
 
     private final DerivacionRepository derivacionRepository;
+    private final SolicitudRepository solicitudRepository;
+    private final ApiFuncionarioService apiFuncionarioService;
+    private final ApiDepartamentoService apiDepartamentoService;
 
     public DerivacionServiceImpl(
-            DerivacionRepository derivacionRepository) {
+            DerivacionRepository derivacionRepository,
+            SolicitudRepository solicitudRepository,
+            ApiFuncionarioService apiFuncionarioService,
+            ApiDepartamentoService apiDepartamentoService) {
         this.derivacionRepository = derivacionRepository;
+        this.solicitudRepository = solicitudRepository;
+        this.apiFuncionarioService = apiFuncionarioService;
+        this.apiDepartamentoService = apiDepartamentoService;
     }
 
     @Override
@@ -42,63 +57,41 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     @Override
-    public List<SolicitudDto> getDerivacionesByFuncionario(Integer rut) {
-        /* Funcionario funcionario = getFuncionarioBuRut(rut);
-        List<Departamento> departamentos = departamentoRepository.findByFuncionarios(funcionario);
-        List<Derivacion> derivaciones = derivacionRepository.findByDepartamentoIn(departamentos);
+    public List<SolicitudDto> getDerivacionesByDeptoId(Long idDepto) {
+        List<Derivacion> derivaciones = derivacionRepository.findByIdDeptoAndEstadoDerivacion(idDepto, EstadoDerivacion.PENDIENTE);
+        List<SolicitudDto> solicitudesDto = new ArrayList<>();
 
-        Map<Long, List<Derivacion>> agrupadasPorSolicitud = derivaciones.stream()
-                .collect(Collectors.groupingBy(d -> d.getSolicitud().getId()));
+        for (Derivacion derivacion : derivaciones) {
+            Optional<Solicitud> solicitudOptional = solicitudRepository.findById(derivacion.getSolicitud().getId());
+            solicitudOptional.ifPresent(solicitud -> {
+                SolicitudDto dto = new SolicitudDto();
+                dto.setId(solicitud.getId());
+                dto.setSolicitante(String.valueOf(solicitud.getRut()));
+                dto.setFechaSolicitud(solicitud.getFechaSolicitud().toString());
+                dto.setFechaInicio(solicitud.getFechaInicio().toString());
+                dto.setFechaFin(solicitud.getFechaTermino().toString());
+                dto.setJornadaInicio(solicitud.getJornadaInicio() != null ? solicitud.getJornadaInicio().name() : "");
+                dto.setJornadaFin(solicitud.getJornadaTermino() != null ? solicitud.getJornadaTermino().name() : "");
+                dto.setTipoSolicitud(solicitud.getTipoSolicitud().name());
+                dto.setDepartamentoOrigen(String.valueOf(solicitud.getIdDepto()));
+                dto.setEstadoSolicitud(solicitud.getEstado().name());
+                dto.setCantidadDias(solicitud.getCantidadDias());
 
-        return agrupadasPorSolicitud.entrySet().stream()
-                .map(entry -> mapToSolicitudDto(entry.getValue(), funcionario))
-                .toList(); */
-    return null;
+                // Obtener nombre del funcionario
+                FuncionarioResponse funcionario = apiFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
+                if (funcionario != null) {
+                    dto.setNombreFuncionario(funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " " + funcionario.getApellidoMaterno());
+                }
+
+                // Obtener nombre del departamento
+                DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(solicitud.getIdDepto());
+                if (departamento != null) {
+                    dto.setNombreDepartamento(departamento.getNombre());
+                }
+
+                solicitudesDto.add(dto);
+            });
+        }
+        return solicitudesDto;
     }
-
-   /*  private SolicitudDto mapToSolicitudDto(List<Derivacion> derivaciones, Funcionario funcionario) {
-        Derivacion primera = derivaciones.get(0);
-        Solicitud solicitud = primera.getSolicitud();
-
-        SolicitudDto dto = new SolicitudDto();
-        dto.setId(solicitud.getId());
-        dto.setSolicitante(solicitud.getNombreSolicitante());
-        dto.setFechaSolicitud(solicitud.getFechaSolicitud().toString());
-        dto.setFechaInicio(solicitud.getFechaInicio().toString());
-        dto.setFechaFin(solicitud.getFechaTermino().toString());
-        dto.setTipoSolicitud(solicitud.getTipoSolicitud().toString());
-        dto.setEstadoSolicitud(solicitud.getEstado().toString());
-        dto.setJornadaInicio(solicitud.getJornadaInicio() != null ? solicitud.getJornadaInicio().toString() : null);
-        dto.setJornadaFin(solicitud.getJornadaTermino() != null ? solicitud.getJornadaTermino().toString() : null);
-        dto.setDepartamentoOrigen(solicitud.getNombreDepartamento());
-        dto.setCantidadDias(solicitud.getCantidadDias());
-
-        List<DerivacionDto> derivacionDtos = derivaciones.stream()
-                .map(d -> mapToDerivacionDto(d, funcionario))
-                .toList();
-
-        dto.setDerivaciones(derivacionDtos);
-        return dto;
-    } */
-
-    // private DerivacionDto mapToDerivacionDto(Derivacion d, Funcionario funcionario) {
-    //     DerivacionDto ddto = new DerivacionDto();
-    //     ddto.setId(d.getId());
-    //     ddto.setTipoMovimiento(d.getTipo().toString());
-    //     ddto.setFechaDerivacion(d.getFechaDerivacion().toString());
-    //     ddto.setNombreDepartamento(d.getNombreDepartamento());
-    //     ddto.setEstadoDerivacion(d.getEstadoDerivacion().name());
-
-    //     boolean recepcionada = d.getEntrada() != null &&
-    //             d.getEntrada().getFuncionario() != null &&
-    //             d.getEntrada().getFuncionario().equals(funcionario);
-    //     ddto.setRecepcionada(recepcionada);
-
-    //     return ddto;
-    // }
-
-    // private Funcionario getFuncionarioBuRut(Integer rut) {
-    //     return RepositoryUtils.findOrThrow(funcionarioRepository.findByRut(rut),
-    //             String.format("No existe el funcionario %d", rut));
-    // }
 }

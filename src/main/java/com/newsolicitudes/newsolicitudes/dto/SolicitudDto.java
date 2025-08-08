@@ -15,6 +15,8 @@ public class SolicitudDto {
     private String departamentoOrigen;
     private String estadoSolicitud;
     private double cantidadDias;
+    private String nombreFuncionario;
+    private String nombreDepartamento;
 
     private List<DerivacionDto> derivaciones;
 
@@ -114,4 +116,19 @@ public class SolicitudDto {
         this.estadoSolicitud = estadoSolicitud;
     }
 
+    public String getNombreFuncionario() {
+        return nombreFuncionario;
+    }
+
+    public void setNombreFuncionario(String nombreFuncionario) {
+        this.nombreFuncionario = nombreFuncionario;
+    }
+
+    public String getNombreDepartamento() {
+        return nombreDepartamento;
+    }
+
+    public void setNombreDepartamento(String nombreDepartamento) {
+        this.nombreDepartamento = nombreDepartamento;
+    }
 }

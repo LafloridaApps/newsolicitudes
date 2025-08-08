@@ -1,6 +1,9 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
+import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
+import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -11,30 +14,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionCreateService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
 
 @RestController
 @RequestMapping("/api/derivacion")
 @CrossOrigin(origins = "http://localhost:5173")
 public class DerivacionController {
 
+    private final DerivacionCreateService derivacionCreateService;
     private final DerivacionService derivacionService;
 
-    private final DerivacionCreateService derivacionCreateService;
-
-    public DerivacionController(DerivacionService derivacionService, DerivacionCreateService derivacionCreateService) {
-        this.derivacionService = derivacionService;
+    public DerivacionController(DerivacionCreateService derivacionCreateService, DerivacionService derivacionService) {
         this.derivacionCreateService = derivacionCreateService;
-    }
-
-    @GetMapping("/{rut}")
-    public ResponseEntity<Object> getDerivacionesByRut(@PathVariable Integer rut) {
-        try {
-            return ResponseEntity.ok(derivacionService.getDerivacionesByFuncionario(rut));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        this.derivacionService = derivacionService;
     }
 
     @PostMapping("/derivar/{idDerivacion}")
@@ -50,6 +41,12 @@ public class DerivacionController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
 
+    }
+
+    @GetMapping("/departamento/{idDepto}")
+    public ResponseEntity<List<SolicitudDto>> getDerivacionesByDeptoId(@PathVariable Long idDepto) {
+        List<SolicitudDto> solicitudes = derivacionService.getDerivacionesByDeptoId(idDepto);
+        return ResponseEntity.ok(solicitudes);
     }
 
 }
