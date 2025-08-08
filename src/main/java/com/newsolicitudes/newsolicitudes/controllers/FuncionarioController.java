@@ -48,4 +48,22 @@ public class FuncionarioController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
         return ResponseEntity.ok(searchFuncServcie.getDirectorActivo(id, fechaInicio, fechaFin));
     }
+
+    @GetMapping("/subrogante-rut")
+    public ResponseEntity<Object> getSubroganteRut(
+            @RequestParam Integer rut,
+            @RequestParam  LocalDate fechaInicio,
+            @RequestParam  LocalDate fechaFin) {
+        return ResponseEntity.ok(searchFuncServcie.buscarSubroganteByRut(rut, fechaInicio, fechaFin));
+    }
+
+    @GetMapping("/subrogante-nombre")
+    public ResponseEntity<Object> getFuncionarioByNombre(
+            @RequestParam String nombre,
+            @RequestParam LocalDate fechaInicio,
+            @RequestParam LocalDate fechaFin,
+            @RequestParam int pageNumber,
+            @RequestParam Long idDepto) {
+        return ResponseEntity.ok(searchFuncServcie.buscarFuncionarioByNombre(nombre, fechaInicio, fechaFin, pageNumber, idDepto));
+    }
 }

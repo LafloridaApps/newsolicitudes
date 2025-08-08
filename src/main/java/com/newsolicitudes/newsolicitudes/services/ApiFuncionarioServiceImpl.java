@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.SearchFuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.services.interfaces.ApiFuncionarioService;
 
 import reactor.core.publisher.Mono;
@@ -41,6 +42,26 @@ public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
                 .block();
 
 
+    }
+
+    @Override
+    public SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNmber) {
+       return  webClient.get()
+                .uri(uriBuilder -> {
+                    String uri = uriBuilder
+                            .path("/api/funcionario/search")
+                            .queryParam("pattern", pattern)
+                            .queryParam("pageNumber", pageNmber)
+                            .build()
+                            .toString();
+                    return URI.create(uri);
+                })
+                .header("Accept", "application/json")
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
+                .bodyToMono(SearchFuncionarioResponse.class)
+                .onErrorResume(Exception.class, e ->  Mono.empty())
+                .block();
     }
 
 }

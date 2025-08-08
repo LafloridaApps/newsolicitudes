@@ -1,7 +1,9 @@
 package com.newsolicitudes.newsolicitudes.services;
 
 import java.net.URI;
+import java.util.List;
 
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -33,7 +35,6 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                             .toString();
                     return URI.create(uri);
                 })
-                .header("Accept", "application/json")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
                 .bodyToMono(DepartamentoResponse.class)
@@ -60,6 +61,17 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .bodyToMono(CargoFunc.class)
                 .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
+    }
+
+    @Override
+    public List<DepartamentoResponse> obtenerFamiliaDepto(Long idDepto) {
+        return webClient.get()
+            .uri(uriBuilder -> uriBuilder.path("/api/departamentos/familia/{id}").build(idDepto))
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
+            .bodyToMono(new ParameterizedTypeReference<List<DepartamentoResponse>>() {})
+            .onErrorResume(e -> Mono.empty())
+            .block();
     }
 
 }

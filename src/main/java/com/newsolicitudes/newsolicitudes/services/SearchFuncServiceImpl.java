@@ -1,6 +1,8 @@
 package com.newsolicitudes.newsolicitudes.services;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
+import com.newsolicitudes.newsolicitudes.dto.SearchFuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.exceptions.AusenciaException;
 import com.newsolicitudes.newsolicitudes.exceptions.DepartamentoException;
@@ -41,10 +44,11 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
         DepartamentoResponse departamento = findDireccion(idDepartamento);
 
         if (departamento == null) {
-            throw new DepartamentoException("No se pudo encontrar una dirección para el departamento con ID: " + idDepartamento);
+            throw new DepartamentoException(
+                    "No se pudo encontrar una dirección para el departamento con ID: " + idDepartamento);
         }
 
-        FuncionarioResponse director = apiFuncionarioService.obtenerDetalleColaborador(departamento.getRutJefe());
+        FuncionarioResponse director = buscarFuncionarioByRut(departamento.getRutJefe());
 
         if (hasAusenciasBetweenDates(director, fechaInicioSolicitud, fechaFinSolicitud)) {
             return findSubrogante(director, fechaInicioSolicitud, fechaFinSolicitud);
@@ -71,10 +75,11 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
 
         if (optSubrogancia.isPresent()) {
             Subrogancia subrogancia = optSubrogancia.get();
-            return apiFuncionarioService.obtenerDetalleColaborador(subrogancia.getSubrogante());
+            return buscarFuncionarioByRut(subrogancia.getSubrogante());
         } else {
             throw new AusenciaException(
-                    "No se encontró subrogante para el director con RUT: " + director.getRut() + " en las fechas solicitadas");
+                    "No se encontró subrogante para el director con RUT: " + director.getRut()
+                            + " en las fechas solicitadas");
         }
     }
 
@@ -96,6 +101,59 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
 
     private NivelDepartamento getNivelDepartamento(DepartamentoResponse departamento) {
         return NivelDepartamento.valueOf(departamento.getNivelDepartamento());
+    }
+
+    private FuncionarioResponse buscarFuncionarioByRut(Integer rut) {
+        return apiFuncionarioService.obtenerDetalleColaborador(rut);
+    }
+
+    @Override
+    public FuncionarioResponse buscarSubroganteByRut(Integer rut, LocalDate fechaInicioSolicitud,
+            LocalDate fechaFinSolicitud) {
+
+        FuncionarioResponse funcionario = buscarFuncionarioByRut(rut);
+
+        if (hasAusenciasBetweenDates(funcionario, fechaInicioSolicitud, fechaFinSolicitud)) {
+            throw new AusenciaException(
+                    "El funcionario con RUT: " + rut + " tiene ausencias en las fechas solicitadas");
+        }
+
+        return funcionario;
+
+    }
+
+    @Override
+    public List<FuncionarioResponse> buscarFuncionarioByNombre(String pattern, LocalDate fechaInicioSolicitud,
+            LocalDate fechaFinSolicitud, int pageNmber, Long iddepto) {
+
+        SearchFuncionarioResponse searchFuncionarioResponse = buscarFuncionarioByNombre(pattern, pageNmber);
+        
+
+        List<DepartamentoResponse> departamentoFamilia = apiDepartamentoService
+                .obtenerFamiliaDepto(iddepto);
+
+        List<Long> familiaIds = flattenDepartamentos(departamentoFamilia);
+
+        return searchFuncionarioResponse.getFuncionarios().stream().map(f -> buscarFuncionarioByRut(f.getRut()))
+                .filter(f -> familiaIds.contains(f.getCodDepto()))
+                .filter(a -> !hasAusenciasBetweenDates(a, fechaInicioSolicitud, fechaFinSolicitud))
+                .toList();
+
+    }
+
+    private List<Long> flattenDepartamentos(List<DepartamentoResponse> departamentos) {
+        List<Long> list = new ArrayList<>();
+        if (departamentos == null)
+            return list;
+
+        for (DepartamentoResponse dep : departamentos) {
+            list.add(dep.getId());
+        }
+        return list;
+    }
+
+    private SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNmber) {
+        return apiFuncionarioService.buscarFuncionarioByNombre(pattern, pageNmber);
     }
 
 }
