@@ -9,10 +9,11 @@ import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionCreateService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.VisacionService;
+import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
@@ -24,14 +25,14 @@ public class DerivacionCreateServiceImpl implements DerivacionCreateService {
 
     private final VisacionService visacionService;
 
-    private final ApiDepartamentoService apiDepartamentoService;
+    private final DepartamentoService departamentoService;
 
     public DerivacionCreateServiceImpl(DerivacionService derivacionService, DerivacionRepository derivacionRepository,
-            VisacionService visacionService, ApiDepartamentoService apiDepartamentoService) {
+            VisacionService visacionService, DepartamentoService departamentoService) {
         this.derivacionService = derivacionService;
         this.derivacionRepository = derivacionRepository;
         this.visacionService = visacionService;
-        this.apiDepartamentoService = apiDepartamentoService;
+        this.departamentoService = departamentoService;
     }
 
     @Override
@@ -43,29 +44,30 @@ public class DerivacionCreateServiceImpl implements DerivacionCreateService {
 
         Long departamento = derivacion.getIdDepto();
 
-        DepartamentoResponse deptoResponse = apiDepartamentoService.obtenerDepartamento(departamento);
+        DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(departamento);
 
-        Long departamentoSiguiente = deptoResponse.getIdDeptoSuperior();
+        DepartamentoResponse departamentoSiguiente = departamentoService.getDepartamentoDestino(
+                departamentoActual.getRutJefe(),
+                departamentoActual);
 
-        NivelDepartamento nivelDepartamento = NivelDepartamento.valueOf(deptoResponse.getNivelDepartamento());
+        Long departamentoSiguienteId = departamentoSiguiente.getId();
 
-        TipoDerivacion tipoDerivacion = switch (nivelDepartamento) {
-            case ALCALDIA, ADMINISTRACION, SUBDIRECCION, DIRECCION -> TipoDerivacion.FIRMA;
-            default -> TipoDerivacion.VISACION;
-        };
+        NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoSiguiente);
+        TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
 
+      
         EstadoDerivacion estadoDerivacion = estadoDerivacion(derivacion);
         if (estadoDerivacion == EstadoDerivacion.DERIVADA
                 || nivelDepartamento == NivelDepartamento.DEPARTAMENTO
                 || nivelDepartamento == NivelDepartamento.SECCION
                 || nivelDepartamento == NivelDepartamento.OFICINA) {
 
-            visacionService.visarSolicitud(solicitud, deptoResponse.getRutJefeSuperior());
+            visacionService.visarSolicitud(solicitud, departamentoActual.getRutJefeSuperior());
         }
         derivacion.setEstadoDerivacion(estadoDerivacion);
         derivacionRepository.save(derivacion);
 
-        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamentoSiguiente,
+        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamentoSiguienteId,
                 EstadoDerivacion.PENDIENTE);
 
     }

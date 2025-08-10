@@ -1,9 +1,8 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
-import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
+import com.newsolicitudes.newsolicitudes.dto.PageSolicitudesResponse;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -43,9 +42,9 @@ public class DerivacionController {
 
     }
 
-    @GetMapping("/departamento/{idDepto}")
-    public ResponseEntity<List<SolicitudDto>> getDerivacionesByDeptoId(@PathVariable Long idDepto) {
-        List<SolicitudDto> solicitudes = derivacionService.getDerivacionesByDeptoId(idDepto);
+    @GetMapping("/departamento/{idDepto}/{pageNumber}")
+    public ResponseEntity<Object> getDerivacionesByDeptoId(@PathVariable Long idDepto, @PathVariable int pageNumber) {
+        PageSolicitudesResponse solicitudes = derivacionService.getDerivacionesByDeptoId(idDepto,pageNumber);
         return ResponseEntity.ok(solicitudes);
     }
 

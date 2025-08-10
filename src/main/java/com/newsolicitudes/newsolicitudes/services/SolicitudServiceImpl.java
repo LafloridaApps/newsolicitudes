@@ -14,20 +14,20 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.SolicitudService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.SubroganciaService;
+import com.newsolicitudes.newsolicitudes.services.mapper.SolicitudMapper;
+import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudServiceImpl implements SolicitudService {
 
-    private final ApiFuncionarioService apiFuncionarioService;
-
-    private final ApiDepartamentoService apiDepartamentoService;
+    private final FuncionarioService funcionarioService;
 
     private final SolicitudRepository solicitudRepository;
 
@@ -35,31 +35,39 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     private final SubroganciaService subroganciaService;
 
-    public SolicitudServiceImpl(ApiFuncionarioService apiFuncionarioService,
-            DerivacionService derivacionService, SolicitudRepository solicitudRepository,
-            SubroganciaService subroganciaService, ApiDepartamentoService apiDepartamentoService) {
-        this.apiFuncionarioService = apiFuncionarioService;
+    private final DepartamentoService departamentoService;
+
+    private final SolicitudMapper solicitudMapper;
+
+    public SolicitudServiceImpl(DerivacionService derivacionService, SolicitudRepository solicitudRepository,
+            SubroganciaService subroganciaService,
+            DepartamentoService departamentoService,
+            FuncionarioService funcionarioService,
+            SolicitudMapper solicitudMapper) {
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaService = subroganciaService;
-        this.apiDepartamentoService = apiDepartamentoService;
+        this.departamentoService = departamentoService;
+        this.funcionarioService = funcionarioService;
+        this.solicitudMapper = solicitudMapper;
     }
 
     @Override
     @Transactional
     public SolicitudResponse createSolicitud(SolicitudRequest request) {
 
-        FuncionarioResponse funcionario = apiFuncionarioService.obtenerDetalleColaborador(request.getRut());
+        FuncionarioResponse funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
 
-        DepartamentoResponse departamentoActual = apiDepartamentoService.obtenerDepartamento(funcionario.getCodDepto());
+        DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
 
-        DepartamentoResponse departamentoDestino = getDepartamentoDestino(request.getRut(), departamentoActual);
+        DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
+                departamentoActual);
 
-        NivelDepartamento nivelDepartamento = getNivelDepartamento(departamentoDestino);
+        NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
 
-        TipoDerivacion tipoDerivacion = tipoPorNivel(nivelDepartamento);
+        TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
 
-        Solicitud solicitud = mapToSolicitud(request, funcionario.getRut(), funcionario.getCodDepto());
+        Solicitud solicitud = solicitudMapper.mapToSolicitud(request, funcionario.getRut(), funcionario.getCodDepto());
 
         solicitud = solicitudRepository.save(solicitud);
 
@@ -74,46 +82,6 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         return new SolicitudResponse(solicitud.getId(), departamentoDestino.getNombre());
 
-    }
-
-    private DepartamentoResponse getDepartamentoDestino(Integer rut, DepartamentoResponse departamento) {
-
-        if (rut.equals(departamento.getRutJefe())) {
-            return apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
-        }
-
-        return departamento;
-    }
-
-    private NivelDepartamento getNivelDepartamento(DepartamentoResponse departamento) {
-        return NivelDepartamento.valueOf(departamento.getNivelDepartamento());
-    }
-
-    private Solicitud mapToSolicitud(SolicitudRequest request, Integer solicitante, Long idDepto) {
-        Solicitud solicitud = new Solicitud();
-        solicitud.setCantidadDias(request.getDiasUsar());
-        solicitud.setFechaSolicitud(request.getFechaSolicitud());
-        solicitud.setFechaInicio(request.getFechaInicio());
-        solicitud.setFechaTermino(request.getFechaFin());
-        solicitud.setIdDepto(idDepto);
-        solicitud.setRut(solicitante);
-
-        solicitud.setTipoSolicitud(Solicitud.TipoSolicitud.valueOf(request.getTipoSolicitud()));
-        solicitud.setEstado(Solicitud.EstadoSolicitud.PENDIENTE);
-        solicitud.setJornadaInicio(
-                request.getJornadaInicio() != null ? Solicitud.Jornada.valueOf(request.getJornadaInicio()) : null);
-        solicitud.setJornadaTermino(
-                request.getJornadaTermino() != null ? Solicitud.Jornada.valueOf(request.getJornadaTermino()) : null);
-
-        return solicitud;
-    }
-
-    private TipoDerivacion tipoPorNivel(NivelDepartamento nivel) {
-        return switch (nivel) {
-            case DEPARTAMENTO, SECCION, OFICINA -> TipoDerivacion.VISACION;
-            case ALCALDIA, DIRECCION, SUBDIRECCION, ADMINISTRACION -> TipoDerivacion.FIRMA;
-            default -> TipoDerivacion.VISACION;
-        };
     }
 
     private void createSubroganciaSol(SubroganciaRequest subrogancia, LocalDate fechaInicio, LocalDate fechaFin,
