@@ -3,7 +3,6 @@ package com.newsolicitudes.newsolicitudes.services;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -96,7 +95,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         Page<Solicitud> solicitudes = solicitudRepository.findByRut(rut, pageable);
         List<MiSolicitudDto> miSolicitudes = solicitudes.getContent().stream()
                 .map(this::mapToMiSolicitudDto)
-                .collect(Collectors.toList());
+                .toList();
 
         PageMiSolicitudResponse pageMiSolicitudResponse = new PageMiSolicitudResponse();
         pageMiSolicitudResponse.setSolicitudes(miSolicitudes);
@@ -119,7 +118,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         miSolicitudDto.setCantidadDias(solicitud.getCantidadDias());
         miSolicitudDto.setTrazabilidad(solicitud.getDerivaciones().stream()
                 .map(this::mapToTrazabilidad)
-                .collect(Collectors.toList()));
+                .toList());
         return miSolicitudDto;
     }
 
@@ -132,41 +131,58 @@ public class SolicitudServiceImpl implements SolicitudService {
         trazabilidad.setDepartamento(depto.getNombre());
 
         if (derivacion.getTipo() == TipoDerivacion.VISACION) {
-            trazabilidad.setAccion("Visación");
-            EntradaDerivacion entrada = derivacion.getEntrada();
-            if (entrada != null) {
-                FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(entrada.getRut());
-                trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
-                if (derivacion.getEstadoDerivacion() == EstadoDerivacion.DERIVADA || derivacion.getEstadoDerivacion() == EstadoDerivacion.FINALIZADA) {
-                    trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
-                } else {
-                    trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);
-                }
-            } else {
-                trazabilidad.setUsuario("Pendiente");
-                trazabilidad.setEstado(EstadoTrazabilidad.PENDIENTE);
-            }
+            handleVisacion(trazabilidad, derivacion);
         } else if (derivacion.getTipo() == TipoDerivacion.FIRMA) {
-            trazabilidad.setAccion("Aprobación");
-            Optional<Aprobacion> aprobacionOpt = aprobacionRepository.findBySolicitud(derivacion.getSolicitud());
-            if (aprobacionOpt.isPresent()) {
-                Aprobacion aprobacion = aprobacionOpt.get();
-                FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(aprobacion.getRut());
-                trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
-                trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
-            } else {
-                EntradaDerivacion entrada = derivacion.getEntrada();
-                if (entrada != null) {
-                    FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(entrada.getRut());
-                    trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
-                    trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);
-                } else {
-                    trazabilidad.setUsuario("Pendiente");
-                    trazabilidad.setEstado(EstadoTrazabilidad.PENDIENTE);
-                }
-            }
+            handleFirma(trazabilidad, derivacion);
         }
 
         return trazabilidad;
+    }
+
+    private void handleVisacion(Trazabilidad trazabilidad, Derivacion derivacion) {
+        trazabilidad.setAccion("Visación");
+        EntradaDerivacion entrada = derivacion.getEntrada();
+        if (entrada != null) {
+            setUsuarioFromEntrada(trazabilidad, entrada);
+            if (derivacion.getEstadoDerivacion() == EstadoDerivacion.DERIVADA || derivacion.getEstadoDerivacion() == EstadoDerivacion.FINALIZADA) {
+                trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
+            } else {
+                trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);
+            }
+        } else {
+            setEstadoPendiente(trazabilidad);
+        }
+    }
+
+    private void handleFirma(Trazabilidad trazabilidad, Derivacion derivacion) {
+        trazabilidad.setAccion("Aprobación");
+        Optional<Aprobacion> aprobacionOpt = aprobacionRepository.findBySolicitud(derivacion.getSolicitud());
+        if (aprobacionOpt.isPresent()) {
+            setUsuarioFromAprobacion(trazabilidad, aprobacionOpt.get());
+            trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
+        } else {
+            EntradaDerivacion entrada = derivacion.getEntrada();
+            if (entrada != null) {
+                setUsuarioFromEntrada(trazabilidad, entrada);
+                trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);
+            } else {
+                setEstadoPendiente(trazabilidad);
+            }
+        }
+    }
+
+    private void setUsuarioFromEntrada(Trazabilidad trazabilidad, EntradaDerivacion entrada) {
+        FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(entrada.getRut());
+        trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
+    }
+
+    private void setUsuarioFromAprobacion(Trazabilidad trazabilidad, Aprobacion aprobacion) {
+        FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(aprobacion.getRut());
+        trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
+    }
+
+    private void setEstadoPendiente(Trazabilidad trazabilidad) {
+        trazabilidad.setUsuario("Pendiente");
+        trazabilidad.setEstado(EstadoTrazabilidad.PENDIENTE);
     }
 }
