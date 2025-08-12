@@ -143,6 +143,4 @@ public class Derivacion {
         this.idDepto = idDepto;
     }
 
-  
-
 }

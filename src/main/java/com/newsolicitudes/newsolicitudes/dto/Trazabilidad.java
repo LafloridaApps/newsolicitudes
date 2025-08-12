@@ -1,5 +1,7 @@
 package com.newsolicitudes.newsolicitudes.dto;
 
+import com.newsolicitudes.newsolicitudes.entities.enums.EstadoTrazabilidad;
+
 public class Trazabilidad {
 
     private Long id;
@@ -7,6 +9,7 @@ public class Trazabilidad {
     private String accion;
     private String usuario;
     private String departamento;
+    private EstadoTrazabilidad estado;
 
     public Long getId() {
         return id;
@@ -46,6 +49,14 @@ public class Trazabilidad {
 
     public void setDepartamento(String departamento) {
         this.departamento = departamento;
+    }
+
+    public EstadoTrazabilidad getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoTrazabilidad estado) {
+        this.estado = estado;
     }
 
 }

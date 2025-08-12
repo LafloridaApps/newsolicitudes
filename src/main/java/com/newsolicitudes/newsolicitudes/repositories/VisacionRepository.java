@@ -1,6 +1,6 @@
 package com.newsolicitudes.newsolicitudes.repositories;
 
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,6 +11,6 @@ public interface VisacionRepository extends JpaRepository<Visacion, Long> {
 
     boolean existsBySolicitud(Solicitud solicitud);
 
-    Optional<Visacion> findBySolicitud(Solicitud solicitud);
+    List<Visacion> findBySolicitud(Solicitud solicitud);
 
 }
