@@ -102,4 +102,6 @@ public class DerivacionServiceImpl implements DerivacionService {
     private boolean hasEntrada(Derivacion derivacion) {
         return entradaDerivacionRepository.findByDerivacionId(derivacion.getId()).isPresent();
     }
+
+   
 }

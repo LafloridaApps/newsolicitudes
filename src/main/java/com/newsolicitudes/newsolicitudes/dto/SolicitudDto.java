@@ -5,7 +5,7 @@ import java.util.List;
 public class SolicitudDto {
 
     private Long id;
-    private String solicitante;
+    private String rutSolicitante;
     private String fechaSolicitud;
     private String fechaInicio;
     private String fechaFin;
@@ -28,12 +28,12 @@ public class SolicitudDto {
         this.id = id;
     }
 
-    public String getSolicitante() {
-        return solicitante;
+    public String getRutSolicitante() {
+        return rutSolicitante;
     }
 
-    public void setSolicitante(String solicitante) {
-        this.solicitante = solicitante;
+    public void setRutSolicitante(String solicitante) {
+        this.rutSolicitante = solicitante;
     }
 
     public String getFechaSolicitud() {

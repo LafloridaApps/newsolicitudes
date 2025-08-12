@@ -36,7 +36,7 @@ public class DerivacionCreateServiceImpl implements DerivacionCreateService {
     }
 
     @Override
-    public void createDerivacionDepto(Long idDerivacion) {
+    public void createDerivacionDepto(Long idDerivacion, Integer rut) {
 
         Derivacion derivacion = getDerivacionBydId(idDerivacion);
 

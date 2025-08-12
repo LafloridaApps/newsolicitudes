@@ -33,6 +33,7 @@ public class Derivacion {
 
     private LocalDate fechaDerivacion;
 
+
     @Enumerated(EnumType.STRING)
     private EstadoDerivacion estadoDerivacion;
 
@@ -141,5 +142,7 @@ public class Derivacion {
     public void setIdDepto(Long idDepto) {
         this.idDepto = idDepto;
     }
+
+  
 
 }

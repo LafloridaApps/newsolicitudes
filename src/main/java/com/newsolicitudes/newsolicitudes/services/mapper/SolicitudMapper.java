@@ -39,8 +39,7 @@ public class SolicitudMapper {
         if (funcionario != null) {
             dto.setNombreFuncionario(funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " "
                     + funcionario.getApellidoMaterno());
-            dto.setSolicitante(funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " "
-                    + funcionario.getApellidoMaterno());
+            dto.setRutSolicitante(funcionario.getRut() + "-" + funcionario.getVrut());
         }
 
         // Obtener nombre del departamento
