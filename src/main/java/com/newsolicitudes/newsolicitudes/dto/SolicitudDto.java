@@ -131,4 +131,14 @@ public class SolicitudDto {
     public void setNombreDepartamento(String nombreDepartamento) {
         this.nombreDepartamento = nombreDepartamento;
     }
+
+    private List<SubroganciaInfo> subroganciaInfo;
+
+    public List<SubroganciaInfo> getSubroganciaInfo() {
+        return subroganciaInfo;
+    }
+
+    public void setSubroganciaInfo(List<SubroganciaInfo> subroganciaInfo) {
+        this.subroganciaInfo = subroganciaInfo;
+    }
 }

@@ -15,4 +15,6 @@ public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
 
     Page<Derivacion> findByIdDepto(Long idDepto, Pageable pageable);
 
+    Page<Derivacion> findByIdDeptoIn(List<Long> idDeptos, Pageable pageable);
+
 }

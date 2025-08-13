@@ -1,17 +1,25 @@
 package com.newsolicitudes.newsolicitudes.services;
 
+import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.DerivacionDto;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.dto.PageSolicitudesResponse;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.exceptions.DerivacionExceptions;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
+import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.mapper.SolicitudMapper;
+import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -29,47 +39,129 @@ public class DerivacionServiceImpl implements DerivacionService {
     private final DerivacionRepository derivacionRepository;
     private final EntradaDerivacionRepository entradaDerivacionRepository;
     private final SolicitudMapper solicitudDtoMapper;
+    private final SubroganciaRepository subroganciaRepository;
+    private final DepartamentoService departamentoService;
+    private final FuncionarioService funcionarioService;
 
     public DerivacionServiceImpl(
             DerivacionRepository derivacionRepository,
             EntradaDerivacionRepository entradaDerivacionRepository,
-            SolicitudMapper solicitudDtoMapper) {
+            SolicitudMapper solicitudDtoMapper,
+            SubroganciaRepository subroganciaRepository, DepartamentoService departamentoService,
+            FuncionarioService funcionarioService) {
         this.derivacionRepository = derivacionRepository;
         this.entradaDerivacionRepository = entradaDerivacionRepository;
         this.solicitudDtoMapper = solicitudDtoMapper;
+        this.subroganciaRepository = subroganciaRepository;
+        this.departamentoService = departamentoService;
+        this.funcionarioService = funcionarioService;
     }
 
     @Override
     @Transactional(rollbackFor = DerivacionExceptions.class)
     public void createSolicitudDerivacion(Solicitud solicitud, TipoDerivacion tipo,
-            Long idDpeto, EstadoDerivacion estadoDerivacion)
+            Long idDepto, EstadoDerivacion estadoDerivacion)
             throws DerivacionExceptions {
+
+        DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
+        TipoDerivacion tipoFinal = determinaTipoDerivacionFinal(depto);
 
         Derivacion derivacionInicial = new Derivacion();
         derivacionInicial.setSolicitud(solicitud);
-        derivacionInicial.setIdDepto(idDpeto);
+        derivacionInicial.setIdDepto(idDepto);
         derivacionInicial.setFechaDerivacion(LocalDate.now());
         derivacionInicial.setEstadoDerivacion(estadoDerivacion);
-        derivacionInicial.setTipo(tipo);
+        derivacionInicial.setTipo(tipoFinal);
 
         derivacionRepository.save(derivacionInicial);
+    }
+
+    private TipoDerivacion determinaTipoDerivacionFinal(DepartamentoResponse deptoDestino) {
+        NivelDepartamento nivelDeptoDestino = DepartamentoUtils.getNivelDepartamento(deptoDestino);
+        TipoDerivacion tipoFinal = DepartamentoUtils.tipoPorNivel(nivelDeptoDestino);
+
+        TipoDerivacion tipoPorSubroganciaJefe = getTipoSiJefeEsSubroganteDirector(deptoDestino.getRutJefe());
+        if (tipoPorSubroganciaJefe == TipoDerivacion.FIRMA) {
+            return TipoDerivacion.FIRMA;
+        }
+
+        TipoDerivacion tipoPorJefeSubrogado = getTipoSiJefeEstaSiendoSubrogadoPorDirector(deptoDestino.getRutJefe());
+        if (tipoPorJefeSubrogado == TipoDerivacion.FIRMA) {
+            return TipoDerivacion.FIRMA;
+        }
+
+        return tipoFinal;
+    }
+
+    private TipoDerivacion getTipoSiJefeEsSubroganteDirector(Integer rutJefe) {
+        List<Subrogancia> subrogancias = subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, LocalDate.now(), LocalDate.now());
+        if (subrogancias.isEmpty()) {
+            return null;
+        }
+        for (Subrogancia subrogancia : subrogancias) {
+            DepartamentoResponse deptoSubrogado = departamentoService.getDepartamentoById(subrogancia.getIdDepto());
+            NivelDepartamento nivel = DepartamentoUtils.getNivelDepartamento(deptoSubrogado);
+            if (DepartamentoUtils.tipoPorNivel(nivel) == TipoDerivacion.FIRMA) {
+                return TipoDerivacion.FIRMA;
+            }
+        }
+        return null;
+    }
+
+    private TipoDerivacion getTipoSiJefeEstaSiendoSubrogadoPorDirector(Integer rutJefeOriginal) {
+        List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeOriginal, LocalDate.now(), LocalDate.now());
+        if (subrogancias.isEmpty()) {
+            return null;
+        }
+        for (Subrogancia subrogancia : subrogancias) {
+            Integer rutSubrogante = subrogancia.getSubrogante();
+            FuncionarioResponse funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
+            DepartamentoResponse deptoSubrogante = departamentoService.getDepartamentoById(funcionarioSubrogante.getCodDepto());
+            NivelDepartamento nivelSubrogante = DepartamentoUtils.getNivelDepartamento(deptoSubrogante);
+            if (DepartamentoUtils.tipoPorNivel(nivelSubrogante) == TipoDerivacion.FIRMA) {
+                return TipoDerivacion.FIRMA;
+            }
+        }
+        return null;
     }
 
     @Override
     public PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber) {
         Pageable pageable = PageRequest.of(pageNumber, 10);
 
-        Page<Derivacion> derivacionesPage = derivacionRepository.findByIdDepto(idDepto, pageable);
+        List<Subrogancia> subrogancias = getSubroganciasByRutSubrogante(idDepto);
+        List<Long> deptoIds = new java.util.ArrayList<>();
+        deptoIds.add(idDepto);
+
+        if (!subrogancias.isEmpty()) {
+            deptoIds.addAll(subrogancias.stream().map(Subrogancia::getIdDepto).toList());
+        }
+
+        Page<Derivacion> derivacionesPage = derivacionRepository.findByIdDeptoIn(deptoIds, pageable);
 
         List<SolicitudDto> sortedSolicitudes = derivacionesPage.getContent().stream()
                 .map(derivacion -> {
-                    Solicitud solicitud = derivacion.getSolicitud(); // ya está disponible
-
+                    Solicitud solicitud = derivacion.getSolicitud();
                     SolicitudDto dto = solicitudDtoMapper(solicitud);
-
                     DerivacionDto derivacionDto = getDerivacionDto(derivacion);
-                    dto.setDerivaciones(List.of(derivacionDto));
 
+                    boolean isSubrogado = subrogancias.stream()
+                            .anyMatch(s -> s.getIdDepto().equals(derivacion.getIdDepto()));
+
+                    if (isSubrogado) {
+                        Subrogancia subrogancia = subrogancias.stream()
+                                .filter(s -> s.getIdDepto().equals(derivacion.getIdDepto())).findFirst().get();
+                        DepartamentoResponse deptoSubrogado = departamentoService
+                                .getDepartamentoById(subrogancia.getIdDepto());
+                        dto.setSubroganciaInfo(List.of(new com.newsolicitudes.newsolicitudes.dto.SubroganciaInfo(
+                                deptoSubrogado.getId(), deptoSubrogado.getNombre(), subrogancia.getFechaInicio(),
+                                subrogancia.getFechaFin())));
+
+                    } else {
+                        dto.setSubroganciaInfo(java.util.Collections.emptyList());
+                    }
+
+                    dto.setDerivaciones(List.of(derivacionDto));
                     return dto;
                 })
                 .sorted(Comparator.comparing(dto -> dto.getId(), Comparator.reverseOrder()))
@@ -82,7 +174,6 @@ public class DerivacionServiceImpl implements DerivacionService {
         solicitudesDtoResponse.setCurrentPage(derivacionesPage.getNumber());
 
         return solicitudesDtoResponse;
-
     }
 
     private DerivacionDto getDerivacionDto(Derivacion derivacion) {
@@ -103,5 +194,20 @@ public class DerivacionServiceImpl implements DerivacionService {
         return entradaDerivacionRepository.findByDerivacionId(derivacion.getId()).isPresent();
     }
 
-   
+    private List<Subrogancia> getSubroganciasByRutSubrogante(Long idDepto) {
+
+        DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
+        LocalDate hoy = fechaActual();
+        return subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(depto.getRutJefe(), hoy, hoy);
+
+    }
+
+    private LocalDate fechaActual() {
+
+        ZoneId zonaSantiago = ZoneId.of("America/Santiago");
+        ZonedDateTime fechaActualSantiago = ZonedDateTime.now(zonaSantiago);
+        return fechaActualSantiago.toLocalDate();
+
+    }
+
 }

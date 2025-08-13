@@ -1,22 +1,30 @@
 package com.newsolicitudes.newsolicitudes.services;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
+import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.EntradaDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
+import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.exceptions.AprobacionException;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.repositories.VisacionRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.AprobacionService;
+import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
+import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
@@ -26,29 +34,29 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final SolicitudRepository solicitudRepository;
     private final DerivacionRepository derivacionRepository;
     private final VisacionRepository visacionRepository;
+    private final DepartamentoService departamentoService;
+    private final SubroganciaRepository subroganciaRepository;
 
     public AprobacionServiceImpl(
             AprobacionRepository aprobacionRepository,
             SolicitudRepository solicitudRepository,
             DerivacionRepository derivacionRepository,
-            VisacionRepository visacionRepository) {
+            VisacionRepository visacionRepository,
+            DepartamentoService departamentoService,
+            SubroganciaRepository subroganciaRepository) {
         this.aprobacionRepository = aprobacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.derivacionRepository = derivacionRepository;
         this.visacionRepository = visacionRepository;
+        this.departamentoService = departamentoService;
+        this.subroganciaRepository = subroganciaRepository;
     }
 
     @Override
     public void aprobarSolicitud(AprobacionRequest request) {
 
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
-
-        derivacion.setEstadoDerivacion(EstadoDerivacion.FINALIZADA);
-        derivacionRepository.save(derivacion);
-
         Solicitud solicitud = derivacion.getSolicitud();
-        solicitud.setEstado(EstadoSolicitud.APROBADA);
-        solicitudRepository.save(solicitud);
 
         EntradaDerivacion entrada = derivacion.getEntrada();
         if (entrada == null || entrada.getRut() == null) {
@@ -56,13 +64,54 @@ public class AprobacionServiceImpl implements AprobacionService {
                     "No se puede aprobar: la derivación no ha sido recepcionada por un funcionario.");
         }
 
-        if (!verificaVisacion(solicitud)) {
+        if (!shouldSkipVisacion(solicitud, request.getAprobadoPor()) && !verificaVisacion(solicitud)) {
             throw new AprobacionException("El funcionario " + solicitud.getRut()
                     + " no tiene visación para la solicitud " + solicitud.getId());
         }
 
+        derivacion.setEstadoDerivacion(EstadoDerivacion.FINALIZADA);
+        derivacionRepository.save(derivacion);
+
+        solicitud.setEstado(EstadoSolicitud.APROBADA);
+        solicitudRepository.save(solicitud);
+
         Aprobacion aprobacion = crearAprobacion(solicitud, request.getAprobadoPor());
         aprobacionRepository.save(aprobacion);
+    }
+
+    private boolean shouldSkipVisacion(Solicitud solicitud, Integer approverRut) {
+        // Condition 1: Approver is a substitute director
+        if (isSubrogandoComoDirector(approverRut)) {
+            return true;
+        }
+
+        // Condition 2: Requester reports to a director
+        DepartamentoResponse requesterDepto = departamentoService.getDepartamentoById(solicitud.getIdDepto());
+        if (requesterDepto.getIdDeptoSuperior() != null) {
+            DepartamentoResponse superiorDepto = departamentoService.getDepartamentoById(requesterDepto.getIdDeptoSuperior());
+            NivelDepartamento nivelSuperior = DepartamentoUtils.getNivelDepartamento(superiorDepto);
+            if (DepartamentoUtils.tipoPorNivel(nivelSuperior) == TipoDerivacion.FIRMA) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isSubrogandoComoDirector(Integer rutJefe) {
+        List<Subrogancia> subrogancias = subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, LocalDate.now(), LocalDate.now());
+        if (subrogancias.isEmpty()) {
+            return false;
+        }
+
+        for (Subrogancia subrogancia : subrogancias) {
+            DepartamentoResponse deptoSubrogado = departamentoService.getDepartamentoById(subrogancia.getIdDepto());
+            NivelDepartamento nivel = DepartamentoUtils.getNivelDepartamento(deptoSubrogado);
+            if (DepartamentoUtils.tipoPorNivel(nivel) == TipoDerivacion.FIRMA) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean verificaVisacion(Solicitud solicitud) {
