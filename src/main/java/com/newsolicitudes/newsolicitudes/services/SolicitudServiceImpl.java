@@ -68,30 +68,36 @@ public class SolicitudServiceImpl implements SolicitudService {
     public SolicitudResponse createSolicitud(SolicitudRequest request) {
         FuncionarioResponse funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
-        DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(), departamentoActual);
+        DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
+                departamentoActual);
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
         Solicitud solicitud = solicitudMapper.mapToSolicitud(request, funcionario.getRut(), funcionario.getCodDepto());
         solicitud = solicitudRepository.save(solicitud);
-        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamentoDestino.getId(), EstadoDerivacion.PENDIENTE);
+        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamentoDestino.getId(),
+                EstadoDerivacion.PENDIENTE);
         if (request.getSubrogancia() != null) {
-            createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(), request.getDepto());
+            createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(),
+                    request.getDepto());
         }
         return new SolicitudResponse(solicitud.getId(), departamentoDestino.getNombre());
     }
 
-    private void createSubroganciaSol(SubroganciaRequest subrogancia, LocalDate fechaInicio, LocalDate fechaFin, Long idDepto) {
+    private void createSubroganciaSol(SubroganciaRequest subrogancia, LocalDate fechaInicio, LocalDate fechaFin,
+            Long idDepto) {
         subroganciaService.createSubrogancia(subrogancia, fechaInicio, fechaFin, idDepto);
     }
 
     @Override
     public boolean existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo) {
-        return solicitudRepository.findByRutAndFechaInicioAndTipoSolicitud(rut, fechaInicio, Solicitud.TipoSolicitud.valueOf(tipo)).isPresent();
+        return solicitudRepository
+                .findByRutAndFechaInicioAndTipoSolicitud(rut, fechaInicio, Solicitud.TipoSolicitud.valueOf(tipo))
+                .isPresent();
     }
 
     @Override
-    public PageMiSolicitudResponse getSolicitudesByRut(Integer rut) {
-        Pageable pageable = PageRequest.of(0, 10);
+    public PageMiSolicitudResponse getSolicitudesByRut(Integer rut, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         Page<Solicitud> solicitudes = solicitudRepository.findByRut(rut, pageable);
         List<MiSolicitudDto> miSolicitudes = solicitudes.getContent().stream()
                 .map(this::mapToMiSolicitudDto)
@@ -126,7 +132,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         Trazabilidad trazabilidad = new Trazabilidad();
         trazabilidad.setId(derivacion.getId());
         trazabilidad.setFecha(derivacion.getFechaDerivacion().toString());
-        
+
         DepartamentoResponse depto = departamentoService.getDepartamentoById(derivacion.getIdDepto());
         trazabilidad.setDepartamento(depto.getNombre());
 
@@ -144,7 +150,8 @@ public class SolicitudServiceImpl implements SolicitudService {
         EntradaDerivacion entrada = derivacion.getEntrada();
         if (entrada != null) {
             setUsuarioFromEntrada(trazabilidad, entrada);
-            if (derivacion.getEstadoDerivacion() == EstadoDerivacion.DERIVADA || derivacion.getEstadoDerivacion() == EstadoDerivacion.FINALIZADA) {
+            if (derivacion.getEstadoDerivacion() == EstadoDerivacion.DERIVADA
+                    || derivacion.getEstadoDerivacion() == EstadoDerivacion.FINALIZADA) {
                 trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
             } else {
                 trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);

@@ -12,6 +12,6 @@ public interface SolicitudService {
 
     boolean existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo);
 
-    PageMiSolicitudResponse getSolicitudesByRut(Integer rut);
+    PageMiSolicitudResponse getSolicitudesByRut(Integer rut, int page, int size);
 
 }
