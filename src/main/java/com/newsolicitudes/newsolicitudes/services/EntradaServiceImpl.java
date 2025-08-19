@@ -1,6 +1,5 @@
 package com.newsolicitudes.newsolicitudes.services;
 
-import java.time.LocalDate;
 
 import org.springframework.stereotype.Service;
 
@@ -10,6 +9,7 @@ import com.newsolicitudes.newsolicitudes.entities.EntradaDerivacion;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.EntradaService;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
@@ -29,7 +29,7 @@ public class EntradaServiceImpl implements EntradaService {
 
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
 
-        entradaRepository.save(new EntradaDerivacion(derivacion, LocalDate.now(), request.getRutFuncionario()));
+        entradaRepository.save(new EntradaDerivacion(derivacion, FechaUtils.fechaActual(), request.getRutFuncionario()));
 
     }
 

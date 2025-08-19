@@ -20,6 +20,7 @@ import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.mapper.SolicitudMapper;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,8 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -197,17 +196,11 @@ public class DerivacionServiceImpl implements DerivacionService {
     private List<Subrogancia> getSubroganciasByRutSubrogante(Long idDepto) {
 
         DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
-        LocalDate hoy = fechaActual();
+        LocalDate hoy = FechaUtils.fechaActual();
         return subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(depto.getRutJefe(), hoy, hoy);
 
     }
 
-    private LocalDate fechaActual() {
-
-        ZoneId zonaSantiago = ZoneId.of("America/Santiago");
-        ZonedDateTime fechaActualSantiago = ZonedDateTime.now(zonaSantiago);
-        return fechaActualSantiago.toLocalDate();
-
-    }
+    
 
 }

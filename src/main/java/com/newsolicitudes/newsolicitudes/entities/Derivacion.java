@@ -48,7 +48,8 @@ public class Derivacion {
     public enum EstadoDerivacion {
         PENDIENTE,
         DERIVADA,
-        FINALIZADA
+        FINALIZADA,
+        POSTERGADA
     }
 
     // Getters y Setters

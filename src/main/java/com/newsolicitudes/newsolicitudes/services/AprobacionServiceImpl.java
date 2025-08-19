@@ -25,6 +25,7 @@ import com.newsolicitudes.newsolicitudes.repositories.VisacionRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.AprobacionService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
@@ -120,7 +121,7 @@ public class AprobacionServiceImpl implements AprobacionService {
 
     private Aprobacion crearAprobacion(Solicitud solicitud, Integer funcionario) {
         Aprobacion aprobacion = new Aprobacion();
-        aprobacion.setFechaAprobacion(LocalDate.now());
+        aprobacion.setFechaAprobacion(FechaUtils.fechaActual());
         aprobacion.setSolicitud(solicitud);
         aprobacion.setRut(funcionario);
         return aprobacion;

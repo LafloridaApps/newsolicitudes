@@ -10,6 +10,7 @@ public class Trazabilidad {
     private String usuario;
     private String departamento;
     private EstadoTrazabilidad estado;
+    private String glosa;
 
     public Long getId() {
         return id;
@@ -57,6 +58,14 @@ public class Trazabilidad {
 
     public void setEstado(EstadoTrazabilidad estado) {
         this.estado = estado;
+    }
+
+    public String getGlosa() {
+        return glosa;
+    }
+
+    public void setGlosa(String glosa) {
+        this.glosa = glosa;
     }
 
 }

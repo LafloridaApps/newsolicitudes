@@ -16,4 +16,6 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
 
     Page<Solicitud> findByRut(Integer rut, Pageable pageable);
 
+    Optional<Solicitud> findByRutAndFechaInicioBetween(Integer rut, LocalDate fechaInicio, LocalDate fechaFin);
+
 }

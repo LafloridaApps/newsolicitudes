@@ -1,6 +1,7 @@
 package com.newsolicitudes.newsolicitudes.services;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,11 +22,13 @@ import com.newsolicitudes.newsolicitudes.dto.Trazabilidad;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.EntradaDerivacion;
+import com.newsolicitudes.newsolicitudes.entities.Postergacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.enums.EstadoTrazabilidad;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
@@ -47,13 +50,15 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final DepartamentoService departamentoService;
     private final SolicitudMapper solicitudMapper;
     private final AprobacionRepository aprobacionRepository;
+    private final PostergacionRepository postergacionRepository;
 
     public SolicitudServiceImpl(DerivacionService derivacionService, SolicitudRepository solicitudRepository,
             SubroganciaService subroganciaService,
             DepartamentoService departamentoService,
             FuncionarioService funcionarioService,
             SolicitudMapper solicitudMapper,
-            AprobacionRepository aprobacionRepository) {
+            AprobacionRepository aprobacionRepository,
+            PostergacionRepository postergacionRepository) {
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaService = subroganciaService;
@@ -61,6 +66,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         this.funcionarioService = funcionarioService;
         this.solicitudMapper = solicitudMapper;
         this.aprobacionRepository = aprobacionRepository;
+        this.postergacionRepository = postergacionRepository;
     }
 
     @Override
@@ -69,7 +75,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         FuncionarioResponse funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
         DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
-                departamentoActual);
+                departamentoActual, request.getFechaInicio(), request.getFechaFin());
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
         Solicitud solicitud = solicitudMapper.mapToSolicitud(request, funcionario.getRut(), funcionario.getCodDepto());
@@ -122,9 +128,29 @@ public class SolicitudServiceImpl implements SolicitudService {
         miSolicitudDto.setTipoSolicitud(solicitud.getTipoSolicitud().name());
         miSolicitudDto.setEstadoSolicitud(solicitud.getEstado().name());
         miSolicitudDto.setCantidadDias(solicitud.getCantidadDias());
-        miSolicitudDto.setTrazabilidad(solicitud.getDerivaciones().stream()
+
+        List<Trazabilidad> trazabilidadList = new ArrayList<>(solicitud.getDerivaciones().stream()
                 .map(this::mapToTrazabilidad)
                 .toList());
+
+        if (solicitud.getEstado() == Solicitud.EstadoSolicitud.POSTERGADA) {
+            Optional<Postergacion> postergacionOpt = postergacionRepository.findBySolicitud(solicitud);
+            if (postergacionOpt.isPresent()) {
+                Postergacion postergacion = postergacionOpt.get();
+                Trazabilidad t = new Trazabilidad();
+                t.setAccion("Postergación");
+                t.setEstado(EstadoTrazabilidad.POSTERGADA);
+                t.setFecha(postergacion.getFechaPostergacion().toString());
+                FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(postergacion.getRutPostergacion());
+                t.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
+                DepartamentoResponse dr = departamentoService.getDepartamentoById(fr.getCodDepto());
+                t.setDepartamento(dr.getNombre());
+                t.setGlosa(postergacion.getGlosa()); // Added this line
+                trazabilidadList.add(t);
+            }
+        }
+
+        miSolicitudDto.setTrazabilidad(trazabilidadList);
         return miSolicitudDto;
     }
 

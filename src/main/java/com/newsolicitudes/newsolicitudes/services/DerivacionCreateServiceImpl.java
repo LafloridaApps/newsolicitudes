@@ -53,7 +53,7 @@ public class DerivacionCreateServiceImpl implements DerivacionCreateService {
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(departamento);
         DepartamentoResponse departamentoSiguiente = departamentoService.getDepartamentoDestino(
                 departamentoActual.getRutJefe(),
-                departamentoActual);
+                departamentoActual, solicitud.getFechaInicio(), solicitud.getFechaTermino());
 
         Long departamentoSiguienteId = departamentoSiguiente.getId();
 
