@@ -7,8 +7,8 @@ import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudRequest;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiFuncionarioService;
 
 @Component
 public class SolicitudMapper {

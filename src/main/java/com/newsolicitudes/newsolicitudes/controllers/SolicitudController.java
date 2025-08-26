@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.SolicitudRequest;
-import com.newsolicitudes.newsolicitudes.services.interfaces.SolicitudService;
+import com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudService;
 
 @RestController
 @RequestMapping("/api/solicitudes")

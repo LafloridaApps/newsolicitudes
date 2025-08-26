@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.EntradaRequest;
-import com.newsolicitudes.newsolicitudes.services.interfaces.EntradaService;
+import com.newsolicitudes.newsolicitudes.services.entrada.EntradaService;
 
 @RestController
 @RequestMapping("/api/entrada")

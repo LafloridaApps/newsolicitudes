@@ -3,7 +3,7 @@ package com.newsolicitudes.newsolicitudes.controllers;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.PostergacionRequest;
-import com.newsolicitudes.newsolicitudes.services.interfaces.PostergacionService;
+import com.newsolicitudes.newsolicitudes.services.postergacion.PostergacionService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

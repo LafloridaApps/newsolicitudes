@@ -2,8 +2,6 @@ package com.newsolicitudes.newsolicitudes.controllers;
 
 import com.newsolicitudes.newsolicitudes.dto.PageSolicitudesResponse;
 import com.newsolicitudes.newsolicitudes.exceptions.DerivacionExceptions;
-import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.NoLeidasService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.newsolicitudes.newsolicitudes.services.interfaces.DerivacionCreateService;
+
+import com.newsolicitudes.newsolicitudes.services.derivacion.DerivacionService;
+import com.newsolicitudes.newsolicitudes.services.derivacioncreate.DerivacionCreateService;
+import com.newsolicitudes.newsolicitudes.services.noleidas.NoLeidasService;
 
 @RestController
 @RequestMapping("/api/derivacion")

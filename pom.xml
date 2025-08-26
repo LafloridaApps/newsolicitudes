@@ -6,14 +6,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.4</version>
+		<version>3.5.5</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.newsolicitudes</groupId>
 	<artifactId>newsolicitudes</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>newsolicitudes</name>
-	<description>Demo project for Spring Boot</description>
+	<description>backend solcitudes de permisos y feriados</description>
 	<url />
 	<licenses>
 		<license />

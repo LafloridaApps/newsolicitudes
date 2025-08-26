@@ -44,10 +44,6 @@ public class ApiAdministrativoResponse {
         this.anio = anio;
     }
 
-   
-
-   
-
     public static class Detalle {
         private int numero;
         private String resolucion;
@@ -109,10 +105,6 @@ public class ApiAdministrativoResponse {
         }
 
     }
-
-
-
-
 
     public List<Detalle> getDetalle() {
         return detalle;

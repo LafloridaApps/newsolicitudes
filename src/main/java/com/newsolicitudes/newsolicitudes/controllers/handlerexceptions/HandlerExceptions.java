@@ -1,5 +1,6 @@
 package com.newsolicitudes.newsolicitudes.controllers.handlerexceptions;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,15 @@ public class HandlerExceptions {
 
   }
 
+  @ExceptionHandler(IOException.class)
+  public ResponseEntity<Object> handlerIOSException(IOException e,
+      HttpServletRequest request) {
+
+    ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.CONFLICT);
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+
+  }
 
   private <T extends Exception> ErrorResponse maptoErrorResponse(T e, HttpServletRequest request, HttpStatus status) {
 

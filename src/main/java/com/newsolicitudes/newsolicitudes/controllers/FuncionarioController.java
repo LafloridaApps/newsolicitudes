@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.newsolicitudes.newsolicitudes.services.interfaces.ApiDepartamentoService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.FuncionarioApiService;
-import com.newsolicitudes.newsolicitudes.services.interfaces.SearchFuncServcie;
+import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.funcionarioapi.FuncionarioApiService;
+import com.newsolicitudes.newsolicitudes.services.searchfunc.SearchFuncServcie;
 
 @RestController
 @RequestMapping("/api/funcionario")

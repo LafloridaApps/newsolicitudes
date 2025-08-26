@@ -1,0 +1,52 @@
+package com.newsolicitudes.newsolicitudes.services.feriadoslegales;
+
+import com.newsolicitudes.newsolicitudes.dto.ApiFeriadosResponse;
+import com.newsolicitudes.newsolicitudes.dto.FeriadosLegalesDto;
+import com.newsolicitudes.newsolicitudes.services.apiferiados.ApiFeriadosServiceImpl;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class FeriadosLegalesServiceImpl implements FeriadosLegalesService {
+
+    private final ApiFeriadosServiceImpl feriadosService;
+
+    public FeriadosLegalesServiceImpl(ApiFeriadosServiceImpl feriadosService) {
+        this.feriadosService = feriadosService;
+    }
+
+    @Override
+    public FeriadosLegalesDto obtnerFeriados(Integer rut, Integer ident) {
+
+        ApiFeriadosResponse response = feriadosService.obtenerFeriadosByRut(rut, ident);
+
+        List<FeriadosLegalesDto.DetalleFeriado> detalle = obtenerDetalle(response.getDetalle());
+
+        return FeriadosLegalesDto.builder()
+                .anio(response.getAnio())
+                .diasAcumulados(response.getDiasAcumulados())
+                .total(response.getTotal())
+                .diasTomados(response.getDiasTomados())
+                .diasPerdidos(response.getDiasPerdidos())
+                .diasPendientes(response.getDiasPendientes())
+                .detalle(detalle)
+                .build();
+
+    }
+
+    private List<FeriadosLegalesDto.DetalleFeriado> obtenerDetalle(List<ApiFeriadosResponse.DetalleFeriado> detalle) {
+
+        return detalle.stream()
+                .map(d -> new FeriadosLegalesDto.DetalleFeriado(
+                        d.getNumero(),
+                        d.getResolucion(),
+                        d.getFechaResolucion(),
+                        d.getFechaInicio(),
+                        d.getFechaTermino(),
+                        d.getPeriodo()))
+                .toList();
+
+    }
+
+}

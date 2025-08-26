@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
-import com.newsolicitudes.newsolicitudes.services.interfaces.AprobacionService;
+import com.newsolicitudes.newsolicitudes.services.aprobacion.AprobacionService;
 
 @RestController
 @RequestMapping("/api/aprobaciones")
