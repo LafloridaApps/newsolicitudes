@@ -56,4 +56,36 @@ public class Aprobacion {
         this.rut = rut;
     }
 
+    public Long getIdSolicitud() {
+        return solicitud.getId();
+    }
+
+    public Integer getRutSolicitud() {
+        return solicitud.getRut();
+    }
+
+    public Long getDeptoSolicitud() {
+        return solicitud.getIdDepto();
+    }
+
+    public LocalDate getFechaSolicitud() {
+        return solicitud.getFechaSolicitud();
+    }
+
+    public LocalDate getFechaInicioSolicitud() {
+        return solicitud.getFechaInicio();
+    }
+
+    public LocalDate getFechaTerminoSolicitud() {
+        return solicitud.getFechaTermino();
+    }
+
+    public double getDuracionSolicitud() {
+        return solicitud.getCantidadDias();
+    }
+
+    public String getTipoSolicitud() {
+        return solicitud.getTipoSolicitud().name();
+    }
+
 }

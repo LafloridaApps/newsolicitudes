@@ -3,21 +3,21 @@ package com.newsolicitudes.newsolicitudes.services.mapper;
 import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudRequest;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
-import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 
 @Component
 public class SolicitudMapper {
 
-    private final ApiFuncionarioService apiFuncionarioService;
+    private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
 
-    public SolicitudMapper(ApiFuncionarioService apiFuncionarioService, ApiDepartamentoService apiDepartamentoService) {
-        this.apiFuncionarioService = apiFuncionarioService;
+    public SolicitudMapper(ApiExtFuncionarioService apiFuncionarioService, ApiDepartamentoService apiDepartamentoService) {
+        this.apiExtFuncionarioService = apiFuncionarioService;
         this.apiDepartamentoService = apiDepartamentoService;
     }
 
@@ -35,7 +35,7 @@ public class SolicitudMapper {
         dto.setCantidadDias(solicitud.getCantidadDias());
 
         // Obtener nombre del funcionario
-        FuncionarioResponse funcionario = apiFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
+        FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
         if (funcionario != null) {
             dto.setNombreFuncionario(funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " "
                     + funcionario.getApellidoMaterno());

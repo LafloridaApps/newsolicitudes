@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.services.apiausencias.ApiAusenciasService;
@@ -23,7 +23,6 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     private final ApiAusenciasService apiAusenciasService;
 
     private final FuncionarioService funcionarioService;
-
 
     private final SolicitudRepository solicitudRepository;
 
@@ -44,7 +43,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
         if (rutSolicitante.equals(departamentoInicial.getRutJefe())) {
             if (departamentoInicial.getIdDeptoSuperior() != null) {
-                departamentoActual = apiDepartamentoService.obtenerDepartamento(departamentoInicial.getIdDeptoSuperior());
+                departamentoActual = apiDepartamentoService
+                        .obtenerDepartamento(departamentoInicial.getIdDeptoSuperior());
             } else {
                 departamentoActual = departamentoInicial;
             }
@@ -54,18 +54,19 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
         while (departamentoActual != null) {
             if (departamentoActual.getRutJefe() != null &&
-                !isAusenteEnFecha(departamentoActual.getRutJefe(), fechaInicio) &&
-                !hasAprobacion(departamentoActual.getRutJefe(), fechaInicio, fechaFin)) {
+                    !isAusenteEnFecha(departamentoActual.getRutJefe(), fechaInicio) &&
+                    !hasAprobacion(departamentoActual.getRutJefe(), fechaInicio, fechaFin)) {
                 return departamentoActual;
             }
 
             if (departamentoActual.getNivelDepartamento() != null &&
-                departamentoActual.getNivelDepartamento().equalsIgnoreCase("DIRECCION")) {
+                    departamentoActual.getNivelDepartamento().equalsIgnoreCase("DIRECCION")) {
                 return departamentoActual;
             }
 
             if (departamentoActual.getIdDeptoSuperior() != null) {
-                departamentoActual = apiDepartamentoService.obtenerDepartamento(departamentoActual.getIdDeptoSuperior());
+                departamentoActual = apiDepartamentoService
+                        .obtenerDepartamento(departamentoActual.getIdDeptoSuperior());
             } else {
                 return departamentoActual;
             }
@@ -80,7 +81,7 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     private boolean isAusenteEnFecha(Integer rut, LocalDate fecha) {
 
-        FuncionarioResponse funcionario = funcionarioService.getFuncionarioByRut(rut);
+        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(rut);
         if (funcionario == null) {
             return true;
         }
@@ -92,17 +93,18 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     private boolean hasAprobacion(Integer rut, LocalDate fechaInicio, LocalDate fechaFin) {
 
-        Optional<Solicitud> optSolicitud = solicitudRepository.findByRutAndFechaInicioBetween(rut, fechaInicio,
+        Optional<List<Solicitud>> optSolicitud = solicitudRepository.findByRutAndFechaInicioBetween(rut, fechaInicio,
                 fechaFin);
 
-        if (optSolicitud.isEmpty()) {
+        if (optSolicitud.isEmpty() || optSolicitud.get().isEmpty()) {
             return false;
-        } else {
-            Solicitud solicitud = optSolicitud.get();
-            return solicitud.getEstado() == Solicitud.EstadoSolicitud.APROBADA &&
-                   !solicitud.getFechaInicio().isAfter(fechaFin) &&
-                   !solicitud.getFechaTermino().isBefore(fechaInicio);
         }
+
+        // Verificamos si alguna solicitud cumple las condiciones
+        return optSolicitud.get().stream()
+                .anyMatch(solicitud -> solicitud.getEstado() == Solicitud.EstadoSolicitud.APROBADA &&
+                        !solicitud.getFechaInicio().isAfter(fechaFin) &&
+                        !solicitud.getFechaTermino().isBefore(fechaInicio));
     }
 
     @Override

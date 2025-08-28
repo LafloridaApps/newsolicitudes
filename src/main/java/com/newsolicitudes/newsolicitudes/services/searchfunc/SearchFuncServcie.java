@@ -3,17 +3,17 @@ package com.newsolicitudes.newsolicitudes.services.searchfunc;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 
 public interface SearchFuncServcie {
 
-    FuncionarioResponse getDirectorActivo(Long idDepartamento, LocalDate fechaInicioSolicitud,
+    FuncionarioResponseApi getDirectorActivo(Long idDepartamento, LocalDate fechaInicioSolicitud,
             LocalDate fechaFinSolicitud);
 
-    FuncionarioResponse buscarSubroganteByRut(Integer rut, LocalDate fechaInicioSolicitud,
+    FuncionarioResponseApi buscarSubroganteByRut(Integer rut, LocalDate fechaInicioSolicitud,
             LocalDate fechaFinSolicitud);
 
-    List<FuncionarioResponse> buscarFuncionarioByNombre(String patterno, LocalDate fechaInicioSolicitud,
+    List<FuncionarioResponseApi> buscarFuncionarioByNombre(String patterno, LocalDate fechaInicioSolicitud,
             LocalDate fechaFinSolicitud, int pageNmber, Long idDepto);
 
 }

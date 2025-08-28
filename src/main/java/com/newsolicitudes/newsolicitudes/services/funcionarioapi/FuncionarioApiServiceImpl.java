@@ -2,22 +2,22 @@ package com.newsolicitudes.newsolicitudes.services.funcionarioapi;
 
 import org.springframework.stereotype.Service;
 
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
-import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 import com.newsolicitudes.newsolicitudes.utlils.PersonaUtils;
 
 @Service
 public class FuncionarioApiServiceImpl implements FuncionarioApiService {
 
-    private final ApiFuncionarioService apiFuncionarioService;
+    private final ApiExtFuncionarioService apiExtFuncionarioService;
 
-    public FuncionarioApiServiceImpl(ApiFuncionarioService apiNewFuncionarioService) {
-        this.apiFuncionarioService = apiNewFuncionarioService;
+    public FuncionarioApiServiceImpl(ApiExtFuncionarioService apiExtFuncionarioService) {
+        this.apiExtFuncionarioService = apiExtFuncionarioService;
     }
 
     @Override
-    public FuncionarioResponse getFuncionarioInfo(Integer rut, String vRut) {
+    public FuncionarioResponseApi getFuncionarioInfo(Integer rut, String vRut) {
 
         if (rut == null || vRut.isEmpty()) {
             throw new FuncionarioException("Rut no puede tener carcteres invalidos o en blanco");
@@ -27,7 +27,7 @@ public class FuncionarioApiServiceImpl implements FuncionarioApiService {
             throw new FuncionarioException("Rut no valido");
         }
 
-        return apiFuncionarioService.obtenerDetalleColaborador(rut);
+        return apiExtFuncionarioService.obtenerDetalleColaborador(rut);
 
     }
 

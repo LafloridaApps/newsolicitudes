@@ -9,11 +9,11 @@ import com.newsolicitudes.newsolicitudes.dto.ApiFeriadosResponse;
 import reactor.core.publisher.Mono;
 
 @Service
-public class ApiFeriadosServiceImpl implements ApiFeriadosService {
+public class ApiFeriadoLegalServiceImpl implements ApiFeriadoLegalService {
 
     private final WebClient webClient;
 
-    public ApiFeriadosServiceImpl(WebClient.Builder webClientBuilder,
+    public ApiFeriadoLegalServiceImpl(WebClient.Builder webClientBuilder,
             ApiProperties apiProperties) {
         this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
     }

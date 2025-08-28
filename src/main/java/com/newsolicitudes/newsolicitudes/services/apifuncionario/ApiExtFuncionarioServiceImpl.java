@@ -7,22 +7,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.SearchFuncionarioResponse;
 
 import reactor.core.publisher.Mono;
 
 @Service
-public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
+public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
 
     private final WebClient webClient;
 
-    public ApiFuncionarioServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
-        this.webClient = webClientBuilder.baseUrl(apiProperties.getNewfuncionarioUrl()).build();
+    public ApiExtFuncionarioServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
+        this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
     }
 
     @Override
-    public FuncionarioResponse obtenerDetalleColaborador(Integer rut) {
+    public FuncionarioResponseApi obtenerDetalleColaborador(Integer rut) {
+
 
         return webClient.get()
                 .uri(uriBuilder -> {
@@ -36,7 +37,7 @@ public class ApiFuncionarioServiceImpl implements ApiFuncionarioService {
                 .header("Accept", "application/json")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
-                .bodyToMono(FuncionarioResponse.class)
+                .bodyToMono(FuncionarioResponseApi.class)
                 .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
 

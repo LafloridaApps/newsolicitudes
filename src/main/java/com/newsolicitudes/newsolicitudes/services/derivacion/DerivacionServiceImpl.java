@@ -2,7 +2,7 @@ package com.newsolicitudes.newsolicitudes.services.derivacion;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.DerivacionDto;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.dto.PageSolicitudesResponse;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
@@ -113,7 +113,7 @@ public class DerivacionServiceImpl implements DerivacionService {
         }
         for (Subrogancia subrogancia : subrogancias) {
             Integer rutSubrogante = subrogancia.getSubrogante();
-            FuncionarioResponse funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
+            FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
             DepartamentoResponse deptoSubrogante = departamentoService.getDepartamentoById(funcionarioSubrogante.getCodDepto());
             NivelDepartamento nivelSubrogante = DepartamentoUtils.getNivelDepartamento(deptoSubrogante);
             if (DepartamentoUtils.tipoPorNivel(nivelSubrogante) == TipoDerivacion.FIRMA) {

@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
@@ -116,7 +116,7 @@ public class DerivacionCreateServiceImpl implements DerivacionCreateService {
         }
         for (Subrogancia subrogancia : subrogancias) {
             Integer rutSubrogante = subrogancia.getSubrogante();
-            FuncionarioResponse funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
+            FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
             DepartamentoResponse deptoSubrogante = departamentoService.getDepartamentoById(funcionarioSubrogante.getCodDepto());
             NivelDepartamento nivelSubrogante = DepartamentoUtils.getNivelDepartamento(deptoSubrogante);
             if (DepartamentoUtils.tipoPorNivel(nivelSubrogante) == TipoDerivacion.FIRMA) {

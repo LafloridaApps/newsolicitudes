@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.MiSolicitudDto;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.dto.PageMiSolicitudResponse;
@@ -71,7 +71,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     @Transactional
     public SolicitudResponse createSolicitud(SolicitudRequest request) {
-        FuncionarioResponse funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
+        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
         DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
                 departamentoActual, request.getFechaInicio(), request.getFechaFin());
@@ -140,7 +140,7 @@ public class SolicitudServiceImpl implements SolicitudService {
                 t.setAccion("Postergación");
                 t.setEstado(EstadoTrazabilidad.POSTERGADA);
                 t.setFecha(postergacion.getFechaPostergacion().toString());
-                FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(postergacion.getRutPostergacion());
+                FuncionarioResponseApi fr = funcionarioService.getFuncionarioByRut(postergacion.getRutPostergacion());
                 t.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
                 DepartamentoResponse dr = departamentoService.getDepartamentoById(fr.getCodDepto());
                 t.setDepartamento(dr.getNombre());
@@ -204,12 +204,12 @@ public class SolicitudServiceImpl implements SolicitudService {
     }
 
     private void setUsuarioFromEntrada(Trazabilidad trazabilidad, EntradaDerivacion entrada) {
-        FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(entrada.getRut());
+        FuncionarioResponseApi fr = funcionarioService.getFuncionarioByRut(entrada.getRut());
         trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
     }
 
     private void setUsuarioFromAprobacion(Trazabilidad trazabilidad, Aprobacion aprobacion) {
-        FuncionarioResponse fr = funcionarioService.getFuncionarioByRut(aprobacion.getRut());
+        FuncionarioResponseApi fr = funcionarioService.getFuncionarioByRut(aprobacion.getRut());
         trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
     }
 

@@ -8,7 +8,7 @@ public class SearchFuncionarioResponse {
     private int totalPages;
     private int totalItems;
     private Long size;
-    List<Funcionario> funcionarios;
+    List<FuncionarioDtoSearch> funcionarios;
 
     public int getCurrentPage() {
         return currentPage;
@@ -42,11 +42,11 @@ public class SearchFuncionarioResponse {
         this.size = size;
     }
 
-    public List<Funcionario> getFuncionarios() {
+    public List<FuncionarioDtoSearch> getFuncionarios() {
         return funcionarios;
     }
 
-    public void setFuncionarios(List<Funcionario> funcionarios) {
+    public void setFuncionarios(List<FuncionarioDtoSearch> funcionarios) {
         this.funcionarios = funcionarios;
     }
 

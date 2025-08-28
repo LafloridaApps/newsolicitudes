@@ -2,7 +2,7 @@ package com.newsolicitudes.newsolicitudes.services.feriadoslegales;
 
 import com.newsolicitudes.newsolicitudes.dto.ApiFeriadosResponse;
 import com.newsolicitudes.newsolicitudes.dto.FeriadosLegalesDto;
-import com.newsolicitudes.newsolicitudes.services.apiferiados.ApiFeriadosServiceImpl;
+import com.newsolicitudes.newsolicitudes.services.apiferiados.ApiFeriadoLegalServiceImpl;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -10,16 +10,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class FeriadosLegalesServiceImpl implements FeriadosLegalesService {
 
-    private final ApiFeriadosServiceImpl feriadosService;
+    private final ApiFeriadoLegalServiceImpl apiFeriadoLegalService;
 
-    public FeriadosLegalesServiceImpl(ApiFeriadosServiceImpl feriadosService) {
-        this.feriadosService = feriadosService;
+    public FeriadosLegalesServiceImpl(ApiFeriadoLegalServiceImpl apiFeriadoLegalService) {
+        this.apiFeriadoLegalService = apiFeriadoLegalService;
     }
 
     @Override
     public FeriadosLegalesDto obtnerFeriados(Integer rut, Integer ident) {
 
-        ApiFeriadosResponse response = feriadosService.obtenerFeriadosByRut(rut, ident);
+        ApiFeriadosResponse response = apiFeriadoLegalService.obtenerFeriadosByRut(rut, ident);
 
         List<FeriadosLegalesDto.DetalleFeriado> detalle = obtenerDetalle(response.getDetalle());
 

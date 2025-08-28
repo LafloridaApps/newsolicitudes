@@ -1,9 +1,9 @@
 package com.newsolicitudes.newsolicitudes.services.funcionarioapi;
 
-import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponse;
+import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 
 public interface FuncionarioApiService {
 
-    FuncionarioResponse getFuncionarioInfo(Integer rut, String vRut);
+ FuncionarioResponseApi getFuncionarioInfo(Integer rut, String vRut);
 
 }

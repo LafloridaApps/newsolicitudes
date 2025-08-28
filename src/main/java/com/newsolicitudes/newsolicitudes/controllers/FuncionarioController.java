@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionarioapi.FuncionarioApiService;
+import com.newsolicitudes.newsolicitudes.services.resumeninicio.ResmuenFuncInicioService;
 import com.newsolicitudes.newsolicitudes.services.searchfunc.SearchFuncServcie;
 
 @RestController
@@ -22,13 +23,16 @@ public class FuncionarioController {
     private final FuncionarioApiService funcionarioApiService;
     private final ApiDepartamentoService apiDepartamentoService;
     private final SearchFuncServcie searchFuncServcie;
+    private final ResmuenFuncInicioService resmuenFuncInicioService;
 
     public FuncionarioController(FuncionarioApiService funcionarioApiService,
             ApiDepartamentoService apiDepartamentoService,
-            SearchFuncServcie searchFuncServcie) {
+            SearchFuncServcie searchFuncServcie,
+            ResmuenFuncInicioService resmuenFuncInicioService) {
         this.funcionarioApiService = funcionarioApiService;
         this.apiDepartamentoService = apiDepartamentoService;
         this.searchFuncServcie = searchFuncServcie;
+        this.resmuenFuncInicioService = resmuenFuncInicioService;
     }
 
     @GetMapping
@@ -66,5 +70,12 @@ public class FuncionarioController {
             @RequestParam Long idDepto) {
         return ResponseEntity
                 .ok(searchFuncServcie.buscarFuncionarioByNombre(nombre, fechaInicio, fechaFin, pageNumber, idDepto));
+    }
+
+    @GetMapping("/resumen-inicio")
+    public ResponseEntity<Object> getResumenFuncInicio(
+            @RequestParam Integer rut) {
+
+        return ResponseEntity.ok(resmuenFuncInicioService.getResumen(rut));
     }
 }
