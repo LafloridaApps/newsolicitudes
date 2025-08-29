@@ -1,6 +1,7 @@
 package com.newsolicitudes.newsolicitudes.services.apiausencias;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.core.ParameterizedTypeReference;
@@ -35,7 +36,7 @@ public class ApiAusenciasServiceImpl implements ApiAusenciasService {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<AusenciasResponse>>() {
                 })
-                .onErrorResume(Exception.class, e -> Mono.empty())
+                .onErrorResume(Exception.class, e -> Mono.just(Collections.emptyList()))
                 .block();
     }
 

@@ -2,6 +2,8 @@ package com.newsolicitudes.newsolicitudes.entities;
 
 import java.time.LocalDate;
 
+import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -86,6 +88,10 @@ public class Aprobacion {
 
     public String getTipoSolicitud() {
         return solicitud.getTipoSolicitud().name();
+    }
+
+    public EstadoSolicitud getEstadoSolicitud() {
+        return solicitud.getEstado();
     }
 
 }

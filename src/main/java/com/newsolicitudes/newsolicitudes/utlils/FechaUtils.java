@@ -1,6 +1,7 @@
 package com.newsolicitudes.newsolicitudes.utlils;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -28,6 +29,10 @@ public class FechaUtils {
     public static LocalDate getLastDayOfCurrentMonth() {
         YearMonth yearMonth = YearMonth.now(SANTIAGO_ZONE);
         return yearMonth.atEndOfMonth();
+    }
+
+    public static LocalDateTime getCurrentDateTime() {
+        return LocalDateTime.now(SANTIAGO_ZONE);
     }
 
 }
