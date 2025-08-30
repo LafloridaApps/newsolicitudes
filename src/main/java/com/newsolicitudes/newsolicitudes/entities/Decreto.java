@@ -10,6 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 
+import jakarta.persistence.CascadeType;
+
 @Entity
 public class Decreto {
 
@@ -17,8 +19,8 @@ public class Decreto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "decreto")
-    private List<Solicitud> solicitudes;
+    @OneToMany(mappedBy = "decreto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DecretoSolicitud> decretoSolicitudes;
 
     private Integer realizadoPor;
 
@@ -36,12 +38,12 @@ public class Decreto {
         this.id = id;
     }
 
-    public List<Solicitud> getSolicitudes() {
-        return solicitudes;
+    public List<DecretoSolicitud> getDecretoSolicitudes() {
+        return decretoSolicitudes;
     }
 
-    public void setSolicitudes(List<Solicitud> solicitudes) {
-        this.solicitudes = solicitudes;
+    public void setDecretoSolicitudes(List<DecretoSolicitud> decretoSolicitudes) {
+        this.decretoSolicitudes = decretoSolicitudes;
     }
 
     public Integer getRealizadoPor() {

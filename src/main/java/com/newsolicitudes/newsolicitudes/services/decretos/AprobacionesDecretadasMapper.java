@@ -1,49 +1,43 @@
-package com.newsolicitudes.newsolicitudes.service.aprobacioneslist;
-
-import java.util.List;
+package com.newsolicitudes.newsolicitudes.services.decretos;
 
 import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
-import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
-import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
 
 @Component
-public class AprobacionMapper {
+public class AprobacionesDecretadasMapper {
 
     private final FuncionarioService funcionarioService;
-
     private final DepartamentoService departamentoService;
 
-    public AprobacionMapper(FuncionarioService funcionarioService, DepartamentoService departamentoService) {
+    public AprobacionesDecretadasMapper(FuncionarioService funcionarioService,
+            DepartamentoService departamentoService) {
         this.funcionarioService = funcionarioService;
         this.departamentoService = departamentoService;
     }
 
-    public List<AprobacionList> aprobacionListToAprobacion(List<Aprobacion> aprobaciones) {
+    AprobacionList maptoAprobacionList(Solicitud solicitud, FuncionarioResponseApi funcionario) {
 
-        return aprobaciones.stream()
-                .filter(s -> s.getEstadoSolicitud().equals(EstadoSolicitud.APROBADA))
-                .map(aprobacion -> AprobacionList.builder()
-                        .idSolicitud(aprobacion.getIdSolicitud())
-                        .rut(getRut(aprobacion.getRutSolicitud()))
-                        .nombres(obtenerNombres(aprobacion.getRutSolicitud()))
-                        .apellidos(obtnerApellidos(aprobacion.getRutSolicitud()))
-                        .departamento(obtenerDepartamento(aprobacion.getDeptoSolicitud()))
-                        .jornada(obtenerJornada(aprobacion.getSolicitud()))
-                        .desde(aprobacion.getFechaInicioSolicitud().toString())
-                        .hasta(aprobacion.getFechaTerminoSolicitud().toString())
-                        .duracion(aprobacion.getDuracionSolicitud())
-                        .fechaSolicitud(aprobacion.getFechaSolicitud().toString())
-                        .tipoSolicitud(aprobacion.getTipoSolicitud())
-                        .tipoContrato(getTipoContrato(aprobacion.getRutSolicitud()))
-                        .url("")
-                        .build())
-                .toList();
+        return AprobacionList.builder()
+                .idSolicitud(solicitud.getId())
+                .rut(getRut(funcionario.getRut()))
+                .nombres(obtenerNombres(funcionario.getRut()))
+                .apellidos(obtnerApellidos(funcionario.getRut()))
+                .departamento(obtenerDepartamento(solicitud.getIdDepto()))
+                .jornada(obtenerJornada(solicitud)) // Assuming jornada is relevant
+                .desde(solicitud.getFechaInicio().toString())
+                .hasta(solicitud.getFechaTermino().toString())
+                .duracion(solicitud.getCantidadDias())
+                .fechaSolicitud(solicitud.getFechaSolicitud().toString())
+                .tipoSolicitud(solicitud.getTipoSolicitud().toString())
+                .tipoContrato(getTipoContrato(funcionario.getRut()))
+                .url("") // Adding missing url field
+                .build();
+
     }
 
     private String getRut(Integer rut) {
@@ -77,20 +71,18 @@ public class AprobacionMapper {
         if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
             // Si la duración es de más de un día, siempre es jornada completa
             if (!solicitud.getFechaInicio().isEqual(solicitud.getFechaTermino())) {
-                return Solicitud.Jornada.COMPLETA.name();
+                return "COMPLETA";
             } else { // Es el mismo día
                 if (solicitud.getJornadaInicio() != null) {
                     if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.AM)) {
-                        return Solicitud.Jornada.AM.name();
+                        return "AM";
                     } else if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.PM)) {
-                        return Solicitud.Jornada.PM.name();
+                        return "PM";
                     }
                 }
                 // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se considera completa por defecto
-                return Solicitud.Jornada.COMPLETA.name();
+                return "completa";
             }
-        } else if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.FERIADO)) {
-            return Solicitud.Jornada.COMPLETA.name();
         }
         return "";
     }
