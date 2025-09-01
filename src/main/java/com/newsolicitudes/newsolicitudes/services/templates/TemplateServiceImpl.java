@@ -1,10 +1,12 @@
 package com.newsolicitudes.newsolicitudes.services.templates;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.newsolicitudes.newsolicitudes.dto.TemplateDto;
 import com.newsolicitudes.newsolicitudes.entities.DocTemplates;
 import com.newsolicitudes.newsolicitudes.repositories.DocTemplatesRepository;
 import com.newsolicitudes.newsolicitudes.services.files.ArchivoService;
@@ -32,6 +34,13 @@ public class TemplateServiceImpl implements TemplateService {
 
         docTemplatesRepository.save(docTemplates);
 
+    }
+
+    @Override
+    public List<TemplateDto> listTemplates() {
+        return docTemplatesRepository.findAll().stream()
+                .map(template -> new TemplateDto(template.getId(), template.getNombre(), template.getDocFile()))
+                .toList();
     }
 
 }
