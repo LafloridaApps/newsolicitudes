@@ -71,8 +71,8 @@ public class DecretoServiceController {
         }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "decreto-" + id + ".pdf");
+        headers.setContentType(MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+        headers.setContentDispositionFormData("attachment", "decreto-" + id + ".docx");
         headers.setContentLength(documento.length);
 
         return new ResponseEntity<>(documento, headers, HttpStatus.OK);

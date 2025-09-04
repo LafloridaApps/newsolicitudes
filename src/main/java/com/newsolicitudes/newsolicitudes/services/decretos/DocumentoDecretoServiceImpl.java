@@ -5,7 +5,6 @@ import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
 import org.docx4j.wml.*;
 import org.springframework.stereotype.Service;
 import org.docx4j.XmlUtils;
-import org.docx4j.Docx4J;
 import jakarta.xml.bind.JAXBElement;
 
 import java.io.ByteArrayOutputStream;
@@ -74,9 +73,9 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
                 tabla.getContent().add(nuevaFila);
             }
 
-            // 6. Convertir a PDF
+            // 6. Guardar como Word
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            Docx4J.toPDF(wordMLPackage, out);
+            wordMLPackage.save(out);
 
             return out.toByteArray();
 
