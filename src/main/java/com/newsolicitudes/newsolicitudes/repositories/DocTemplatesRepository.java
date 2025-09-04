@@ -6,4 +6,6 @@ import com.newsolicitudes.newsolicitudes.entities.DocTemplates;
 
 public interface DocTemplatesRepository extends JpaRepository<DocTemplates,Long> {
 
+    DocTemplates findByNombre(String nombre);
+
 }

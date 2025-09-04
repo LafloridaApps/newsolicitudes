@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Lob;
 
 @Entity
 public class Decreto {
@@ -27,6 +28,9 @@ public class Decreto {
     private LocalDateTime fechaHoraTransaccion;
 
     private LocalDate fechaDecreto;
+
+    @Lob
+    private byte[] documentoPdf;
 
     // Getters and Setters
 
@@ -68,5 +72,13 @@ public class Decreto {
 
     public void setFechaDecreto(LocalDate fechaDecreto) {
         this.fechaDecreto = fechaDecreto;
+    }
+
+    public byte[] getDocumentoPdf() {
+        return documentoPdf;
+    }
+
+    public void setDocumentoPdf(byte[] documentoPdf) {
+        this.documentoPdf = documentoPdf;
     }
 }

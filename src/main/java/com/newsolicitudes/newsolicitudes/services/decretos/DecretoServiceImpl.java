@@ -32,20 +32,22 @@ public class DecretoServiceImpl implements DecretoService {
     private final DecretoSolicitudRepository decretoSolicitudRepository;
     private final FuncionarioService funcionarioService;
     private final AprobacionesDecretadasMapper mapper;
+    private final DocumentoDecretoService documentoDecretoService;
 
     public DecretoServiceImpl(SolicitudRepository solicitudRepository, DecretoRepository decretoRepository,
             DecretoSolicitudRepository decretoSolicitudRepository, FuncionarioService funcionarioService,
-            AprobacionesDecretadasMapper mapper) {
+            AprobacionesDecretadasMapper mapper, DocumentoDecretoService documentoDecretoService) {
         this.solicitudRepository = solicitudRepository;
         this.decretoRepository = decretoRepository;
         this.decretoSolicitudRepository = decretoSolicitudRepository;
         this.funcionarioService = funcionarioService;
         this.mapper = mapper;
+        this.documentoDecretoService = documentoDecretoService;
     }
 
     @Override
     @Transactional
-    public List<AprobacionList> decretar(Set<Long> ids, Integer rut) {
+    public List<AprobacionList> decretar(Set<Long> ids, Integer rut, String template) {
 
         List<Solicitud> solicitudes = solicitudRepository.findAllById(ids);
         List<AprobacionList> decretadas = new ArrayList<>();
@@ -68,6 +70,10 @@ public class DecretoServiceImpl implements DecretoService {
             AprobacionList dto = mapper.maptoAprobacionList(solicitud, funcionario);
             decretadas.add(dto);
         }
+
+        byte[] generatedDocument = documentoDecretoService.generarDocumento(decretadas, template);
+        nuevoDecreto.setDocumentoPdf(generatedDocument);
+        decretoRepository.save(nuevoDecreto);
 
         solicitudRepository.saveAll(solicitudes);
 
@@ -108,5 +114,12 @@ public class DecretoServiceImpl implements DecretoService {
         return decretos.stream()
                 .map(decreto -> new DecretoDto(decreto.getId(), decreto.getFechaDecreto()))
                 .toList();
+    }
+
+    @Override
+    public byte[] getDecretoDocumento(Long id) {
+        Decreto decreto = decretoRepository.findById(id)
+                .orElseThrow(() -> new NotFounException("Decreto no encontrado con id: " + id));
+        return decreto.getDocumentoPdf();
     }
 }

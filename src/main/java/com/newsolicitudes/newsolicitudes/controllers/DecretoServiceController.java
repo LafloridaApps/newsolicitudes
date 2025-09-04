@@ -14,13 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping; // New import
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam; // New import
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/decretos")
@@ -36,14 +39,14 @@ public class DecretoServiceController {
     @PostMapping("/decretar")
     public ResponseEntity<List<AprobacionList>> decretar(@RequestBody DecretoRequest request) {
 
-        List<AprobacionList> decretadas = decretoService.decretar(request.getIds(), request.getRut());
+        List<AprobacionList> decretadas = decretoService.decretar(request.getIds(), request.getRut(),
+                request.getTemplate());
         return ResponseEntity.status(HttpStatus.CREATED).body(decretadas);
     }
 
     @DeleteMapping("/eliminar")
     public ResponseEntity<Object> revertirDecreto(@RequestBody DecretoDeleteRequest request) {
 
-      
         decretoService.revertirDecreto(request);
 
         Map<String, Object> response = Map.of("message", "Decreto eliminado correctamente");
@@ -57,5 +60,21 @@ public class DecretoServiceController {
             @RequestParam LocalDate fechaFin) {
         List<DecretoDto> decretos = decretoService.findDecretosByFecha(fechaInicio, fechaFin);
         return ResponseEntity.ok(decretos);
+    }
+
+    @GetMapping("/{id}/documento")
+    public ResponseEntity<byte[]> getDecretoDocumento(@PathVariable Long id) {
+        byte[] documento = decretoService.getDecretoDocumento(id);
+
+        if (documento == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "decreto-" + id + ".pdf");
+        headers.setContentLength(documento.length);
+
+        return new ResponseEntity<>(documento, headers, HttpStatus.OK);
     }
 }

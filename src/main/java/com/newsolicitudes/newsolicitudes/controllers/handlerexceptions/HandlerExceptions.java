@@ -12,6 +12,7 @@ import com.newsolicitudes.newsolicitudes.dto.ErrorResponse;
 import com.newsolicitudes.newsolicitudes.exceptions.AprobacionException;
 import com.newsolicitudes.newsolicitudes.exceptions.AusenciaException;
 import com.newsolicitudes.newsolicitudes.exceptions.DepartamentoException;
+import com.newsolicitudes.newsolicitudes.exceptions.DocumentException;
 import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
 
@@ -72,6 +73,16 @@ public class HandlerExceptions {
       HttpServletRequest request) {
 
     ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.CONFLICT);
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+
+  }
+
+  @ExceptionHandler(DocumentException.class)
+  public ResponseEntity<Object> handlerDocumentException(DocumentException e,
+      HttpServletRequest request) {
+
+    ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.BAD_REQUEST);
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
 

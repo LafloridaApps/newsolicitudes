@@ -10,10 +10,12 @@ import com.newsolicitudes.newsolicitudes.dto.DecretoDto;
 
 public interface DecretoService {
 
-    List<AprobacionList> decretar(Set<Long> ids, Integer rut);
+    List<AprobacionList> decretar(Set<Long> ids, Integer rut, String template);
 
     void revertirDecreto(DecretoDeleteRequest request); // Modified to accept DecretoDeleteRequest
 
     List<DecretoDto> findDecretosByFecha(LocalDate fechaInicio, LocalDate fechaFin); // New method
+
+    byte[] getDecretoDocumento(Long id);
 
 }
