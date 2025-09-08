@@ -43,4 +43,11 @@ public class TemplateServiceImpl implements TemplateService {
                 .toList();
     }
 
+    @Override
+    public void deleteTemplate(Long id) {
+
+        docTemplatesRepository.deleteById(id);
+
+    }
+
 }

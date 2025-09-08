@@ -14,4 +14,6 @@ public interface TemplateService {
 
     List<TemplateDto> listTemplates();
 
+    void deleteTemplate(Long id);
+
 }

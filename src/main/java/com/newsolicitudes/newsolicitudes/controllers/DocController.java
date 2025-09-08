@@ -12,6 +12,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +51,13 @@ public class DocController {
         Map<String, String> response = Map.of("message", "Archivo subido correctamente");
         return ResponseEntity.ok().body(response);
 
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity<Object> deleteTemplate(@RequestParam Long id) {
+        templateService.deleteTemplate(id);
+        Map<String, String> response = Map.of("message", "Plantilla eliminada correctamente");
+        return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/templates")

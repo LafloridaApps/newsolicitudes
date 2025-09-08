@@ -20,9 +20,10 @@ public class AprobacionesDecretadasMapper {
         this.departamentoService = departamentoService;
     }
 
-    AprobacionList maptoAprobacionList(Solicitud solicitud, FuncionarioResponseApi funcionario) {
+    AprobacionList maptoAprobacionList(Solicitud solicitud, FuncionarioResponseApi funcionario, Long nroDecreto) {
 
         return AprobacionList.builder()
+                .nroDecreto(nroDecreto)
                 .idSolicitud(solicitud.getId())
                 .rut(getRut(funcionario.getRut()))
                 .nombres(obtenerNombres(funcionario.getRut()))
@@ -80,7 +81,8 @@ public class AprobacionesDecretadasMapper {
                         return "PM";
                     }
                 }
-                // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se considera completa por defecto
+                // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se
+                // considera completa por defecto
                 return "completa";
             }
         }

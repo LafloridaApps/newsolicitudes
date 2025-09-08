@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
-import com.newsolicitudes.newsolicitudes.dto.DecretoDeleteRequest; // New import
-import com.newsolicitudes.newsolicitudes.dto.DecretoDto; // New import
+import com.newsolicitudes.newsolicitudes.dto.DecretoDeleteRequest;
+import com.newsolicitudes.newsolicitudes.dto.DecretoDto;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.entities.Decreto;
 import com.newsolicitudes.newsolicitudes.entities.DecretoSolicitud;
@@ -67,7 +67,7 @@ public class DecretoServiceImpl implements DecretoService {
 
             // Map to AprobacionList DTO
             FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
-            AprobacionList dto = mapper.maptoAprobacionList(solicitud, funcionario);
+            AprobacionList dto = mapper.maptoAprobacionList(solicitud, funcionario, nuevoDecreto.getId());
             decretadas.add(dto);
         }
 
@@ -82,7 +82,7 @@ public class DecretoServiceImpl implements DecretoService {
 
     @Override
     @Transactional
-    public void revertirDecreto(DecretoDeleteRequest request) { // Modified signature
+    public void revertirDecreto(DecretoDeleteRequest request) {
         if (request == null || request.getIds() == null || request.getIds().isEmpty()) {
             throw new IllegalArgumentException("La solicitud de eliminación de decretos no puede ser nula o vacía.");
         }
@@ -95,15 +95,13 @@ public class DecretoServiceImpl implements DecretoService {
             List<Solicitud> solicitudesARevertir = new ArrayList<>();
             for (DecretoSolicitud ds : decreto.getDecretoSolicitudes()) {
                 Solicitud solicitud = ds.getSolicitud();
-                solicitud.setEstado(EstadoSolicitud.APROBADA); // Assuming APROBADA is the state to revert to
+                solicitud.setEstado(EstadoSolicitud.APROBADA);
                 solicitudesARevertir.add(solicitud);
             }
             solicitudRepository.saveAll(solicitudesARevertir);
 
-            // Eliminar entradas de DecretoSolicitud
             decretoSolicitudRepository.deleteAll(decreto.getDecretoSolicitudes());
 
-            // Eliminar el decreto
             decretoRepository.delete(decreto);
         }
     }

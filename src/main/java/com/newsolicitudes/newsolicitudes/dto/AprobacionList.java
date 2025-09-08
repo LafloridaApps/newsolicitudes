@@ -3,6 +3,7 @@ package com.newsolicitudes.newsolicitudes.dto;
 
 public class AprobacionList {
 
+    private Long nroDecreto;
     private Long idSolicitud;
     private String rut;
     private String nombres;
@@ -18,6 +19,7 @@ public class AprobacionList {
     private String url;
 
     private AprobacionList(Builder builder) {
+        this.nroDecreto = builder.nroDecreto;
         this.idSolicitud = builder.idSolicitud;
         this.rut = builder.rut;
         this.nombres = builder.nombres;
@@ -141,8 +143,17 @@ public class AprobacionList {
         this.hasta = hasta;
     }
 
+    public Long getNroDecreto() {
+        return nroDecreto;
+    }
+
+    public void setNroDecreto(Long nroDecreto) {
+        this.nroDecreto = nroDecreto;
+    }
+
     public static class Builder {
 
+        private Long nroDecreto;
         private Long idSolicitud;
         private String rut;
         private String nombres;
@@ -221,6 +232,13 @@ public class AprobacionList {
             this.hasta = hasta;
             return this;
         }
+
+        public Builder nroDecreto(Long nroDecreto) {
+            this.nroDecreto = nroDecreto;
+            return this;
+        }
+
+        
 
         public AprobacionList build() {
             return new AprobacionList(this);
