@@ -17,4 +17,6 @@ public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
 
     Page<Derivacion> findByIdDeptoIn(List<Long> idDeptos, Pageable pageable);
 
+    List<Derivacion> findBySolicitudIdOrderByFechaDerivacionDesc(Long solicitudId);
+
 }

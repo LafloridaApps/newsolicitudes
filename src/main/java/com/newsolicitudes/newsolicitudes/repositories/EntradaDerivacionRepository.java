@@ -13,4 +13,6 @@ public interface EntradaDerivacionRepository extends JpaRepository<EntradaDeriva
 
     Optional<EntradaDerivacion> findByDerivacionId(Long derivacionId);
 
+    List<EntradaDerivacion> findByDerivacion_Solicitud_IdAndDerivacion_Solicitud_IdDepto(Long solicitudId, Long idDepartamento);
+
 }

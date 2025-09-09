@@ -21,4 +21,19 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
 
     Optional<Solicitud> findTopByRutOrderByFechaSolicitudDesc(Integer rut);
 
+    List<Solicitud> findByEstadoAndFechaInicioBetween(Solicitud.EstadoSolicitud estado, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Solicitud> findByEstadoAndFechaTerminoBetween(Solicitud.EstadoSolicitud estado, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Solicitud> findByEstadoAndIdDeptoAndFechaInicioBetween(Solicitud.EstadoSolicitud estado, Long idDepto, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Solicitud> findByEstadoAndIdDeptoAndFechaTerminoBetween(Solicitud.EstadoSolicitud estado, Long idDepto, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Solicitud> findByEstadoAndIdDeptoAndFechaInicioLessThanEqualAndFechaTerminoGreaterThanEqual(
+        Solicitud.EstadoSolicitud estado, Long idDepto, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Solicitud> findByEstadoInAndIdDeptoAndFechaInicioLessThanEqualAndFechaTerminoGreaterThanEqual(List<Solicitud.EstadoSolicitud> estados, Long idDepto, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<Solicitud> findByEstado(Solicitud.EstadoSolicitud estado);
+
 }
