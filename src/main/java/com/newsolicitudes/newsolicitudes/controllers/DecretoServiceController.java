@@ -4,15 +4,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
+import com.newsolicitudes.newsolicitudes.dto.DecretoConSolicitudesDTO;
 import com.newsolicitudes.newsolicitudes.dto.DecretoRequest;
-import com.newsolicitudes.newsolicitudes.dto.DecretoDeleteRequest; // New import
-import com.newsolicitudes.newsolicitudes.dto.DecretoDto; // New import
+import com.newsolicitudes.newsolicitudes.dto.DecretoDeleteRequest;
+import com.newsolicitudes.newsolicitudes.dto.DecretoDto;
 import com.newsolicitudes.newsolicitudes.services.decretos.DecretoService;
 
-import java.time.LocalDate; // New import
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -75,5 +79,19 @@ public class DecretoServiceController {
         headers.setContentLength(documento.length);
 
         return new ResponseEntity<>(documento, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<DecretoConSolicitudesDTO>> searchDecretos(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(required = false) Integer rut,
+            @RequestParam(required = false) Long idSolicitud,
+            @RequestParam(required = false) String nombreFuncionario,
+            Pageable pageable) {
+
+        Page<DecretoConSolicitudesDTO> resultados = decretoService.searchDecretos(id, fechaDesde, fechaHasta, rut, idSolicitud, nombreFuncionario, pageable);
+        return ResponseEntity.ok(resultados);
     }
 }

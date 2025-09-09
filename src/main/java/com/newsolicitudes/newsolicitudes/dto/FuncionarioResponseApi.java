@@ -1,5 +1,7 @@
 package com.newsolicitudes.newsolicitudes.dto;
 
+import java.util.List; // Importar List
+
 public class FuncionarioResponseApi {
 
     private Integer rut;
@@ -15,6 +17,7 @@ public class FuncionarioResponseApi {
     private String foto;
     private Integer ident;
     private String tipoContrato;
+    private List<DecretoDto> decretos; // Nuevo campo
 
     public Integer getRut() {
         return rut;
@@ -120,4 +123,12 @@ public class FuncionarioResponseApi {
         this.tipoContrato = tipoContrato;
     }
 
+    // Getters y setters para el nuevo campo 'decretos'
+    public List<DecretoDto> getDecretos() {
+        return decretos;
+    }
+
+    public void setDecretos(List<DecretoDto> decretos) {
+        this.decretos = decretos;
+    }
 }

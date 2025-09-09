@@ -1,11 +1,12 @@
 package com.newsolicitudes.newsolicitudes.services.searchfunc;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest; // Importar PageRequest
+import org.springframework.data.domain.Pageable; // Importar Pageable
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
@@ -18,6 +19,8 @@ import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.apiausencias.ApiAusenciasService;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.decretos.DecretoService; // Importar DecretoService
+import com.newsolicitudes.newsolicitudes.dto.DecretoDto; // Importar DecretoDto
 
 @Service
 public class SearchFuncServiceImpl implements SearchFuncServcie {
@@ -26,14 +29,17 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
     private final ApiAusenciasService apiAusenciasService;
     private final ApiExtFuncionarioService apiFuncionarioService;
     private final SubroganciaRepository subroganciaRepository;
+    private final DecretoService decretoService; // Inyectar DecretoService
 
     public SearchFuncServiceImpl(ApiDepartamentoService apiDepartamentoService,
             ApiAusenciasService apiAusenciasService, ApiExtFuncionarioService apiFuncionarioService,
-            SubroganciaRepository subroganciaRepository) {
+            SubroganciaRepository subroganciaRepository,
+            DecretoService decretoService) { // Modificar constructor
         this.apiDepartamentoService = apiDepartamentoService;
         this.apiAusenciasService = apiAusenciasService;
         this.apiFuncionarioService = apiFuncionarioService;
         this.subroganciaRepository = subroganciaRepository;
+        this.decretoService = decretoService; // Asignar DecretoService
     }
 
     @Override
@@ -50,7 +56,7 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
         FuncionarioResponseApi director = buscarFuncionarioByRut(departamento.getRutJefe());
 
         if (!hasAusenciasBetweenDates(director, fechaInicioSolicitud, fechaFinSolicitud)) {
-            director =  findSubrogante(director, fechaInicioSolicitud, fechaFinSolicitud);
+            director = findSubrogante(director, fechaInicioSolicitud, fechaFinSolicitud);
         }
 
         return director;
@@ -125,28 +131,27 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
 
         SearchFuncionarioResponse searchFuncionarioResponse = buscarFuncionarioByNombre(pattern, pageNmber);
 
-        List<DepartamentoResponse> departamentoFamilia = apiDepartamentoService
-                .obtenerFamiliaDepto(iddepto);
-
-        List<Long> familiaIds = flattenDepartamentos(departamentoFamilia);
-
-        return searchFuncionarioResponse.getFuncionarios().stream().map(f -> buscarFuncionarioByRut(f.getRut()))
-                .filter(f -> familiaIds.contains(f.getCodDepto()))
+        List<FuncionarioResponseApi> funcionarios = searchFuncionarioResponse.getFuncionarios().stream()
+                .map(f -> buscarFuncionarioByRut(f.getRut()))
                 .filter(a -> !hasAusenciasBetweenDates(a, fechaInicioSolicitud, fechaFinSolicitud))
                 .toList();
 
-    }
-
-    private List<Long> flattenDepartamentos(List<DepartamentoResponse> departamentos) {
-        List<Long> list = new ArrayList<>();
-        if (departamentos == null)
-            return list;
-
-        for (DepartamentoResponse dep : departamentos) {
-            list.add(dep.getId());
+        // Buscar y asignar decretos a cada funcionario
+        for (FuncionarioResponseApi funcionario : funcionarios) {
+            Pageable pageable = PageRequest.of(0, 100); // Puedes ajustar el tamaño de página si es necesario
+            List<DecretoDto> decretos = decretoService.searchDecretos(null, null, null, funcionario.getRut(), null, null, pageable)
+                                                    .getContent()
+                                                    .stream()
+                                                    .map(dto -> new DecretoDto(dto.getIdDecreto(), dto.getFechaDecreto())) // Asumiendo que DecretoConSolicitudesDTO tiene un getDecreto() que devuelve DecretoDto
+                                                    .toList();
+            funcionario.setDecretos(decretos);
         }
-        return list;
+
+        return funcionarios;
+
     }
+
+    
 
     private SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNmber) {
         return apiFuncionarioService.buscarFuncionarioByNombre(pattern, pageNmber);
