@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
@@ -23,6 +24,8 @@ import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.repositories.VisacionRepository;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.firma.FirmaService;
+import com.newsolicitudes.newsolicitudes.services.mapper.PdfDtoMapper;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
@@ -36,6 +39,8 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final VisacionRepository visacionRepository;
     private final DepartamentoService departamentoService;
     private final SubroganciaRepository subroganciaRepository;
+    private final PdfDtoMapper pdfDtoMapper;
+    private final FirmaService firmaService;
 
     public AprobacionServiceImpl(
             AprobacionRepository aprobacionRepository,
@@ -43,16 +48,21 @@ public class AprobacionServiceImpl implements AprobacionService {
             DerivacionRepository derivacionRepository,
             VisacionRepository visacionRepository,
             DepartamentoService departamentoService,
-            SubroganciaRepository subroganciaRepository) {
+            SubroganciaRepository subroganciaRepository,
+            PdfDtoMapper pdfDtoMapper,
+            FirmaService firmaService) {
         this.aprobacionRepository = aprobacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.derivacionRepository = derivacionRepository;
         this.visacionRepository = visacionRepository;
         this.departamentoService = departamentoService;
         this.subroganciaRepository = subroganciaRepository;
+        this.pdfDtoMapper = pdfDtoMapper;
+        this.firmaService = firmaService;
     }
 
     @Override
+    @Transactional
     public void aprobarSolicitud(AprobacionRequest request) {
 
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
@@ -76,7 +86,21 @@ public class AprobacionServiceImpl implements AprobacionService {
         solicitudRepository.save(solicitud);
 
         Aprobacion aprobacion = crearAprobacion(solicitud, request.getAprobadoPor());
+
         aprobacionRepository.save(aprobacion);
+
+        String url = firmarPdf(solicitud);
+
+        aprobacion.setUrlPdf(url);
+
+        aprobacionRepository.save(aprobacion);
+
+    }
+
+    private String firmarPdf(Solicitud solicitud) {
+
+        return firmaService.firmarPdf(pdfDtoMapper.toPdfDto(solicitud));
+
     }
 
     private boolean shouldSkipVisacion(Solicitud solicitud, Integer approverRut) {
@@ -88,7 +112,8 @@ public class AprobacionServiceImpl implements AprobacionService {
         // Condition 2: Requester reports to a director
         DepartamentoResponse requesterDepto = departamentoService.getDepartamentoById(solicitud.getIdDepto());
         if (requesterDepto.getIdDeptoSuperior() != null) {
-            DepartamentoResponse superiorDepto = departamentoService.getDepartamentoById(requesterDepto.getIdDeptoSuperior());
+            DepartamentoResponse superiorDepto = departamentoService
+                    .getDepartamentoById(requesterDepto.getIdDeptoSuperior());
             NivelDepartamento nivelSuperior = DepartamentoUtils.getNivelDepartamento(superiorDepto);
             if (DepartamentoUtils.tipoPorNivel(nivelSuperior) == TipoDerivacion.FIRMA) {
                 return true;
@@ -99,7 +124,9 @@ public class AprobacionServiceImpl implements AprobacionService {
     }
 
     private boolean isSubrogandoComoDirector(Integer rutJefe) {
-        List<Subrogancia> subrogancias = subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, LocalDate.now(), LocalDate.now());
+        List<Subrogancia> subrogancias = subroganciaRepository
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, LocalDate.now(),
+                        LocalDate.now());
         if (subrogancias.isEmpty()) {
             return false;
         }

@@ -17,6 +17,25 @@ public class FuncionarioResponseApi {
     private String foto;
     private Integer ident;
     private String tipoContrato;
+    private String escalafon;
+    private Integer grado;
+
+    public String getEscalafon() {
+        return escalafon;
+    }
+
+    public void setEscalafon(String escalafon) {
+        this.escalafon = escalafon;
+    }
+
+    public Integer getGrado() {
+        return grado;
+    }
+
+    public void setGrado(Integer grado) {
+        this.grado = grado;
+    }
+
     private List<DecretoDto> decretos; // Nuevo campo
 
     public Integer getRut() {

@@ -11,7 +11,9 @@ public class ApiProperties {
 
     private String departamentoUrl;
 
-    
+    private String firmaUrl;
+
+    private String pdfUrl;
 
     public String getFuncionarioUrl() {
         return funcionarioUrl;
@@ -29,6 +31,20 @@ public class ApiProperties {
         this.departamentoUrl = departamentoUrl;
     }
 
-   
+    public String getFirmaUrl() {
+        return firmaUrl;
+    }
+
+    public void setFirmaUrl(String firmaUrl) {
+        this.firmaUrl = firmaUrl;
+    }
+
+    public String getPdfUrl() {
+        return pdfUrl;
+    }
+
+    public void setPdfUrl(String pdfUrl) {
+        this.pdfUrl = pdfUrl;
+    }
 
 }

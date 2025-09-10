@@ -26,6 +26,8 @@ public class Aprobacion {
 
     private LocalDate fechaAprobacion;
 
+    private String urlPdf;
+
     public Long getId() {
         return id;
     }
@@ -92,6 +94,14 @@ public class Aprobacion {
 
     public EstadoSolicitud getEstadoSolicitud() {
         return solicitud.getEstado();
+    }
+
+    public String getUrlPdf() {
+        return urlPdf;
+    }
+
+    public void setUrlPdf(String urlPdf) {
+        this.urlPdf = urlPdf;
     }
 
 }
