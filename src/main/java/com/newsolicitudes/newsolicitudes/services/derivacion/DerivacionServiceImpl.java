@@ -62,7 +62,7 @@ public class DerivacionServiceImpl implements DerivacionService {
             throws DerivacionExceptions {
 
         DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
-        TipoDerivacion tipoFinal = determinaTipoDerivacionFinal(depto);
+        TipoDerivacion tipoFinal = determinaTipoDerivacionFinal(depto, solicitud.getFechaInicio());
 
         Derivacion derivacionInicial = new Derivacion();
         derivacionInicial.setSolicitud(solicitud);
@@ -74,16 +74,16 @@ public class DerivacionServiceImpl implements DerivacionService {
         derivacionRepository.save(derivacionInicial);
     }
 
-    private TipoDerivacion determinaTipoDerivacionFinal(DepartamentoResponse deptoDestino) {
+    private TipoDerivacion determinaTipoDerivacionFinal(DepartamentoResponse deptoDestino, LocalDate fechaChequeo) {
         NivelDepartamento nivelDeptoDestino = DepartamentoUtils.getNivelDepartamento(deptoDestino);
         TipoDerivacion tipoFinal = DepartamentoUtils.tipoPorNivel(nivelDeptoDestino);
 
-        TipoDerivacion tipoPorSubroganciaJefe = getTipoSiJefeEsSubroganteDirector(deptoDestino.getRutJefe());
+        TipoDerivacion tipoPorSubroganciaJefe = getTipoSiJefeEsSubroganteDirector(deptoDestino.getRutJefe(), fechaChequeo);
         if (tipoPorSubroganciaJefe == TipoDerivacion.FIRMA) {
             return TipoDerivacion.FIRMA;
         }
 
-        TipoDerivacion tipoPorJefeSubrogado = getTipoSiJefeEstaSiendoSubrogadoPorDirector(deptoDestino.getRutJefe());
+        TipoDerivacion tipoPorJefeSubrogado = getTipoSiJefeEstaSiendoSubrogadoPorDirector(deptoDestino.getRutJefe(), fechaChequeo);
         if (tipoPorJefeSubrogado == TipoDerivacion.FIRMA) {
             return TipoDerivacion.FIRMA;
         }
@@ -91,8 +91,10 @@ public class DerivacionServiceImpl implements DerivacionService {
         return tipoFinal;
     }
 
-    private TipoDerivacion getTipoSiJefeEsSubroganteDirector(Integer rutJefe) {
-        List<Subrogancia> subrogancias = subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, LocalDate.now(), LocalDate.now());
+    private TipoDerivacion getTipoSiJefeEsSubroganteDirector(Integer rutJefe, LocalDate fechaChequeo) {
+        List<Subrogancia> subrogancias = subroganciaRepository
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, fechaChequeo,
+                        fechaChequeo);
         if (subrogancias.isEmpty()) {
             return null;
         }
@@ -106,15 +108,18 @@ public class DerivacionServiceImpl implements DerivacionService {
         return null;
     }
 
-    private TipoDerivacion getTipoSiJefeEstaSiendoSubrogadoPorDirector(Integer rutJefeOriginal) {
-        List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeOriginal, LocalDate.now(), LocalDate.now());
+    private TipoDerivacion getTipoSiJefeEstaSiendoSubrogadoPorDirector(Integer rutJefeOriginal, LocalDate fechaChequeo) {
+        List<Subrogancia> subrogancias = subroganciaRepository
+                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeOriginal,
+                        fechaChequeo, fechaChequeo);
         if (subrogancias.isEmpty()) {
             return null;
         }
         for (Subrogancia subrogancia : subrogancias) {
             Integer rutSubrogante = subrogancia.getSubrogante();
             FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
-            DepartamentoResponse deptoSubrogante = departamentoService.getDepartamentoById(funcionarioSubrogante.getCodDepto());
+            DepartamentoResponse deptoSubrogante = departamentoService
+                    .getDepartamentoById(funcionarioSubrogante.getCodDepto());
             NivelDepartamento nivelSubrogante = DepartamentoUtils.getNivelDepartamento(deptoSubrogante);
             if (DepartamentoUtils.tipoPorNivel(nivelSubrogante) == TipoDerivacion.FIRMA) {
                 return TipoDerivacion.FIRMA;
@@ -196,10 +201,10 @@ public class DerivacionServiceImpl implements DerivacionService {
 
         DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
         LocalDate hoy = FechaUtils.fechaActual();
-        return subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(depto.getRutJefe(), hoy, hoy);
+        return subroganciaRepository
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(depto.getRutJefe(), hoy, hoy);
 
     }
 
-    
 
 }

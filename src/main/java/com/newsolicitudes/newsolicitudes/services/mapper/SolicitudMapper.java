@@ -1,12 +1,16 @@
 package com.newsolicitudes.newsolicitudes.services.mapper;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDto;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudRequest;
+import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 
@@ -15,10 +19,14 @@ public class SolicitudMapper {
 
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
+    private final AprobacionRepository aprobacionRepository;
 
-    public SolicitudMapper(ApiExtFuncionarioService apiFuncionarioService, ApiDepartamentoService apiDepartamentoService) {
+    public SolicitudMapper(ApiExtFuncionarioService apiFuncionarioService,
+            ApiDepartamentoService apiDepartamentoService,
+            AprobacionRepository aprobacionRepository) {
         this.apiExtFuncionarioService = apiFuncionarioService;
         this.apiDepartamentoService = apiDepartamentoService;
+        this.aprobacionRepository = aprobacionRepository;
     }
 
     public SolicitudDto solicitudDtoMapper(Solicitud solicitud) {
@@ -33,6 +41,7 @@ public class SolicitudMapper {
         dto.setDepartamentoOrigen(String.valueOf(solicitud.getIdDepto()));
         dto.setEstadoSolicitud(solicitud.getEstado().name());
         dto.setCantidadDias(solicitud.getCantidadDias());
+        dto.setUrlPdf(getUrlPdf(solicitud));
 
         // Obtener nombre del funcionario
         FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
@@ -70,4 +79,15 @@ public class SolicitudMapper {
         return solicitud;
     }
 
+    private String getUrlPdf(Solicitud solicitud) {
+
+        Optional<Aprobacion> optAprobacion = aprobacionRepository.findBySolicitud(solicitud);
+
+        if (optAprobacion.isPresent()) {
+            return optAprobacion.get().getUrlPdf();
+        } else {
+            return null;
+        }
+
+    }
 }

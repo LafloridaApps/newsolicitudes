@@ -53,14 +53,19 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         }
 
         while (departamentoActual != null) {
-            if (departamentoActual.getRutJefe() != null &&
-                    !isAusenteEnFecha(departamentoActual.getRutJefe(), fechaInicio) &&
-                    !hasAprobacion(departamentoActual.getRutJefe(), fechaInicio, fechaFin)) {
-                return departamentoActual;
-            }
 
             if (departamentoActual.getNivelDepartamento() != null &&
                     departamentoActual.getNivelDepartamento().equalsIgnoreCase("DIRECCION")) {
+                if (departamentoActual.getIdDeptoSuperior() != null) {
+                    return apiDepartamentoService.obtenerDepartamento(departamentoActual.getIdDeptoSuperior());
+                } else {
+                    return departamentoActual;
+                }
+            }
+
+            if (departamentoActual.getRutJefe() != null &&
+                    !isAusenteEnFecha(departamentoActual.getRutJefe(), fechaInicio) &&
+                    !hasAprobacion(departamentoActual.getRutJefe(), fechaInicio, fechaFin)) {
                 return departamentoActual;
             }
 

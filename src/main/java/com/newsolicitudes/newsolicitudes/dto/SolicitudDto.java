@@ -17,6 +17,7 @@ public class SolicitudDto {
     private double cantidadDias;
     private String nombreFuncionario;
     private String nombreDepartamento;
+    private String urlPdf;
 
     private List<DerivacionDto> derivaciones;
 
@@ -140,5 +141,13 @@ public class SolicitudDto {
 
     public void setSubroganciaInfo(List<SubroganciaInfo> subroganciaInfo) {
         this.subroganciaInfo = subroganciaInfo;
+    }
+
+    public String getUrlPdf() {
+        return urlPdf;
+    }
+
+    public void setUrlPdf(String urlPdf) {
+        this.urlPdf = urlPdf;
     }
 }
