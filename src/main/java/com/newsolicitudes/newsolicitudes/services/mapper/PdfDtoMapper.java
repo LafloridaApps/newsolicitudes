@@ -82,11 +82,14 @@ public class PdfDtoMapper {
     }
 
     private String getJornada(Solicitud solicitud) {
+        if (solicitud.getJornadaInicio() == null) {
+            return "Completa"; // Assume "Completa" when null
+        }
         return switch (solicitud.getJornadaInicio()) {
             case PM -> "PM";
             case AM -> "AM";
             case COMPLETA -> "Completa";
-            default -> "";
+            default -> ""; // This default should ideally not be reached if all enum values are covered
         };
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.CargoFunc;
+import com.newsolicitudes.newsolicitudes.dto.DepartamentoJerarquiaDTO;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 
 import reactor.core.publisher.Mono;
@@ -86,5 +87,17 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .onErrorResume(e -> Mono.empty())
                 .block();
     }
+
+    @Override
+    public DepartamentoJerarquiaDTO getJerarquiaPorId(Long id) {
+    return webClient.get()
+            .uri(uriBuilder -> uriBuilder.path("/api/departamentos/jerarquia/{id}").build(id))
+            .retrieve()
+            .onStatus(HttpStatusCode::is4xxClientError,
+                response -> response.createException().flatMap(Mono::error))
+            .bodyToMono(DepartamentoJerarquiaDTO.class)
+            .onErrorResume(e -> Mono.empty())
+            .block();
+}
 
 }

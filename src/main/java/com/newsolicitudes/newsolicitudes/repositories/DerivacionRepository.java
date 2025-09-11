@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Pageable;
 
 public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
@@ -18,5 +20,7 @@ public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
     Page<Derivacion> findByIdDeptoIn(List<Long> idDeptos, Pageable pageable);
 
     List<Derivacion> findBySolicitudIdOrderByFechaDerivacionDesc(Long solicitudId);
+
+    Optional<Derivacion> findTopBySolicitudIdAndIdDeptoOrderByFechaDerivacionDesc(Long solicitudId, Long idDepto);
 
 }

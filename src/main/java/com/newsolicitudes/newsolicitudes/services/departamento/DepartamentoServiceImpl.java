@@ -5,18 +5,24 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.apiausencias.ApiAusenciasService;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
 
 @Service
 public class DepartamentoServiceImpl implements DepartamentoService {
+
+    private static final Logger logger = LoggerFactory.getLogger(DepartamentoServiceImpl.class);
 
     private final ApiDepartamentoService apiDepartamentoService;
 
@@ -26,57 +32,112 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
     private final SolicitudRepository solicitudRepository;
 
+    private final SubroganciaRepository subroganciaRepository;
+
     public DepartamentoServiceImpl(ApiDepartamentoService apiDepartamentoService,
             ApiAusenciasService apiAusenciasService, FuncionarioService funcionarioService,
-            SolicitudRepository solicitudRepository) {
+            SolicitudRepository solicitudRepository, SubroganciaRepository subroganciaRepository) {
         this.apiDepartamentoService = apiDepartamentoService;
         this.apiAusenciasService = apiAusenciasService;
         this.funcionarioService = funcionarioService;
         this.solicitudRepository = solicitudRepository;
+        this.subroganciaRepository = subroganciaRepository;
     }
 
     @Override
     public DepartamentoResponse getDepartamentoDestino(Integer rutSolicitante, DepartamentoResponse departamentoInicial,
             LocalDate fechaInicio, LocalDate fechaFin) {
 
-        DepartamentoResponse departamentoActual;
+        logger.info("Iniciando getDepartamentoDestino para rutSolicitante: {}, departamentoInicial: {}, fechaInicio: {}, fechaFin: {}",
+                rutSolicitante, departamentoInicial.getNombre(), fechaInicio, fechaFin);
 
-        if (rutSolicitante.equals(departamentoInicial.getRutJefe())) {
-            if (departamentoInicial.getIdDeptoSuperior() != null) {
-                departamentoActual = apiDepartamentoService
-                        .obtenerDepartamento(departamentoInicial.getIdDeptoSuperior());
-            } else {
-                departamentoActual = departamentoInicial;
-            }
-        } else {
-            departamentoActual = departamentoInicial;
+        DepartamentoResponse dptoActual = departamentoInicial;
+        if (rutSolicitante.equals(dptoActual.getRutJefe()) && dptoActual.getIdDeptoSuperior() != null) {
+            logger.info("Solicitante es jefe y departamento inicial tiene superior. Moviendo a superior.");
+            dptoActual = getSuperior(dptoActual);
         }
 
-        while (departamentoActual != null) {
+        while (dptoActual != null) {
+            logger.info("Evaluando departamento: {} (ID: {}, Nivel: {}, RutJefe: {})",
+                    dptoActual.getNombre(), dptoActual.getId(), dptoActual.getNivelDepartamento(), dptoActual.getRutJefe());
 
-            if (departamentoActual.getNivelDepartamento() != null &&
-                    departamentoActual.getNivelDepartamento().equalsIgnoreCase("DIRECCION")) {
-                if (departamentoActual.getIdDeptoSuperior() != null) {
-                    return apiDepartamentoService.obtenerDepartamento(departamentoActual.getIdDeptoSuperior());
+            if (esJefeDisponible(dptoActual, fechaInicio, fechaFin)) {
+                logger.info("Jefe de departamento {} disponible. Retornando departamento.", dptoActual.getNombre());
+                return dptoActual;
+            }
+
+            if (esNivelDireccion(dptoActual)) {
+                logger.info("Departamento {} es de nivel DIRECCION y su jefe no está disponible. Buscando superior.", dptoActual.getNombre());
+                DepartamentoResponse superior = getSuperior(dptoActual);
+                if (superior != null) {
+                    logger.info("Retornando departamento superior: {}", superior.getNombre());
+                    return superior;
                 } else {
-                    return departamentoActual;
+                    logger.info("Retornando departamento actual (DIRECCION sin superior y jefe no disponible): {}", dptoActual.getNombre());
+                    return dptoActual;
                 }
             }
 
-            if (departamentoActual.getRutJefe() != null &&
-                    !isAusenteEnFecha(departamentoActual.getRutJefe(), fechaInicio) &&
-                    !hasAprobacion(departamentoActual.getRutJefe(), fechaInicio, fechaFin)) {
-                return departamentoActual;
+            logger.info("Jefe de departamento {} no disponible y no es nivel DIRECCION. Buscando superior.", dptoActual.getNombre());
+            DepartamentoResponse superior = getSuperior(dptoActual);
+            if (superior == null) {
+                logger.info("No hay departamento superior para {}. Retornando departamento actual.", dptoActual.getNombre());
+                return dptoActual;
             }
+            dptoActual = superior;
+        }
 
-            if (departamentoActual.getIdDeptoSuperior() != null) {
-                departamentoActual = apiDepartamentoService
-                        .obtenerDepartamento(departamentoActual.getIdDeptoSuperior());
-            } else {
-                return departamentoActual;
+        logger.info("Fin de la jerarquía, no se encontró departamento destino. Retornando null.");
+        return null;
+    }
+
+    private DepartamentoResponse getSuperior(DepartamentoResponse d) {
+        logger.debug("Obteniendo superior para departamento: {} (ID: {}, idDeptoSuperior: {})", d.getNombre(), d.getId(), d.getIdDeptoSuperior());
+        DepartamentoResponse superior = null;
+        if (d.getIdDeptoSuperior() != null) {
+            superior = apiDepartamentoService.obtenerDepartamento(d.getIdDeptoSuperior());
+            logger.debug("Resultado de obtenerDepartamento para superior de {}: {} (ID: {})", d.getNombre(), superior != null ? superior.getNombre() : "null", superior != null ? superior.getId() : "null");
+        }
+        return superior;
+    }
+
+    private boolean esNivelDireccion(DepartamentoResponse d) {
+        boolean isDireccion = d.getNivelDepartamento() != null && "DIRECCION".equalsIgnoreCase(d.getNivelDepartamento());
+        logger.debug("Departamento {} es nivel DIRECCION: {}", d.getNombre(), isDireccion);
+        return isDireccion;
+    }
+
+    private boolean esJefeDisponible(DepartamentoResponse d, LocalDate fechaInicio, LocalDate fechaFin) {
+        if (d.getRutJefe() == null) {
+            logger.debug("Jefe de departamento {} (Rut: null) no disponible.", d.getNombre());
+            return false;
+        }
+
+        boolean jefeAusente = isAusenteEnFecha(d.getRutJefe(), fechaInicio);
+        boolean jefeConAprobacion = hasAprobacion(d.getRutJefe(), fechaInicio, fechaFin);
+
+        boolean disponible = !jefeAusente && !jefeConAprobacion;
+
+        if (!disponible && esNivelDireccion(d)) { // If chief is not directly available and it's a DIRECCION level department
+            boolean hasSubrogate = hasActiveSubrogate(d.getRutJefe(), fechaInicio, fechaFin);
+            if (hasSubrogate) {
+                logger.debug("Jefe de departamento {} (Rut: {}) no disponible directamente, pero tiene subrogante activo. Considerado disponible.", d.getNombre(), d.getRutJefe());
+                return true;
             }
         }
-        return null;
+
+        logger.debug("Jefe de departamento {} (Rut: {}) disponible: {}", d.getNombre(), d.getRutJefe(), disponible);
+        return disponible;
+    }
+
+    private boolean hasActiveSubrogate(Integer rutJefe, LocalDate fechaInicio, LocalDate fechaFin) {
+        List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, fechaInicio, fechaFin);
+        if (!subrogancias.isEmpty()) {
+            logger.debug("Jefe {} tiene subrogante activo.", rutJefe);
+            return true;
+        }
+        logger.debug("Jefe {} no tiene subrogante activo.", rutJefe);
+        return false;
     }
 
     @Override
@@ -88,11 +149,14 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
         FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(rut);
         if (funcionario == null) {
+            logger.debug("Funcionario con rut {} no encontrado. Considerado ausente.", rut);
             return true;
         }
 
-        return !apiAusenciasService.getAusenciasByRutAndFechas(funcionario.getRut(),
+        boolean ausente = !apiAusenciasService.getAusenciasByRutAndFechas(funcionario.getRut(),
                 funcionario.getIdent(), fecha, fecha).isEmpty();
+        logger.debug("Funcionario {} (Rut: {}) ausente en fecha {}: {}", funcionario.getNombre(), rut, fecha, ausente);
+        return ausente;
 
     }
 
@@ -101,15 +165,15 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         Optional<List<Solicitud>> optSolicitud = solicitudRepository.findByRutAndFechaInicioBetween(rut, fechaInicio,
                 fechaFin);
 
-        if (optSolicitud.isEmpty() || optSolicitud.get().isEmpty()) {
-            return false;
+        boolean hasAprob = false;
+        if (optSolicitud.isPresent() && !optSolicitud.get().isEmpty()) {
+            hasAprob = optSolicitud.get().stream()
+                    .anyMatch(solicitud -> solicitud.getEstado() == Solicitud.EstadoSolicitud.APROBADA &&
+                            !solicitud.getFechaInicio().isAfter(fechaFin) &&
+                            !solicitud.getFechaTermino().isBefore(fechaInicio));
         }
-
-        // Verificamos si alguna solicitud cumple las condiciones
-        return optSolicitud.get().stream()
-                .anyMatch(solicitud -> solicitud.getEstado() == Solicitud.EstadoSolicitud.APROBADA &&
-                        !solicitud.getFechaInicio().isAfter(fechaFin) &&
-                        !solicitud.getFechaTermino().isBefore(fechaInicio));
+        logger.debug("Funcionario con rut {} tiene aprobaciones entre {} y {}: {}", rut, fechaInicio, fechaFin, hasAprob);
+        return hasAprob;
     }
 
     @Override
@@ -118,3 +182,4 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     }
 
 }
+
