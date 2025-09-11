@@ -53,13 +53,10 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
         DepartamentoResponse dptoActual = departamentoInicial;
         if (rutSolicitante.equals(dptoActual.getRutJefe()) && dptoActual.getIdDeptoSuperior() != null) {
-            logger.info("Solicitante es jefe y departamento inicial tiene superior. Moviendo a superior.");
             dptoActual = getSuperior(dptoActual);
         }
 
         while (dptoActual != null) {
-            logger.info("Evaluando departamento: {} (ID: {}, Nivel: {}, RutJefe: {})",
-                    dptoActual.getNombre(), dptoActual.getId(), dptoActual.getNivelDepartamento(), dptoActual.getRutJefe());
 
             if (esJefeDisponible(dptoActual, fechaInicio, fechaFin)) {
                 logger.info("Jefe de departamento {} disponible. Retornando departamento.", dptoActual.getNombre());
@@ -67,32 +64,25 @@ public class DepartamentoServiceImpl implements DepartamentoService {
             }
 
             if (esNivelDireccion(dptoActual)) {
-                logger.info("Departamento {} es de nivel DIRECCION y su jefe no está disponible. Buscando superior.", dptoActual.getNombre());
                 DepartamentoResponse superior = getSuperior(dptoActual);
                 if (superior != null) {
-                    logger.info("Retornando departamento superior: {}", superior.getNombre());
                     return superior;
                 } else {
-                    logger.info("Retornando departamento actual (DIRECCION sin superior y jefe no disponible): {}", dptoActual.getNombre());
                     return dptoActual;
                 }
             }
 
-            logger.info("Jefe de departamento {} no disponible y no es nivel DIRECCION. Buscando superior.", dptoActual.getNombre());
             DepartamentoResponse superior = getSuperior(dptoActual);
             if (superior == null) {
-                logger.info("No hay departamento superior para {}. Retornando departamento actual.", dptoActual.getNombre());
                 return dptoActual;
             }
             dptoActual = superior;
         }
 
-        logger.info("Fin de la jerarquía, no se encontró departamento destino. Retornando null.");
         return null;
     }
 
     private DepartamentoResponse getSuperior(DepartamentoResponse d) {
-        logger.debug("Obteniendo superior para departamento: {} (ID: {}, idDeptoSuperior: {})", d.getNombre(), d.getId(), d.getIdDeptoSuperior());
         DepartamentoResponse superior = null;
         if (d.getIdDeptoSuperior() != null) {
             superior = apiDepartamentoService.obtenerDepartamento(d.getIdDeptoSuperior());
@@ -102,14 +92,12 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     }
 
     private boolean esNivelDireccion(DepartamentoResponse d) {
-        boolean isDireccion = d.getNivelDepartamento() != null && "DIRECCION".equalsIgnoreCase(d.getNivelDepartamento());
-        logger.debug("Departamento {} es nivel DIRECCION: {}", d.getNombre(), isDireccion);
-        return isDireccion;
+        return d.getNivelDepartamento() != null && "DIRECCION".equalsIgnoreCase(d.getNivelDepartamento());
+        
     }
 
     private boolean esJefeDisponible(DepartamentoResponse d, LocalDate fechaInicio, LocalDate fechaFin) {
         if (d.getRutJefe() == null) {
-            logger.debug("Jefe de departamento {} (Rut: null) no disponible.", d.getNombre());
             return false;
         }
 
@@ -121,23 +109,16 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         if (!disponible && esNivelDireccion(d)) { // If chief is not directly available and it's a DIRECCION level department
             boolean hasSubrogate = hasActiveSubrogate(d.getRutJefe(), fechaInicio, fechaFin);
             if (hasSubrogate) {
-                logger.debug("Jefe de departamento {} (Rut: {}) no disponible directamente, pero tiene subrogante activo. Considerado disponible.", d.getNombre(), d.getRutJefe());
                 return true;
             }
         }
 
-        logger.debug("Jefe de departamento {} (Rut: {}) disponible: {}", d.getNombre(), d.getRutJefe(), disponible);
         return disponible;
     }
 
     private boolean hasActiveSubrogate(Integer rutJefe, LocalDate fechaInicio, LocalDate fechaFin) {
         List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, fechaInicio, fechaFin);
-        if (!subrogancias.isEmpty()) {
-            logger.debug("Jefe {} tiene subrogante activo.", rutJefe);
-            return true;
-        }
-        logger.debug("Jefe {} no tiene subrogante activo.", rutJefe);
-        return false;
+        return !subrogancias.isEmpty();
     }
 
     @Override
@@ -149,14 +130,11 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
         FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(rut);
         if (funcionario == null) {
-            logger.debug("Funcionario con rut {} no encontrado. Considerado ausente.", rut);
             return true;
         }
 
-        boolean ausente = !apiAusenciasService.getAusenciasByRutAndFechas(funcionario.getRut(),
+        return !apiAusenciasService.getAusenciasByRutAndFechas(funcionario.getRut(),
                 funcionario.getIdent(), fecha, fecha).isEmpty();
-        logger.debug("Funcionario {} (Rut: {}) ausente en fecha {}: {}", funcionario.getNombre(), rut, fecha, ausente);
-        return ausente;
 
     }
 
