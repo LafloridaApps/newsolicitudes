@@ -36,8 +36,8 @@ public class FuncionarioController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> obtenerDetalleColaborador(@RequestParam Integer rut, String vRut) {
-        return ResponseEntity.ok(funcionarioApiService.getFuncionarioInfo(rut, vRut));
+    public ResponseEntity<Object> obtenerDetalleColaborador(@RequestParam Integer rut) {
+        return ResponseEntity.ok(funcionarioApiService.getFuncionarioInfo(rut));
     }
 
     @GetMapping("/cargofunc")

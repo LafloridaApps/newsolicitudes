@@ -2,6 +2,7 @@ package com.newsolicitudes.newsolicitudes.controllers;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +13,7 @@ import com.newsolicitudes.newsolicitudes.services.dashboard.DashboardService;
 
 @RestController
 @RequestMapping("/api/dashboard")
+@CrossOrigin(origins = "http://localhost:5173")
 public class DashboardController {
 
     private final DashboardService dashboardService;
