@@ -25,7 +25,6 @@ import java.time.ZoneId; // Nuevo import
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.HashMap;
 
 @Service
@@ -54,13 +53,19 @@ public class ResumenServiceImpl implements ResumenService {
 
     @Override
     public ResumenJefeDepartamentoDTO getResumenJefeDepartamento(Integer rutJefe, Long idDepartamento) {
-        logger.info("Iniciando getResumenJefeDepartamento para rutJefe: {}, idDepartamento: {}", rutJefe,
-                idDepartamento);
         List<DepartamentoSubrogadoDTO> departamentosSubrogados = getDepartamentosSubrogados(rutJefe);
-        List<SolicitudPendienteDTO> solicitudesPendientes = getSolicitudesPendientes(idDepartamento);
+    
+        List<Long> idDepartamentos = new ArrayList<>();
+        idDepartamentos.add(idDepartamento);
+        List<Subrogancia> subrogancias = subroganciaRepository.findBySubrogante(rutJefe);
+        for (Subrogancia subrogancia : subrogancias) {
+            idDepartamentos.add(subrogancia.getIdDepto());
+        }
+    
+        List<SolicitudPendienteDTO> solicitudesPendientes = getSolicitudesPendientes(idDepartamentos);
         List<ProximaAusenciaDTO> proximasAusencias = getProximasAusencias(idDepartamento);
         Integer ausenciasHoy = getAusenciasEquipoHoy(idDepartamento); // Nueva llamada
-
+    
         return new ResumenJefeDepartamentoDTO(departamentosSubrogados, solicitudesPendientes, proximasAusencias,
                 ausenciasHoy);
     }
@@ -86,14 +91,13 @@ public class ResumenServiceImpl implements ResumenService {
                 .toList();
     }
 
-    private List<SolicitudPendienteDTO> getSolicitudesPendientes(Long idDepartamentoActual) {
-        logger.info("Obteniendo solicitudes pendientes para idDepartamentoActual: {}", idDepartamentoActual);
+    private List<SolicitudPendienteDTO> getSolicitudesPendientes(List<Long> idDepartamentos) {
         List<Solicitud> todasLasSolicitudesPendientes = solicitudRepository
                 .findByEstado(Solicitud.EstadoSolicitud.PENDIENTE);
         List<SolicitudPendienteDTO> pendientes = new ArrayList<>();
 
         for (Solicitud solicitud : todasLasSolicitudesPendientes) {
-            if (isSolicitudPendingForDepartment(solicitud, idDepartamentoActual)) {
+            if (isSolicitudPendingForDepartments(solicitud, idDepartamentos)) {
                 String nombreFuncionario = DEFAULTVALUE;
                 try {
                     FuncionarioResponseApi funcionario = apiExtFuncionarioService
@@ -111,22 +115,26 @@ public class ResumenServiceImpl implements ResumenService {
         return pendientes;
     }
 
-    private boolean isSolicitudPendingForDepartment(Solicitud solicitud, Long idDepartamentoActual) {
-
+    private boolean isSolicitudPendingForDepartments(Solicitud solicitud, List<Long> departmentIds) {
         List<Derivacion> allDerivaciones = derivacionRepository
-                .findBySolicitudIdOrderByFechaDerivacionDesc(solicitud.getId());
+                .findBySolicitudIdOrderByFechaDerivacionDescIdDesc(solicitud.getId());
+
         if (allDerivaciones.isEmpty()) {
-            return solicitud.getIdDepto().equals(idDepartamentoActual);
-        }
-
-        Optional<Derivacion> ultimaDerivacionParaDeptoActualOpt = derivacionRepository
-                .findTopBySolicitudIdAndIdDeptoOrderByFechaDerivacionDesc(solicitud.getId(), idDepartamentoActual);
-
-        if (ultimaDerivacionParaDeptoActualOpt.isPresent()) {
-            Derivacion ultimaDerivacionParaDeptoActual = ultimaDerivacionParaDeptoActualOpt.get();
-            return ultimaDerivacionParaDeptoActual.getEntrada() == null;
+            try {
+                FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
+                if (funcionario != null) {
+                    return departmentIds.contains(funcionario.getCodDepto());
+                } else {
+                    logger.error("No se pudo obtener el funcionario para el rut: {}", solicitud.getRut());
+                    return false;
+                }
+            } catch (Exception e) {
+                logger.error("Error al obtener el funcionario para el rut: {}. Error: {}", solicitud.getRut(), e.getMessage());
+                return false;
+            }
         } else {
-            return false;
+            Derivacion ultimaDerivacion = allDerivaciones.get(0);
+            return departmentIds.contains(ultimaDerivacion.getIdDepto());
         }
     }
 

@@ -11,7 +11,10 @@ public class MiSolicitudDto {
     private String fechaInicio;
     private String fechaFin;
     private double cantidadDias;
+    private String urlPdf;
     private List<Trazabilidad> trazabilidad;
+
+    
 
     public Long getId() {
         return id;
@@ -75,6 +78,14 @@ public class MiSolicitudDto {
 
     public void setTrazabilidad(List<Trazabilidad> trazabilidad) {
         this.trazabilidad = trazabilidad;
+    }
+
+    public String getUrlPdf() {
+        return urlPdf;
+    }
+
+    public void setUrlPdf(String urlPdf) {
+        this.urlPdf = urlPdf;
     }
 
 }

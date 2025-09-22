@@ -127,6 +127,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         miSolicitudDto.setTipoSolicitud(solicitud.getTipoSolicitud().name());
         miSolicitudDto.setEstadoSolicitud(solicitud.getEstado().name());
         miSolicitudDto.setCantidadDias(solicitud.getCantidadDias());
+        miSolicitudDto.setUrlPdf(getUrlPdf(solicitud));
 
         List<Trazabilidad> trazabilidadList = new ArrayList<>(solicitud.getDerivaciones().stream()
                 .map(this::mapToTrazabilidad)
@@ -216,5 +217,13 @@ public class SolicitudServiceImpl implements SolicitudService {
     private void setEstadoPendiente(Trazabilidad trazabilidad) {
         trazabilidad.setUsuario("Pendiente");
         trazabilidad.setEstado(EstadoTrazabilidad.PENDIENTE);
+    }
+
+    private String getUrlPdf(Solicitud solicitud) {
+        Optional<Aprobacion> aprobacionOpt = aprobacionRepository.findBySolicitud(solicitud);
+        if (aprobacionOpt.isPresent()) {
+            return aprobacionOpt.get().getUrlPdf();
+        }
+        return null;
     }
 }
