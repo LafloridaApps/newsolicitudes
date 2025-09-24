@@ -41,7 +41,7 @@ public class SolicitudController {
     }
 
     @GetMapping("/rut")
-    public ResponseEntity<Object> existeSolicitud(@RequestParam Integer rut,
+    public ResponseEntity<Object> getSolicitudesByRut(@RequestParam Integer rut,
             @RequestParam int page,
             @RequestParam int size
 

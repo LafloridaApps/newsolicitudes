@@ -24,6 +24,7 @@ import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -130,7 +131,7 @@ public class DerivacionServiceImpl implements DerivacionService {
 
     @Override
     public PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber) {
-        Pageable pageable = PageRequest.of(pageNumber, 10);
+        Pageable pageable = PageRequest.of(pageNumber, 10,Sort.by("solicitud.id").descending());
 
         List<Subrogancia> subrogancias = getSubroganciasByRutSubrogante(idDepto);
         List<Long> deptoIds = new java.util.ArrayList<>();
