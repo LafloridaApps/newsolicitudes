@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/postergaciones")
+@RequestMapping("/solicitudes/postergaciones")
 @CrossOrigin(origins = "http://localhost:5173")
 public class PostergacionController {
 

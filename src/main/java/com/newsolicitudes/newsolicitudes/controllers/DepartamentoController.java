@@ -12,7 +12,7 @@ import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 
 @RestController
-@RequestMapping("/api/departamentos")
+@RequestMapping("/solicitudes/departamentos")
 @CrossOrigin(origins = "http://localhost:5173")
 public class DepartamentoController {
 

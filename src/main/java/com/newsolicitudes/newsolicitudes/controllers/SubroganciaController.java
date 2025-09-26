@@ -14,7 +14,7 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 
 @RestController
-@RequestMapping("/api/subrogancia")
+@RequestMapping("/solicitudes/subrogancia")
 @CrossOrigin(origins = "http://localhost:5173")
 public class SubroganciaController {
 

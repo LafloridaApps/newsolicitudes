@@ -16,7 +16,7 @@ import com.newsolicitudes.newsolicitudes.dto.SolicitudRequest;
 import com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudService;
 
 @RestController
-@RequestMapping("/api/solicitudes")
+@RequestMapping("/solicitudes/solicitudes")
 @CrossOrigin(origins = "http://localhost:5173")
 public class SolicitudController {
 

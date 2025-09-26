@@ -16,7 +16,7 @@ import com.newsolicitudes.newsolicitudes.services.resumeninicio.ResmuenFuncInici
 import com.newsolicitudes.newsolicitudes.services.searchfunc.SearchFuncServcie;
 
 @RestController
-@RequestMapping("/api/funcionario")
+@RequestMapping("/solicitudes/funcionario")
 @CrossOrigin(origins = "http://localhost:5173")
 public class FuncionarioController {
 

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.newsolicitudes.newsolicitudes.services.feriadoslegales.FeriadosLegalesService;
 
 @RestController
-@RequestMapping("/api/feriados")
+@RequestMapping("/solicitudes/feriados")
 @CrossOrigin(origins = "http://localhost:5173")
 public class FeriadosLegalesController {
 

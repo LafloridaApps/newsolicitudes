@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.newsolicitudes.newsolicitudes.services.administrativo.AdministrativoService;
 
 @RestController
-@RequestMapping("/api/administrativos")
+@RequestMapping("/solicitudes/administrativos")
 @CrossOrigin(origins = "http://localhost:5173")
 public class AdministrativosController {
 

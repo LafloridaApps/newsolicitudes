@@ -27,7 +27,7 @@ import com.newsolicitudes.newsolicitudes.services.templates.TemplateService;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/doc")
+@RequestMapping("/solicitudes/doc")
 @CrossOrigin(origins = "http://localhost:5173")
 public class DocController {
 

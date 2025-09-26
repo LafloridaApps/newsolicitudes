@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/resumen")
+@RequestMapping("/solicitudes/resumen")
 @CrossOrigin(origins = "http://localhost:5173") // Ajusta según sea necesario
 public class ResumenController {
 

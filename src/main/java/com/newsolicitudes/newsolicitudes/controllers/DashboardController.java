@@ -12,7 +12,7 @@ import com.newsolicitudes.newsolicitudes.dto.DashboardAusenciaDto;
 import com.newsolicitudes.newsolicitudes.services.dashboard.DashboardService;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping("/solicitudes/dashboard")
 @CrossOrigin(origins = "http://localhost:5173")
 public class DashboardController {
 

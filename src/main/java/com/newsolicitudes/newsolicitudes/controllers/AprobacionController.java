@@ -19,7 +19,7 @@ import com.newsolicitudes.newsolicitudes.service.aprobacioneslist.AprobacionList
 import com.newsolicitudes.newsolicitudes.services.aprobacion.AprobacionService;
 
 @RestController
-@RequestMapping("/api/aprobaciones")
+@RequestMapping("/solicitudes/aprobaciones")
 @CrossOrigin(origins = "http://localhost:5173")
 public class AprobacionController {
 

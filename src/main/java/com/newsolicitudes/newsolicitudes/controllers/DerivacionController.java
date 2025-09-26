@@ -20,7 +20,7 @@ import com.newsolicitudes.newsolicitudes.services.derivacioncreate.DerivacionCre
 import com.newsolicitudes.newsolicitudes.services.noleidas.NoLeidasService;
 
 @RestController
-@RequestMapping("/api/derivacion")
+@RequestMapping("/solicitudes/derivacion")
 @CrossOrigin(origins = "http://localhost:5173")
 public class DerivacionController {
 
