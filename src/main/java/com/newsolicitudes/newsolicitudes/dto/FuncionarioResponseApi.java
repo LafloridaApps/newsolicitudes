@@ -150,4 +150,12 @@ public class FuncionarioResponseApi {
     public void setDecretos(List<DecretoDto> decretos) {
         this.decretos = decretos;
     }
+
+    public String getNombreCompleto() {
+        return nombre + " " + apellidoPaterno + " " + apellidoMaterno;
+    }
+
+    public String getRutCompleto() {
+        return rut + "-" + vrut;
+    }
 }
