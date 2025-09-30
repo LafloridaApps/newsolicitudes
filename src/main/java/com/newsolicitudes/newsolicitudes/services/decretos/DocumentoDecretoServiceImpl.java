@@ -56,7 +56,7 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
             }
 
             // 3. Tomar la segunda fila como plantilla (fila 0 = encabezado)
-            Tr filaEjemplo = (Tr) tabla.getContent().get(1);
+            Tr filaEjemplo = (Tr) tabla.getContent().get(2);
 
             // 4. Limpiar filas previas (dejamos solo encabezado)
             tabla.getContent().subList(1, tabla.getContent().size()).clear();
@@ -65,10 +65,15 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
             for (AprobacionList a : aprobaciones) {
                 Tr nuevaFila = XmlUtils.deepCopy(filaEjemplo);
 
-                reemplazarTextoEnCelda(nuevaFila, 0, a.getRut());
-                reemplazarTextoEnCelda(nuevaFila, 1, a.getTipoSolicitud());
-                reemplazarTextoEnCelda(nuevaFila, 2, a.getDesde());
-                reemplazarTextoEnCelda(nuevaFila, 3, a.getHasta());
+                reemplazarTextoEnCelda(nuevaFila, 1, a.getNombres() + " " + a.getApellidos());
+                reemplazarTextoEnCelda(nuevaFila, 2, a.getRut());
+                reemplazarTextoEnCelda(nuevaFila, 3, a.getDesde());
+                reemplazarTextoEnCelda(nuevaFila, 4, a.getHasta());
+                reemplazarTextoEnCelda(nuevaFila, 5 , a.getJornada());
+                reemplazarTextoEnCelda(nuevaFila, 6, a.getDuracion().toString());
+                reemplazarTextoEnCelda(nuevaFila, 7, a.getNroDecreto().toString());
+                reemplazarTextoEnCelda(nuevaFila, 8, a.getIdSolicitud().toString());
+
 
                 tabla.getContent().add(nuevaFila);
             }

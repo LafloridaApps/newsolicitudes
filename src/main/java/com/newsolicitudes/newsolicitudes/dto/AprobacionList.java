@@ -12,7 +12,7 @@ public class AprobacionList {
     private String jornada;
     private String desde;
     private String hasta;
-    private double duracion;
+    private Double duracion;
     private String fechaSolicitud;
     private String tipoSolicitud;
     private String tipoContrato;
@@ -88,11 +88,11 @@ public class AprobacionList {
         this.jornada = jornada;
     }
 
-    public double getDuracion() {
+    public Double getDuracion() {
         return duracion;
     }
 
-    public void setDuracion(double duracion) {
+    public void setDuracion(Double duracion) {
         this.duracion = duracion;
     }
 
@@ -160,7 +160,7 @@ public class AprobacionList {
         private String apellidos;
         private String departamento;
         private String jornada;
-        private double duracion;
+        private Double duracion;
         private String desde;
         private String hasta;
         private String fechaSolicitud;
@@ -198,7 +198,7 @@ public class AprobacionList {
             return this;
         }
 
-        public Builder duracion(double duracion) {
+        public Builder duracion(Double duracion) {
             this.duracion = duracion;
             return this;
         }

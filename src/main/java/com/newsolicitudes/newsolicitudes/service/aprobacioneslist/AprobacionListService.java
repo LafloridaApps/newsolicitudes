@@ -1,12 +1,11 @@
 package com.newsolicitudes.newsolicitudes.service.aprobacioneslist;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
+import com.newsolicitudes.newsolicitudes.dto.AprobacionListPage;
 
 public interface AprobacionListService {
 
-    List<AprobacionList> getAprobacionList(LocalDate fechaInicio, LocalDate fechaTermino);
+    AprobacionListPage getAprobacionList(LocalDate fechaInicio, LocalDate fechaTermino, int pageNumber);
 
 }

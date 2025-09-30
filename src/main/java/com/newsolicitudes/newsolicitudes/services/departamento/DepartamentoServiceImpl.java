@@ -48,8 +48,7 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     public DepartamentoResponse getDepartamentoDestino(Integer rutSolicitante, DepartamentoResponse departamentoInicial,
             LocalDate fechaInicio, LocalDate fechaFin) {
 
-        logger.info("Iniciando getDepartamentoDestino para rutSolicitante: {}, departamentoInicial: {}, fechaInicio: {}, fechaFin: {}",
-                rutSolicitante, departamentoInicial.getNombre(), fechaInicio, fechaFin);
+       
 
         DepartamentoResponse dptoActual = departamentoInicial;
         if (rutSolicitante.equals(dptoActual.getRutJefe()) && dptoActual.getIdDeptoSuperior() != null) {
@@ -86,14 +85,13 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         DepartamentoResponse superior = null;
         if (d.getIdDeptoSuperior() != null) {
             superior = apiDepartamentoService.obtenerDepartamento(d.getIdDeptoSuperior());
-            logger.debug("Resultado de obtenerDepartamento para superior de {}: {} (ID: {})", d.getNombre(), superior != null ? superior.getNombre() : "null", superior != null ? superior.getId() : "null");
         }
         return superior;
     }
 
     private boolean esNivelDireccion(DepartamentoResponse d) {
         return d.getNivelDepartamento() != null && "DIRECCION".equalsIgnoreCase(d.getNivelDepartamento());
-        
+
     }
 
     private boolean esJefeDisponible(DepartamentoResponse d, LocalDate fechaInicio, LocalDate fechaFin) {
@@ -106,7 +104,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
 
         boolean disponible = !jefeAusente && !jefeConAprobacion;
 
-        if (!disponible && esNivelDireccion(d)) { // If chief is not directly available and it's a DIRECCION level department
+        if (!disponible && esNivelDireccion(d)) { // If chief is not directly available and it's a DIRECCION level
+                                                  // department
             boolean hasSubrogate = hasActiveSubrogate(d.getRutJefe(), fechaInicio, fechaFin);
             if (hasSubrogate) {
                 return true;
@@ -117,7 +116,9 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     }
 
     private boolean hasActiveSubrogate(Integer rutJefe, LocalDate fechaInicio, LocalDate fechaFin) {
-        List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, fechaInicio, fechaFin);
+        List<Subrogancia> subrogancias = subroganciaRepository
+                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, fechaInicio,
+                        fechaFin);
         return !subrogancias.isEmpty();
     }
 
@@ -150,7 +151,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
                             !solicitud.getFechaInicio().isAfter(fechaFin) &&
                             !solicitud.getFechaTermino().isBefore(fechaInicio));
         }
-        logger.debug("Funcionario con rut {} tiene aprobaciones entre {} y {}: {}", rut, fechaInicio, fechaFin, hasAprob);
+        logger.debug("Funcionario con rut {} tiene aprobaciones entre {} y {}: {}", rut, fechaInicio, fechaFin,
+                hasAprob);
         return hasAprob;
     }
 
@@ -159,5 +161,6 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         return apiDepartamentoService.getDepartamentosList();
     }
 
-}
+   
 
+}

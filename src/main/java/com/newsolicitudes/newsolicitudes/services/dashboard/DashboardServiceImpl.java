@@ -19,6 +19,7 @@ import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
@@ -44,7 +45,8 @@ public class DashboardServiceImpl implements DashboardService {
         List<Long> deptoIds = new ArrayList<>();
         collectDeptoInfo(deptoJerarquia, deptoIds, deptoNombres);
 
-        List<Solicitud> solicitudes = solicitudRepository.findAllByEstadoAndIdDeptoIn(EstadoSolicitud.APROBADA, deptoIds);
+        List<Solicitud> solicitudes = solicitudRepository.findByEstadoInAndIdDeptoInAndFechaInicioGreaterThanEqual(
+                List.of(EstadoSolicitud.APROBADA, EstadoSolicitud.DECRETADA), deptoIds, FechaUtils.getFirstDayOfCurrentMonth()    );
 
         return solicitudes.stream().map(solicitud -> mapToDashboardDto(solicitud, deptoNombres))
                 .toList();
@@ -71,9 +73,10 @@ public class DashboardServiceImpl implements DashboardService {
         String rutFuncionario = "";
 
         if (funcionario != null) {
-            nombreFuncionario = funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " " + funcionario.getApellidoMaterno();
+            nombreFuncionario = funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " "
+                    + funcionario.getApellidoMaterno();
             // The RUT from the API might need formatting (e.g., adding dots and hyphen)
-            rutFuncionario = funcionario.getRut().toString(); 
+            rutFuncionario = funcionario.getRut().toString();
         }
 
         return new DashboardAusenciaDto(

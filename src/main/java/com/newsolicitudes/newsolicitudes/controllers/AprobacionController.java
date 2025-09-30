@@ -1,7 +1,6 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -12,8 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
+import com.newsolicitudes.newsolicitudes.dto.AprobacionListPage;
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
 import com.newsolicitudes.newsolicitudes.service.aprobacioneslist.AprobacionListService;
 import com.newsolicitudes.newsolicitudes.services.aprobacion.AprobacionService;
@@ -43,10 +41,10 @@ public class AprobacionController {
 
     @GetMapping("/list")
     public ResponseEntity<Object> getAprobacionesBetweenDate(@RequestParam LocalDate fechaInicio,
-            @RequestParam LocalDate fechaFin) {
+            @RequestParam LocalDate fechaFin, @RequestParam int pageNumber) {
 
-        List<AprobacionList> aprobaciones = aprobacionListService.getAprobacionList(fechaInicio, fechaFin);
-        if (aprobaciones.isEmpty()) {
+        AprobacionListPage aprobaciones = aprobacionListService.getAprobacionList(fechaInicio, fechaFin, pageNumber);
+        if (aprobaciones.getAprobaciones().isEmpty()) {
             Map<String, String> response = Map.of("message", "No se encontraron aprobaciones");
             return ResponseEntity.ok(response);
         }

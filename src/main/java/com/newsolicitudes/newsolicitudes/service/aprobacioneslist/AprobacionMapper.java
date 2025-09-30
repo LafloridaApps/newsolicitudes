@@ -1,10 +1,13 @@
 package com.newsolicitudes.newsolicitudes.service.aprobacioneslist;
 
+import java.util.Comparator;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
+import com.newsolicitudes.newsolicitudes.dto.AprobacionListPage;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
@@ -24,8 +27,17 @@ public class AprobacionMapper {
         this.departamentoService = departamentoService;
     }
 
-    public List<AprobacionList> aprobacionListToAprobacion(List<Aprobacion> aprobaciones) {
+    public AprobacionListPage aprobacionListToAprobacion(Page<Aprobacion> aprobaciones) {
 
+        return new AprobacionListPage(
+                aprobaciones.getTotalPages(),
+                aprobaciones.getTotalElements(),
+                aprobaciones.getNumber(),
+                mapToAprobacionList(aprobaciones.getContent()));
+
+    }
+
+    private List<AprobacionList> mapToAprobacionList(List<Aprobacion> aprobaciones) {
         return aprobaciones.stream()
                 .filter(s -> s.getEstadoSolicitud().equals(EstadoSolicitud.APROBADA))
                 .map(aprobacion -> AprobacionList.builder()
@@ -41,8 +53,9 @@ public class AprobacionMapper {
                         .fechaSolicitud(aprobacion.getFechaSolicitud().toString())
                         .tipoSolicitud(aprobacion.getTipoSolicitud())
                         .tipoContrato(getTipoContrato(aprobacion.getRutSolicitud()))
-                        .url("")
+                        .url(aprobacion.getUrlPdf())
                         .build())
+                .sorted(Comparator.comparing(AprobacionList::getApellidos).thenComparing(AprobacionList::getNombres))
                 .toList();
     }
 
@@ -86,7 +99,8 @@ public class AprobacionMapper {
                         return Solicitud.Jornada.PM.name();
                     }
                 }
-                // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se considera completa por defecto
+                // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se
+                // considera completa por defecto
                 return Solicitud.Jornada.COMPLETA.name();
             }
         } else if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.FERIADO)) {

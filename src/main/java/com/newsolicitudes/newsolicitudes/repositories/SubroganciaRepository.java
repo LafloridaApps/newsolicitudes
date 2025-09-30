@@ -25,4 +25,6 @@ public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long> 
 
     List<Subrogancia> findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(Integer jefe, LocalDate fecha, LocalDate fecha2);
 
+    boolean existsBySubroganteAndFechaInicioLessThanEqual(Integer subrogante, LocalDate fecha);
+
 }

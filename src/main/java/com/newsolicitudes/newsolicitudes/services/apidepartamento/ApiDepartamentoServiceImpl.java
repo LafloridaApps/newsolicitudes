@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.dto.CargoFunc;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoJerarquiaDTO;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
@@ -20,9 +22,12 @@ import reactor.core.publisher.Mono;
 public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     private final WebClient webClient;
+    private final SubroganciaRepository subroganciaRepository;
 
-    public ApiDepartamentoServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
+    public ApiDepartamentoServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties,
+            SubroganciaRepository subroganciaRepository) {
         this.webClient = webClientBuilder.baseUrl(apiProperties.getDepartamentoUrl()).build();
+        this.subroganciaRepository = subroganciaRepository;
     }
 
     @Override
@@ -46,7 +51,8 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     @Override
     public CargoFunc obtenerJefeFunc(Long idDepto, Integer rut) {
-        return webClient.get()
+
+        CargoFunc cargoFunc = webClient.get()
                 .uri(uriBuilder -> {
                     String uri = uriBuilder
                             .path("/api/departamentos/esjefe")
@@ -62,6 +68,16 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .bodyToMono(CargoFunc.class)
                 .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
+
+        if (cargoFunc != null
+                && subroganciaRepository.existsBySubroganteAndFechaInicioLessThanEqual(rut, FechaUtils.fechaActual())) {
+
+            cargoFunc.setEsJefe(true);
+            
+        }
+
+        return cargoFunc;
+
     }
 
     @Override
@@ -78,7 +94,7 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     @Override
     public List<DepartamentoList> getDepartamentosList() {
-       return webClient.get()
+        return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/api/departamentos/list").build())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, response -> Mono.empty())
@@ -90,14 +106,14 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     @Override
     public DepartamentoJerarquiaDTO getJerarquiaPorId(Long id) {
-    return webClient.get()
-            .uri(uriBuilder -> uriBuilder.path("/api/departamentos/jerarquia/{id}").build(id))
-            .retrieve()
-            .onStatus(HttpStatusCode::is4xxClientError,
-                response -> response.createException().flatMap(Mono::error))
-            .bodyToMono(DepartamentoJerarquiaDTO.class)
-            .onErrorResume(e -> Mono.empty())
-            .block();
-}
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/departamentos/jerarquia/{id}").build(id))
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        response -> response.createException().flatMap(Mono::error))
+                .bodyToMono(DepartamentoJerarquiaDTO.class)
+                .onErrorResume(e -> Mono.empty())
+                .block();
+    }
 
 }
