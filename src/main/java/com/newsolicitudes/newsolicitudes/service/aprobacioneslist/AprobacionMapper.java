@@ -6,11 +6,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
-import com.newsolicitudes.newsolicitudes.dto.AprobacionListPage;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
@@ -30,16 +28,16 @@ public class AprobacionMapper {
         this.departamentoService = departamentoService;
     }
 
-    public AprobacionListPage aprobacionListToAprobacion(Page<Aprobacion> aprobaciones) {
-        List<Aprobacion> aprobacionContent = aprobaciones.getContent();
+    public List<AprobacionList> aprobacionListToAprobacion(List<Aprobacion> aprobaciones) {
+
 
         // Collect all unique RUTs and department IDs
-        List<Integer> ruts = aprobacionContent.stream()
+        List<Integer> ruts = aprobaciones.stream()
                 .map(Aprobacion::getRutSolicitud)
                 .distinct()
                 .toList();
 
-        List<Long> deptoIds = aprobacionContent.stream()
+        List<Long> deptoIds = aprobaciones.stream()
                 .map(Aprobacion::getDeptoSolicitud)
                 .distinct()
                 .toList();
@@ -51,11 +49,7 @@ public class AprobacionMapper {
         Map<Long, DepartamentoResponse> departamentosMap = deptoIds.stream()
                 .collect(Collectors.toMap(Function.identity(), departamentoService::getDepartamentoById));
 
-        return new AprobacionListPage(
-                aprobaciones.getTotalPages(),
-                aprobaciones.getTotalElements(),
-                aprobaciones.getNumber(),
-                mapToAprobacionList(aprobacionContent, funcionariosMap, departamentosMap));
+        return mapToAprobacionList(aprobaciones, funcionariosMap, departamentosMap);
     }
 
     private List<AprobacionList> mapToAprobacionList(List<Aprobacion> aprobaciones,
@@ -83,7 +77,7 @@ public class AprobacionMapper {
                             .url(aprobacion.getUrlPdf())
                             .build();
                 })
-                .sorted(Comparator.comparing(AprobacionList::getApellidos).thenComparing(AprobacionList::getNombres))
+                .sorted(Comparator.comparing(AprobacionList::getApellidos))
                 .toList();
     }
 

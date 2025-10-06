@@ -1,11 +1,12 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.DashboardAusenciaDto;
@@ -22,8 +23,8 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
-    @GetMapping("/ausencias/departamento/{departamentoId}")
-    public List<DashboardAusenciaDto> getAusenciasPorDepartamento(@PathVariable Long departamentoId) {
-        return dashboardService.getAusenciasPorDepartamento(departamentoId);
+    @GetMapping("/ausencias/departamento")
+    public List<DashboardAusenciaDto> getAusenciasPorDepartamento(@RequestParam Long idDepto, @RequestParam LocalDate fecha) {
+        return dashboardService.getAusenciasPorDepartamento(idDepto, fecha);
     }
 }

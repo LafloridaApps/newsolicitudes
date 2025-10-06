@@ -1,5 +1,6 @@
 package com.newsolicitudes.newsolicitudes.services.dashboard;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +20,6 @@ import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
-import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
@@ -38,15 +38,19 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public List<DashboardAusenciaDto> getAusenciasPorDepartamento(Long departamentoId) {
+    public List<DashboardAusenciaDto> getAusenciasPorDepartamento(Long departamentoId, LocalDate fecha) {
         DepartamentoJerarquiaDTO deptoJerarquia = apiDepartamentoService.getJerarquiaPorId(departamentoId);
+
+        LocalDate primerDia = primerDiaDelMes(fecha);
+        LocalDate ultimoDia = ultimoDiaDelMes(fecha);
+
 
         Map<Long, String> deptoNombres = new HashMap<>();
         List<Long> deptoIds = new ArrayList<>();
         collectDeptoInfo(deptoJerarquia, deptoIds, deptoNombres);
 
-        List<Solicitud> solicitudes = solicitudRepository.findByEstadoInAndIdDeptoInAndFechaInicioGreaterThanEqual(
-                List.of(EstadoSolicitud.APROBADA, EstadoSolicitud.DECRETADA), deptoIds, FechaUtils.getFirstDayOfCurrentMonth()    );
+        List<Solicitud> solicitudes = solicitudRepository.findByEstadoInAndIdDeptoInAndFechaInicioGreaterThanEqualAndFechaTerminoLessThanEqual(
+                List.of(EstadoSolicitud.APROBADA, EstadoSolicitud.DECRETADA), deptoIds, primerDia, ultimoDia);
 
         return solicitudes.stream().map(solicitud -> mapToDashboardDto(solicitud, deptoNombres))
                 .toList();
@@ -88,5 +92,15 @@ public class DashboardServiceImpl implements DashboardService {
                 aprobacionOpt.map(Aprobacion::getFechaAprobacion).orElse(null),
                 new PeriodoDto(solicitud.getFechaInicio(), solicitud.getFechaTermino()));
     }
+
+    private  LocalDate primerDiaDelMes(LocalDate fecha) {
+        return fecha.withDayOfMonth(1);
+    }
+
+    
+    private  LocalDate ultimoDiaDelMes(LocalDate fecha) {
+        return fecha.withDayOfMonth(fecha.lengthOfMonth());
+    }
+
 
 }

@@ -1,13 +1,11 @@
 package com.newsolicitudes.newsolicitudes.service.aprobacioneslist;
 
 import java.time.LocalDate;
+import java.util.List;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.newsolicitudes.newsolicitudes.dto.AprobacionListPage;
+import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 
@@ -25,11 +23,9 @@ public class AprobacionListServiceImpl implements AprobacionListService {
     }
 
     @Override
-    public AprobacionListPage getAprobacionList(LocalDate fechaInicio, LocalDate fechaTermino, int pageNumber) {
+    public List<AprobacionList> getAprobacionList(LocalDate fechaInicio, LocalDate fechaTermino) {
 
-        Pageable pageable = PageRequest.of(pageNumber, 20);
-
-        Page<Aprobacion> aprobaciones = aprobacionRepository.findByFechaAprobacionBetween(fechaInicio, fechaTermino, pageable);
+        List<Aprobacion> aprobaciones = aprobacionRepository.findByFechaAprobacionBetween(fechaInicio, fechaTermino);
 
         return aprobacionMapper.aprobacionListToAprobacion(aprobaciones);
 

@@ -43,8 +43,8 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
 
     List<Solicitud> findAllByEstadoAndIdDeptoIn(Solicitud.EstadoSolicitud estado, List<Long> idDeptos);
 
-    List<Solicitud> findByEstadoInAndIdDeptoInAndFechaInicioGreaterThanEqual(List<Solicitud.EstadoSolicitud> estados,
+    List<Solicitud> findByEstadoInAndIdDeptoInAndFechaInicioGreaterThanEqualAndFechaTerminoLessThanEqual(List<Solicitud.EstadoSolicitud> estados,
             List<Long> idDeptos,
-            LocalDate fechaInicio);
+            LocalDate fechaInicio, LocalDate fechaFin);
 
 }
