@@ -41,7 +41,7 @@ public class ResmuenFuncInicioServiceImpl implements ResmuenFuncInicioService {
                 // Obtener funcionario
                 FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(rut);
 
-                FeriadosLegalesDto feriados = feriadoService.obtnerFeriados(funcionario.getRut(),
+                FeriadosLegalesDto feriados = feriadoService.obtenerFeriados(funcionario.getRut(),
                                 funcionario.getIdent());
                 AdministrativoDto administrativo = administrativoService.getAdministrativoByRutAndIdent(
                                 funcionario.getRut(),

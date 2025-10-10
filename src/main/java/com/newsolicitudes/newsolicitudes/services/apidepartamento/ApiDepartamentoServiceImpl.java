@@ -70,7 +70,7 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .block();
 
         if (cargoFunc != null
-                && subroganciaRepository.existsBySubroganteAndFechaInicioLessThanEqual(rut, FechaUtils.fechaActual())) {
+                && subroganciaRepository.existsBySubroganteAndFechaInicioGreaterThanEqual(rut, FechaUtils.fechaActual())) {
 
             cargoFunc.setEsJefe(true);
             

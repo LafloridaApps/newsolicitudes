@@ -6,4 +6,5 @@ public interface FuncionarioService {
 
     FuncionarioResponseApi getFuncionarioByRut(Integer rut);
 
+
 }

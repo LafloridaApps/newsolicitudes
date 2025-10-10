@@ -2,7 +2,9 @@ package com.newsolicitudes.newsolicitudes.services.solicitud;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -31,9 +33,12 @@ import com.newsolicitudes.newsolicitudes.entities.enums.EstadoTrazabilidad;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
+import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.derivacion.DerivacionService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
 import com.newsolicitudes.newsolicitudes.services.mapper.SolicitudMapper;
 import com.newsolicitudes.newsolicitudes.services.subrogancia.SubroganciaService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
@@ -51,6 +56,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final SolicitudMapper solicitudMapper;
     private final AprobacionRepository aprobacionRepository;
     private final PostergacionRepository postergacionRepository;
+    private final ApiMailService apiMailService;
+    private final SubroganciaRepository subroganciaRepository;
 
     public SolicitudServiceImpl(DerivacionService derivacionService, SolicitudRepository solicitudRepository,
             SubroganciaService subroganciaService,
@@ -58,7 +65,9 @@ public class SolicitudServiceImpl implements SolicitudService {
             FuncionarioService funcionarioService,
             SolicitudMapper solicitudMapper,
             AprobacionRepository aprobacionRepository,
-            PostergacionRepository postergacionRepository) {
+            PostergacionRepository postergacionRepository,
+            ApiMailService apiMailService,
+            SubroganciaRepository subroganciaRepository) {
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaService = subroganciaService;
@@ -67,6 +76,8 @@ public class SolicitudServiceImpl implements SolicitudService {
         this.solicitudMapper = solicitudMapper;
         this.aprobacionRepository = aprobacionRepository;
         this.postergacionRepository = postergacionRepository;
+        this.apiMailService = apiMailService;
+        this.subroganciaRepository = subroganciaRepository;
     }
 
     @Override
@@ -76,6 +87,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
         DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
                 departamentoActual, request.getFechaInicio(), request.getFechaFin());
+
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
         Solicitud solicitud = solicitudMapper.mapToSolicitud(request, funcionario.getRut(), funcionario.getCodDepto());
@@ -86,12 +98,42 @@ public class SolicitudServiceImpl implements SolicitudService {
             createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(),
                     request.getDepto());
         }
+
+        sendMailSolicitud(solicitud, departamentoDestino, funcionario, departamentoActual.getNombre());
         return new SolicitudResponse(solicitud.getId(), departamentoDestino.getNombre());
     }
 
     private void createSubroganciaSol(SubroganciaRequest subrogancia, LocalDate fechaInicio, LocalDate fechaFin,
             Long idDepto) {
         subroganciaService.createSubrogancia(subrogancia, fechaInicio, fechaFin, idDepto);
+    }
+
+    private void sendMailSolicitud(Solicitud solicitud, DepartamentoResponse departamentoDestino,
+            FuncionarioResponseApi funcionario, String nombreDepartamentoActual) {
+
+        Integer rutJefeDestino = departamentoDestino.getRutJefe();
+        LocalDate hoy = LocalDate.now();
+        List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
+
+        FuncionarioResponseApi destinatario;
+        if (!subrogancias.isEmpty()) {
+            destinatario = funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
+        } else {
+            destinatario = funcionarioService.getFuncionarioByRut(rutJefeDestino);
+        }
+
+        String to = destinatario.getEmail();
+        String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
+        String templateName = "solicitud";
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("nombreJefe", destinatario.getNombreCompleto());
+        body.put("nombre", funcionario.getNombreCompleto());
+        body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
+        body.put("departamento", nombreDepartamentoActual);
+        body.put("link", "https://appx.laflorida.cl/login");
+
+        apiMailService.enviarMail(to, subject, templateName, body);
     }
 
     @Override

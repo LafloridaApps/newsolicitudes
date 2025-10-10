@@ -43,11 +43,13 @@ public class DecretoServiceImpl implements DecretoService {
     private final AprobacionesDecretadasMapper mapper;
     private final DocumentoDecretoService documentoDecretoService;
     private final ApiExtFuncionarioService apiExtFuncionarioService;
+    private final com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository aprobacionRepository;
 
     public DecretoServiceImpl(SolicitudRepository solicitudRepository, DecretoRepository decretoRepository,
             DecretoSolicitudRepository decretoSolicitudRepository, FuncionarioService funcionarioService,
             AprobacionesDecretadasMapper mapper, DocumentoDecretoService documentoDecretoService,
-            ApiExtFuncionarioService apiExtFuncionarioService) {
+            ApiExtFuncionarioService apiExtFuncionarioService,
+            com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository aprobacionRepository) {
         this.solicitudRepository = solicitudRepository;
         this.decretoRepository = decretoRepository;
         this.decretoSolicitudRepository = decretoSolicitudRepository;
@@ -55,6 +57,7 @@ public class DecretoServiceImpl implements DecretoService {
         this.mapper = mapper;
         this.documentoDecretoService = documentoDecretoService;
         this.apiExtFuncionarioService = apiExtFuncionarioService;
+        this.aprobacionRepository = aprobacionRepository;
     }
 
     @Override
@@ -183,7 +186,12 @@ public class DecretoServiceImpl implements DecretoService {
                 } catch (Exception e) {
                     // Si la API de funcionario falla, simplemente no se pone el nombre.
                 }
-                return new SolicitudInfoDTO(solicitud.getId(), solicitud.getRut(), funcionarioNombreDisplay);
+
+                String urlPdf = aprobacionRepository.findBySolicitud(solicitud)
+                    .map(com.newsolicitudes.newsolicitudes.entities.Aprobacion::getUrlPdf)
+                    .orElse(null);
+
+                return new SolicitudInfoDTO(solicitud.getId(), solicitud.getRut(), funcionarioNombreDisplay, solicitud.getTipoSolicitud(), urlPdf);
             }).toList();
 
         return new DecretoConSolicitudesDTO(

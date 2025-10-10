@@ -72,7 +72,10 @@ public class ResumenServiceImpl implements ResumenService {
 
     private List<DepartamentoSubrogadoDTO> getDepartamentosSubrogados(Integer rutJefe) {
         List<Subrogancia> subrogancias = subroganciaRepository.findBySubrogante(rutJefe);
+        LocalDate today = LocalDate.now(ZoneId.of("America/Santiago"));
+
         return subrogancias.stream()
+                .filter(s -> !today.isBefore(s.getFechaInicio()) && !today.isAfter(s.getFechaFin()))
                 .map(subrogancia -> {
                     String nombreDepartamento = DEFAULTVALUE;
                     try {

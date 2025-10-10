@@ -17,6 +17,7 @@ import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepositor
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
 import com.newsolicitudes.newsolicitudes.services.mapper.SolicitudMapper;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
@@ -30,7 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class DerivacionServiceImpl implements DerivacionService {
@@ -41,19 +44,21 @@ public class DerivacionServiceImpl implements DerivacionService {
     private final SubroganciaRepository subroganciaRepository;
     private final DepartamentoService departamentoService;
     private final FuncionarioService funcionarioService;
+    private final ApiMailService apiMailService;
 
     public DerivacionServiceImpl(
             DerivacionRepository derivacionRepository,
             EntradaDerivacionRepository entradaDerivacionRepository,
             SolicitudMapper solicitudDtoMapper,
             SubroganciaRepository subroganciaRepository, DepartamentoService departamentoService,
-            FuncionarioService funcionarioService) {
+            FuncionarioService funcionarioService, ApiMailService apiMailService) {
         this.derivacionRepository = derivacionRepository;
         this.entradaDerivacionRepository = entradaDerivacionRepository;
         this.solicitudDtoMapper = solicitudDtoMapper;
         this.subroganciaRepository = subroganciaRepository;
         this.departamentoService = departamentoService;
         this.funcionarioService = funcionarioService;
+        this.apiMailService = apiMailService;
     }
 
     @Override
@@ -73,6 +78,38 @@ public class DerivacionServiceImpl implements DerivacionService {
         derivacionInicial.setTipo(tipoFinal);
 
         derivacionRepository.save(derivacionInicial);
+        sendMailDerivacion(derivacionInicial);
+    }
+
+    private void sendMailDerivacion(Derivacion derivacion) {
+        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(derivacion.getSolicitud().getRut());
+        DepartamentoResponse deptoDestino = departamentoService.getDepartamentoById(derivacion.getIdDepto());
+        
+        Integer rutJefeDestino = deptoDestino.getRutJefe();
+        LocalDate hoy = FechaUtils.fechaActual();
+        List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
+
+        FuncionarioResponseApi destinatario;
+        if (!subrogancias.isEmpty()) {
+            destinatario = funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
+        } else {
+            destinatario = funcionarioService.getFuncionarioByRut(rutJefeDestino);
+        }
+
+        DepartamentoResponse deptoOrigen = departamentoService.getDepartamentoById(funcionario.getCodDepto());
+
+        String to = destinatario.getEmail();
+        String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
+        String templateName = "solicitud";
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("nombreJefe", destinatario.getNombreCompleto());
+        body.put("nombre", funcionario.getNombreCompleto());
+        body.put("tipoPermiso", derivacion.getSolicitud().getTipoSolicitud().name());
+        body.put("departamento", deptoOrigen.getNombre());
+        body.put("link", "https://appx.laflorida.cl/login");
+
+        apiMailService.enviarMail(to, subject, templateName, body);
     }
 
     private TipoDerivacion determinaTipoDerivacionFinal(DepartamentoResponse deptoDestino, LocalDate fechaChequeo) {

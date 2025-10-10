@@ -83,9 +83,11 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
 
             // 5. Rellenar filas
             logger.info("Iniciando el relleno de filas.");
+            int contador = 1;
             for (AprobacionList a : aprobaciones) {
                 Tr nuevaFila = XmlUtils.deepCopy(filaEjemplo);
 
+                reemplazarTextoEnCelda(nuevaFila, 0, String.valueOf(contador));
                 reemplazarTextoEnCelda(nuevaFila, 1, a.getNombres() + " " + a.getApellidos());
                 reemplazarTextoEnCelda(nuevaFila, 2, a.getRut());
                 reemplazarTextoEnCelda(nuevaFila, 3, a.getDesde());
@@ -97,6 +99,7 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
 
 
                 tabla.getContent().add(nuevaFila);
+                contador++;
             }
             logger.info("Relleno de filas completado.");
 
@@ -108,7 +111,6 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
             return out.toByteArray();
 
         } catch (Exception e) {
-            logger.error("Error generando documento", e);
             e.printStackTrace(); // Imprime el stack trace completo para depuración
             throw new DocumentException("Error generando documento", e);
         }
@@ -116,7 +118,6 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
     }
 
     private void reemplazarTextoEnCelda(Tr fila, int indexCelda, String texto) {
-        //logger.debug("Reemplazando texto en celda: {} con texto: {}", indexCelda, texto);
         Object obj = fila.getContent().get(indexCelda);
         Tc celda;
         if (obj instanceof JAXBElement) {

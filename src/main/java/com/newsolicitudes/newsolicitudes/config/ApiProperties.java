@@ -15,6 +15,8 @@ public class ApiProperties {
 
     private String pdfUrl;
 
+    private String mailUrl;
+
     public String getFuncionarioUrl() {
         return funcionarioUrl;
     }
@@ -45,6 +47,14 @@ public class ApiProperties {
 
     public void setPdfUrl(String pdfUrl) {
         this.pdfUrl = pdfUrl;
+    }
+
+    public String getMailUrl() {
+        return mailUrl;
+    }
+
+    public void setMailUrl(String mailUrl) {
+        this.mailUrl = mailUrl;
     }
 
 }

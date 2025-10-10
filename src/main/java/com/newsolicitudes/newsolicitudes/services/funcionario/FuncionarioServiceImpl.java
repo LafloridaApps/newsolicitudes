@@ -10,6 +10,7 @@ public class FuncionarioServiceImpl implements FuncionarioService {
 
     private final ApiExtFuncionarioService apiExtFuncionarioService;
 
+
     public FuncionarioServiceImpl(ApiExtFuncionarioService apiExtFuncionarioService) {
         this.apiExtFuncionarioService = apiExtFuncionarioService;
     }
@@ -18,5 +19,6 @@ public class FuncionarioServiceImpl implements FuncionarioService {
     public FuncionarioResponseApi getFuncionarioByRut(Integer rut) {
         return apiExtFuncionarioService.obtenerDetalleColaborador(rut);
     }
+
 
 }

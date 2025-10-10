@@ -17,7 +17,7 @@ public class FeriadosLegalesServiceImpl implements FeriadosLegalesService {
     }
 
     @Override
-    public FeriadosLegalesDto obtnerFeriados(Integer rut, Integer ident) {
+    public FeriadosLegalesDto obtenerFeriados(Integer rut, Integer ident) {
 
         ApiFeriadosResponse response = apiFeriadoLegalService.obtenerFeriadosByRut(rut, ident);
 
@@ -30,6 +30,7 @@ public class FeriadosLegalesServiceImpl implements FeriadosLegalesService {
                 .diasTomados(response.getDiasTomados())
                 .diasPerdidos(response.getDiasPerdidos())
                 .diasPendientes(response.getDiasPendientes())
+                .diasCorresponden(response.getDiasCorresponden())
                 .detalle(detalle)
                 .build();
 

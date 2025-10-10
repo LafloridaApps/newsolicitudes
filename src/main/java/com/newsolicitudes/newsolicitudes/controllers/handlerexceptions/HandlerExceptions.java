@@ -14,6 +14,7 @@ import com.newsolicitudes.newsolicitudes.exceptions.AusenciaException;
 import com.newsolicitudes.newsolicitudes.exceptions.DepartamentoException;
 import com.newsolicitudes.newsolicitudes.exceptions.DocumentException;
 import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
+import com.newsolicitudes.newsolicitudes.exceptions.MailServiceException;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -85,6 +86,16 @@ public class HandlerExceptions {
     ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.BAD_REQUEST);
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+
+  }
+
+  @ExceptionHandler(MailServiceException.class)
+  public ResponseEntity<Object> handlerMailServiceException(MailServiceException e,
+      HttpServletRequest request) {
+
+    ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.BAD_REQUEST);
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 
   }
 

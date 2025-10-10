@@ -22,7 +22,7 @@ public class FeriadosLegalesController {
 
     @GetMapping
     public ResponseEntity<Object> getFeriados(@RequestParam Integer rut, @RequestParam Integer ident) {
-        return ResponseEntity.ok(feriadosService.obtnerFeriados(rut, ident));
+        return ResponseEntity.ok(feriadosService.obtenerFeriados(rut, ident));
 
     }
 

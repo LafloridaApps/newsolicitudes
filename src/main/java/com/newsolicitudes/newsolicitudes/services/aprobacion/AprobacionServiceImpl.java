@@ -1,7 +1,9 @@
 package com.newsolicitudes.newsolicitudes.services.aprobacion;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,8 @@ import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.repositories.VisacionRepository;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.firma.FirmaService;
+import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
 import com.newsolicitudes.newsolicitudes.services.mapper.PdfDtoMapper;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
@@ -41,6 +45,8 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final SubroganciaRepository subroganciaRepository;
     private final PdfDtoMapper pdfDtoMapper;
     private final FirmaService firmaService;
+    private final FuncionarioService funcionarioService;
+    private final ApiMailService apiMailService;
 
     public AprobacionServiceImpl(
             AprobacionRepository aprobacionRepository,
@@ -50,7 +56,9 @@ public class AprobacionServiceImpl implements AprobacionService {
             DepartamentoService departamentoService,
             SubroganciaRepository subroganciaRepository,
             PdfDtoMapper pdfDtoMapper,
-            FirmaService firmaService) {
+            FirmaService firmaService,
+            FuncionarioService funcionarioService,
+            ApiMailService apiMailService) {
         this.aprobacionRepository = aprobacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.derivacionRepository = derivacionRepository;
@@ -59,6 +67,8 @@ public class AprobacionServiceImpl implements AprobacionService {
         this.subroganciaRepository = subroganciaRepository;
         this.pdfDtoMapper = pdfDtoMapper;
         this.firmaService = firmaService;
+        this.funcionarioService = funcionarioService;
+        this.apiMailService = apiMailService;
     }
 
     @Override
@@ -74,7 +84,7 @@ public class AprobacionServiceImpl implements AprobacionService {
                     "No se puede aprobar: la derivación no ha sido recepcionada por un funcionario.");
         }
 
-        if (!shouldSkipVisacion(solicitud, request.getAprobadoPor()) && !verificaVisacion(solicitud)) {
+        if (!shouldSkipVisacion(solicitud, request.getAprobadoPor(), derivacion) && !verificaVisacion(solicitud)) {
             throw new AprobacionException("El funcionario " + solicitud.getRut()
                     + " no tiene visación para la solicitud " + solicitud.getId());
         }
@@ -95,6 +105,22 @@ public class AprobacionServiceImpl implements AprobacionService {
 
         aprobacionRepository.save(aprobacion);
 
+        if (validarCorreo(funcionarioService.getFuncionarioByRut(solicitud.getRut()).getEmail())) {
+            sendMail(solicitud.getRut(), solicitud.getId());
+        }
+
+    }
+
+    private void sendMail(Integer rutSolicitante, Long idSolicitud) {
+
+        String to = funcionarioService.getFuncionarioByRut(rutSolicitante).getEmail();
+        String subject = "Aprobación de Solicitud";
+        String templateName = "aprobacion";
+        Map<String, Object> body = new HashMap<>();
+        body.put("link", "https://appx.laflorida.cl/login");
+        body.put("idSolicitud", idSolicitud);
+
+        apiMailService.enviarMail(to, subject, templateName, body);
     }
 
     private String firmarPdf(Solicitud solicitud) {
@@ -103,7 +129,15 @@ public class AprobacionServiceImpl implements AprobacionService {
 
     }
 
-    private boolean shouldSkipVisacion(Solicitud solicitud, Integer approverRut) {
+    private boolean validarCorreo(String email) {
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+        return email != null && email.matches(emailRegex);
+    }
+
+    private boolean shouldSkipVisacion(Solicitud solicitud, Integer approverRut, Derivacion derivacion) {
+        if (derivacion.getTipo() == TipoDerivacion.FIRMA) {
+            return true;
+        }
         // Condition 1: Approver is a substitute director
         if (isSubrogandoComoDirector(approverRut)) {
             return true;

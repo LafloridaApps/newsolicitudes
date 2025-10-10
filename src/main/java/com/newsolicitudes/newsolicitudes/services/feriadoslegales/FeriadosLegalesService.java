@@ -4,6 +4,6 @@ import com.newsolicitudes.newsolicitudes.dto.FeriadosLegalesDto;
 
 public interface FeriadosLegalesService {
 
-    FeriadosLegalesDto obtnerFeriados(Integer rut, Integer ident);
+    FeriadosLegalesDto obtenerFeriados(Integer rut, Integer ident);
 
 }
