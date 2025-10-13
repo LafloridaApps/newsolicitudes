@@ -103,18 +103,38 @@ public class AprobacionMapper {
 
     public String obtenerJornada(Solicitud solicitud) {
         if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
+            // Si es más de un día, es COMPLETA
             if (!solicitud.getFechaInicio().isEqual(solicitud.getFechaTermino())) {
                 return Solicitud.Jornada.COMPLETA.name();
-            } else {
-                if (solicitud.getJornadaInicio() != null) {
-                    if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.AM)) {
-                        return Solicitud.Jornada.AM.name();
-                    } else if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.PM)) {
-                        return Solicitud.Jornada.PM.name();
-                    }
-                }
+            }
+
+            // Lógica para un solo día
+            Solicitud.Jornada jornadaInicio = solicitud.getJornadaInicio();
+            Solicitud.Jornada jornadaTermino = solicitud.getJornadaTermino();
+
+            // Si ambas son AM y PM, es COMPLETA
+            if (jornadaInicio == Solicitud.Jornada.AM && jornadaTermino == Solicitud.Jornada.PM) {
                 return Solicitud.Jornada.COMPLETA.name();
             }
+
+            // Si inicio es COMPLETA, es COMPLETA
+            if (jornadaInicio == Solicitud.Jornada.COMPLETA) {
+                return Solicitud.Jornada.COMPLETA.name();
+            }
+            
+            // Si inicio es AM y termino no es PM (o es nulo), es AM
+            if (jornadaInicio == Solicitud.Jornada.AM) {
+                return Solicitud.Jornada.AM.name();
+            }
+
+            // Si inicio es PM, es PM
+            if (jornadaInicio == Solicitud.Jornada.PM) {
+                return Solicitud.Jornada.PM.name();
+            }
+
+            // Por defecto, si no hay jornada de inicio, es COMPLETA
+            return Solicitud.Jornada.COMPLETA.name();
+
         } else if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.FERIADO)) {
             return Solicitud.Jornada.COMPLETA.name();
         }
