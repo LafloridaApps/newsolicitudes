@@ -75,15 +75,17 @@ public class AprobacionesDecretadasMapper {
                 return "COMPLETA";
             } else { // Es el mismo día
                 if (solicitud.getJornadaInicio() != null) {
-                    if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.AM)) {
+                    if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.AM)
+                            && solicitud.getJornadaTermino().equals(Solicitud.Jornada.AM)) {
                         return "AM";
-                    } else if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.PM)) {
+                    } else if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.PM)
+                            && solicitud.getJornadaTermino().equals(Solicitud.Jornada.PM)) {
                         return "PM";
                     }
                 }
                 // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se
                 // considera completa por defecto
-                return "completa";
+                return "COMPLETA";
             }
         }
         return "";

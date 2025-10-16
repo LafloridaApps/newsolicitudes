@@ -47,6 +47,10 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final FirmaService firmaService;
     private final FuncionarioService funcionarioService;
     private final ApiMailService apiMailService;
+    private static final String URL_LOGIN = "https://appx.laflorida.cl/login";
+    private static final String SUBJECT_MAIL = "Aprobación de Solicitud";
+    private static final String TEMPLATE_MAIL = "aprobacion";
+    private static final String ERROR_MESSAGE_FIRMA = "No se puede firmar la solicitud. Su firma podría no estar vigente o existe un error de conexión";
 
     public AprobacionServiceImpl(
             AprobacionRepository aprobacionRepository,
@@ -101,6 +105,8 @@ public class AprobacionServiceImpl implements AprobacionService {
 
         String url = firmarPdf(solicitud);
 
+        validarUrl(url);
+
         aprobacion.setUrlPdf(url);
 
         aprobacionRepository.save(aprobacion);
@@ -111,13 +117,24 @@ public class AprobacionServiceImpl implements AprobacionService {
 
     }
 
+    private void validarUrl(String url) {
+        if (url == null) {
+            throw new AprobacionException(
+                    ERROR_MESSAGE_FIRMA);
+        }
+        if (url.contains("ERROR") || url.contains("404")) {
+            throw new AprobacionException(
+                    ERROR_MESSAGE_FIRMA);
+        }
+    }
+
     private void sendMail(Integer rutSolicitante, Long idSolicitud) {
 
         String to = funcionarioService.getFuncionarioByRut(rutSolicitante).getEmail();
-        String subject = "Aprobación de Solicitud";
-        String templateName = "aprobacion";
+        String subject = SUBJECT_MAIL;
+        String templateName = TEMPLATE_MAIL;
         Map<String, Object> body = new HashMap<>();
-        body.put("link", "https://appx.laflorida.cl/login");
+        body.put("link", URL_LOGIN);
         body.put("idSolicitud", idSolicitud);
 
         apiMailService.enviarMail(to, subject, templateName, body);
@@ -190,5 +207,26 @@ public class AprobacionServiceImpl implements AprobacionService {
     private Derivacion getDerivacionById(Long id) {
         return RepositoryUtils.findOrThrow(derivacionRepository.findById(id),
                 String.format("No existe la derivación %d", id));
+    }
+
+    @Override
+    public void repairUrl(Long idSolicitud) {
+
+        Solicitud solicitud = RepositoryUtils.findOrThrow(solicitudRepository.findById(idSolicitud),
+                String.format("No existe la solicitud %d", idSolicitud));
+
+        Aprobacion aprobacion = aprobacionRepository.findBySolicitud(solicitud)
+                .orElseThrow(() -> new AprobacionException("No existe la aprobación para la solicitud " + idSolicitud));
+
+        aprobacion.setUrlPdf(null);
+
+        String nuevaUrl = firmaService.firmarPdf(pdfDtoMapper.toPdfDto(solicitud));
+
+        validarUrl(nuevaUrl);
+
+        aprobacion.setUrlPdf(nuevaUrl);
+
+        aprobacionRepository.save(aprobacion);
+
     }
 }

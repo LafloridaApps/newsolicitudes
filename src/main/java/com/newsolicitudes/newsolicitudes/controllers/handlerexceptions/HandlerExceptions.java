@@ -105,7 +105,7 @@ public class HandlerExceptions {
         .timestamp(LocalDateTime.now())
         .status(status.value())
         .error(status.getReasonPhrase())
-        .mensaje(e.getMessage())
+        .message(e.getMessage())
         .ruta(request.getRequestURI())
         .build();
 

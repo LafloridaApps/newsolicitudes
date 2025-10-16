@@ -6,4 +6,6 @@ public interface AprobacionService {
 
     void aprobarSolicitud(AprobacionRequest request);
 
+    void repairUrl(Long idSolicitud);
+
 }

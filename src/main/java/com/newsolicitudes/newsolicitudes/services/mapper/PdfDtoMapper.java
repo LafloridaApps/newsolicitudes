@@ -2,17 +2,14 @@ package com.newsolicitudes.newsolicitudes.services.mapper;
 
 import java.time.format.TextStyle;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.PdfDto;
-import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
-import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 
@@ -21,14 +18,12 @@ public class PdfDtoMapper {
 
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
-    private final AprobacionRepository aprobacionRepository;
 
     public PdfDtoMapper(ApiExtFuncionarioService apiExtFuncionarioService,
-            ApiDepartamentoService apiDepartamentoService,
-            AprobacionRepository aprobacionRepository) {
+            ApiDepartamentoService apiDepartamentoService
+            ) {
         this.apiExtFuncionarioService = apiExtFuncionarioService;
         this.apiDepartamentoService = apiDepartamentoService;
-        this.aprobacionRepository = aprobacionRepository;
     }
 
     public PdfDto toPdfDto(Solicitud solicitud) {
@@ -63,15 +58,20 @@ public class PdfDtoMapper {
     }
 
     private Integer getRutFirma(Solicitud solicitud) {
-
-        Optional<Aprobacion> aprobacion = aprobacionRepository.findBySolicitud(solicitud);
-
-        if (aprobacion.isPresent()) {
-            return aprobacion.get().getRut();
-        } else {
-            return null;
+        DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(solicitud.getIdDepto());
+        while (departamento != null) {
+            String nivel = departamento.getNivelDepartamento();
+            if (nivel != null && (nivel.equalsIgnoreCase("DIRECCION") || nivel.equalsIgnoreCase("ALCALDIA")
+                    || nivel.equalsIgnoreCase("ADMINISTRACION") || nivel.equalsIgnoreCase("SUBDIRECCION"))) {
+                return departamento.getRutJefe();
+            }
+            if (departamento.getIdDeptoSuperior() != null) {
+                departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
+            } else {
+                break;
+            }
         }
-
+        return null;
     }
 
     private Long getTipoSolicitud(TipoSolicitud tipoSolicitud) {
@@ -82,14 +82,25 @@ public class PdfDtoMapper {
     }
 
     private String getJornada(Solicitud solicitud) {
-        if (solicitud.getJornadaInicio() == null) {
-            return "Completa"; // Assume "Completa" when null
+       if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
+            // Si la duración es de más de un día, siempre es jornada completa
+            if (!solicitud.getFechaInicio().isEqual(solicitud.getFechaTermino())) {
+                return "COMPLETA";
+            } else { // Es el mismo día
+                if (solicitud.getJornadaInicio() != null) {
+                    if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.AM)
+                            && solicitud.getJornadaTermino().equals(Solicitud.Jornada.AM)) {
+                        return "AM";
+                    } else if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.PM)
+                            && solicitud.getJornadaTermino().equals(Solicitud.Jornada.PM)) {
+                        return "PM";
+                    }
+                }
+                // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se
+                // considera completa por defecto
+                return "COMPLETA";
+            }
         }
-        return switch (solicitud.getJornadaInicio()) {
-            case PM -> "PM";
-            case AM -> "AM";
-            case COMPLETA -> "Completa";
-            default -> ""; // This default should ideally not be reached if all enum values are covered
-        };
+        return "";
     }
 }

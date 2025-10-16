@@ -8,7 +8,7 @@ public class ErrorResponse {
     private LocalDateTime timestamp;
     private int status;
     private String error;
-    private String mensaje;
+    private String message;
     private String ruta;
 
     public static Builder builder() {
@@ -19,7 +19,7 @@ public class ErrorResponse {
         this.timestamp = builder.timestamp;
         this.status = builder.status;
         this.error = builder.error;
-        this.mensaje = builder.mensaje;
+        this.message = builder.message;
         this.ruta = builder.ruta;
     }
 
@@ -47,12 +47,12 @@ public class ErrorResponse {
         this.error = error;
     }
 
-    public String getMensaje() {
-        return mensaje;
+    public String getMessage() {
+        return message;
     }
 
-    public void setMensaje(String mensaje) {
-        this.mensaje = mensaje;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
     public String getRuta() {
@@ -68,7 +68,7 @@ public class ErrorResponse {
         private LocalDateTime timestamp;
         private int status;
         private String error;
-        private String mensaje;
+        private String message;
         private String ruta;
 
         public Builder timestamp(LocalDateTime timestamp) {
@@ -86,8 +86,8 @@ public class ErrorResponse {
             return this;
         }
 
-        public Builder mensaje(String mensaje) {
-            this.mensaje = mensaje;
+        public Builder message(String message) {
+            this.message = message;
             return this;
         }
 

@@ -26,6 +26,7 @@ public class AprobacionController {
     private final AprobacionService aprobacionService;
 
     private final AprobacionListService aprobacionListService;
+    private static final String MESSAGE = "message";
 
     public AprobacionController(AprobacionService aprobacionService, AprobacionListService aprobacionListService) {
         this.aprobacionService = aprobacionService;
@@ -36,7 +37,7 @@ public class AprobacionController {
     public ResponseEntity<Object> createAprobacion(@RequestBody AprobacionRequest request) {
 
         aprobacionService.aprobarSolicitud(request);
-        Map<String, String> response = Map.of("message", "Solicitud aprobada con éxito");
+        Map<String, String> response = Map.of(MESSAGE, "Solicitud aprobada con éxito");
         return ResponseEntity.ok(response);
 
     }
@@ -47,11 +48,20 @@ public class AprobacionController {
 
         List<AprobacionList> aprobaciones = aprobacionListService.getAprobacionList(fechaInicio, fechaFin);
         if (aprobaciones.isEmpty()) {
-            Map<String, String> response = Map.of("message", "No se encontraron aprobaciones");
+            Map<String, String> response = Map.of(MESSAGE, "No se encontraron aprobaciones");
             return ResponseEntity.ok(response);
         }
 
         return ResponseEntity.ok(aprobaciones);
+
+    }
+
+    @GetMapping("/repair")
+    public ResponseEntity<Object> repairUrl(@RequestParam Long idSolicitud) {
+
+        aprobacionService.repairUrl(idSolicitud);
+        Map<String, String> response = Map.of(MESSAGE, "Url reparada con éxito");
+        return ResponseEntity.ok(response);
 
     }
 
