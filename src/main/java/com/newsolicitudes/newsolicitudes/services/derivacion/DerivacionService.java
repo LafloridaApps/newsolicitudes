@@ -12,7 +12,7 @@ public interface DerivacionService {
             EstadoDerivacion estadoDerivacion)
             throws DerivacionExceptions;
 
-    PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber);
+    PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber, Boolean noLeidas);
 
    
 

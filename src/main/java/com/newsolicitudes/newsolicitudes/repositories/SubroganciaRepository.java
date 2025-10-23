@@ -29,4 +29,12 @@ public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long> 
 
     boolean existsBySubroganteAndFechaInicioGreaterThanEqual(Integer subrogante, LocalDate fecha);
 
+    boolean existsBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+        Integer rut,
+        LocalDate fechaInicio,
+        LocalDate fechaTermino
+);
+
+
+
 }

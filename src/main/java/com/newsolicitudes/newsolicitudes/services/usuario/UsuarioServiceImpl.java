@@ -55,20 +55,18 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public List<ModuloDto> obtenerModulosPorUsuario(String rut) {
-        Usuario usuario = RepositoryUtils.findOrThrow(usuarioRepository.findByRut(rut),
-                String.format("Usuario no encontrado con RUT: %s", rut));
+        Usuario usuario = usuarioRepository.findByRut(rut).orElse(null);
 
-        return usuario.getModulos().stream()
-                .map(modulo -> new ModuloDto(modulo.getNombre(),modulo.getId()))
-                .toList();
+        return usuario != null ? usuario.getModulos().stream()
+                .map(modulo -> new ModuloDto(modulo.getNombre(), modulo.getId()))
+                .toList() : null;
     }
 
     @Override
     public UsuarioDto obtenerUsuarioPorRut(String rut) {
-        Usuario usuario = RepositoryUtils.findOrThrow(usuarioRepository.findByRut(rut),
-                String.format("Usuario no encontrado con RUT: %s", rut));
+         Usuario usuario = usuarioRepository.findByRut(rut).orElse(null);
 
-        return usuarioDtoMapper.mapToUsuarioDto(usuario);
+        return usuario != null ? usuarioDtoMapper.mapToUsuarioDto(usuario) : null;
 
     }
 
@@ -82,9 +80,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public void createOrUpdateUsuario(String rut, List<Long> moduloIds) {
-        
-        FuncionarioResponseApi funcionarioInfo = funcionarioApiService.getFuncionarioInfo(Integer.parseInt(rut.split("-")[0]));
 
+        FuncionarioResponseApi funcionarioInfo = funcionarioApiService
+                .getFuncionarioInfo(Integer.parseInt(rut.split("-")[0]));
 
         Usuario usuario = usuarioRepository.findByRut(rut)
                 .orElse(new Usuario());

@@ -12,7 +12,7 @@ public class SolicitudRequest {
     private String tipoSolicitud;
     private String jornadaInicio;
     private String jornadaTermino;
-    private double diasUsar;
+    
     private SubroganciaRequest subrogancia;
 
     public String getJornadaInicio() {
@@ -87,12 +87,5 @@ public class SolicitudRequest {
         this.subrogancia = subrogancia;
     }
 
-    public double getDiasUsar() {
-        return diasUsar;
-    }
-
-    public void setDiasUsar(double diasUsar) {
-        this.diasUsar = diasUsar;
-    }
-
+  
 }

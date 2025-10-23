@@ -9,8 +9,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
+    @Query("SELECT d FROM Derivacion d LEFT JOIN EntradaDerivacion e ON d.id = e.derivacion.id WHERE d.idDepto IN :deptoIds AND e.id IS NULL")
+    Page<Derivacion> findUnreadByIdDeptoIn(@Param("deptoIds") List<Long> deptoIds, Pageable pageable);
+
     List<Derivacion> findByIdDepto(Long idDepto);
 
     List<Derivacion> findBySolicitudId(Long solicitudId);

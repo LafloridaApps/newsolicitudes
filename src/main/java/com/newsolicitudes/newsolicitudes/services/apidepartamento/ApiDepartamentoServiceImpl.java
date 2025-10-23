@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
-import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;                        
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.dto.CargoFunc;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoJerarquiaDTO;
@@ -51,6 +51,7 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     @Override
     public CargoFunc obtenerJefeFunc(Long idDepto, Integer rut) {
+        
 
         CargoFunc cargoFunc = webClient.get()
                 .uri(uriBuilder -> {
@@ -68,14 +69,18 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .bodyToMono(CargoFunc.class)
                 .onErrorResume(Exception.class, e -> Mono.empty())
                 .block();
+        
+        
 
-        if (cargoFunc != null
-                && subroganciaRepository.existsBySubroganteAndFechaInicioGreaterThanEqual(rut, FechaUtils.fechaActual())) {
+      if (cargoFunc != null
+        && subroganciaRepository.existsBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                rut,
+                FechaUtils.fechaActual(), // para fechaInicio <= hoy
+                FechaUtils.fechaActual()  // para fechaTermino >= hoy
+        )) {
 
-            cargoFunc.setEsJefe(true);
-            
-        }
-
+    cargoFunc.setEsJefe(true);
+}
         return cargoFunc;
 
     }

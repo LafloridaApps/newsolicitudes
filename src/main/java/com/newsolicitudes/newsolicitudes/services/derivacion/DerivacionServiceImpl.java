@@ -167,7 +167,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     @Override
-    public PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber) {
+    public PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber, Boolean noLeidas) {
         Pageable pageable = PageRequest.of(pageNumber, 10,Sort.by("solicitud.id").descending());
 
         List<Subrogancia> subrogancias = getSubroganciasByRutSubrogante(idDepto);
@@ -178,7 +178,12 @@ public class DerivacionServiceImpl implements DerivacionService {
             deptoIds.addAll(subrogancias.stream().map(Subrogancia::getIdDepto).toList());
         }
 
-        Page<Derivacion> derivacionesPage = derivacionRepository.findByIdDeptoIn(deptoIds, pageable);
+        Page<Derivacion> derivacionesPage;
+        if (Boolean.TRUE.equals(noLeidas)) {
+            derivacionesPage = derivacionRepository.findUnreadByIdDeptoIn(deptoIds, pageable);
+        } else {
+            derivacionesPage = derivacionRepository.findByIdDeptoIn(deptoIds, pageable);
+        }
 
         List<SolicitudDto> sortedSolicitudes = derivacionesPage.getContent().stream()
                 .map(derivacion -> {
