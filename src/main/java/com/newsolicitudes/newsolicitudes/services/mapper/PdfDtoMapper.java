@@ -63,12 +63,16 @@ public class PdfDtoMapper {
             String nivel = departamento.getNivelDepartamento();
             if (nivel != null && (nivel.equalsIgnoreCase("DIRECCION") || nivel.equalsIgnoreCase("ALCALDIA")
                     || nivel.equalsIgnoreCase("ADMINISTRACION") || nivel.equalsIgnoreCase("SUBDIRECCION"))) {
-                return departamento.getRutJefe();
-            }
-            if (departamento.getIdDeptoSuperior() != null) {
+
+                if (departamento.getRutJefe().equals(solicitud.getRut()) && departamento.getIdDeptoSuperior() != null) {
+                    departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
+                } else {
+                    return departamento.getRutJefe();
+                }
+            } else if (departamento.getIdDeptoSuperior() != null) {
                 departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
             } else {
-                break;
+                departamento = null;
             }
         }
         return null;

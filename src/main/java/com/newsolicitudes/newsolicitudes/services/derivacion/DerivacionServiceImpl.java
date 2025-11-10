@@ -67,8 +67,10 @@ public class DerivacionServiceImpl implements DerivacionService {
             Long idDepto, EstadoDerivacion estadoDerivacion)
             throws DerivacionExceptions {
 
-        DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
-        TipoDerivacion tipoFinal = determinaTipoDerivacionFinal(depto, solicitud.getFechaInicio());
+    DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
+    // Si el invocador ya determinó el tipo de derivación (p. ej. en la creación de la siguiente derivación),
+    // respetarlo. De lo contrario calcularlo aquí usando la fecha de inicio.
+    TipoDerivacion tipoFinal = tipo != null ? tipo : determinaTipoDerivacionFinal(depto, solicitud.getFechaInicio());
 
         Derivacion derivacionInicial = new Derivacion();
         derivacionInicial.setSolicitud(solicitud);
