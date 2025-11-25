@@ -48,9 +48,9 @@ public class DerivacionController {
 
     }
 
-    @GetMapping("/departamento/{idDepto}/{pageNumber}")
-    public ResponseEntity<Object> getDerivacionesByDeptoId(@PathVariable Long idDepto, @PathVariable int pageNumber, @RequestParam(required = false) Boolean noLeidas) {
-        PageSolicitudesResponse solicitudes = derivacionService.getDerivacionesByDeptoId(idDepto, pageNumber, noLeidas);
+    @GetMapping("/departamento/{idDepto}/page/{pageNumber}")
+    public ResponseEntity<Object> getDerivacionesByDeptoId(@RequestParam Integer rut, @PathVariable Long idDepto, @PathVariable int pageNumber, @RequestParam(required = false) Boolean noLeidas) {
+        PageSolicitudesResponse solicitudes = derivacionService.getDerivacionesByDeptoId(rut, idDepto, pageNumber, noLeidas);
         return ResponseEntity.ok(solicitudes);
     }
 

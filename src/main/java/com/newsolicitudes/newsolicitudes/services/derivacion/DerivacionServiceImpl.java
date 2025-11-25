@@ -123,9 +123,9 @@ public class DerivacionServiceImpl implements DerivacionService {
 
     // Obtiene una página de solicitudes basadas en las derivaciones de un departamento.
     @Override
-    public PageSolicitudesResponse getDerivacionesByDeptoId(Long idDepto, int pageNumber, Boolean noLeidas) {
-        // 1. Obtener subrogancias activas para el jefe del departamento actual.
-        List<Subrogancia> subroganciasActivas = getSubroganciasActivasParaJefe(idDepto);
+    public PageSolicitudesResponse getDerivacionesByDeptoId(Integer rut, Long idDepto, int pageNumber, Boolean noLeidas) {
+        // 1. Obtener subrogancias activas para el RUT del usuario.
+        List<Subrogancia> subroganciasActivas = getSubroganciasActivasParaRut(rut);
 
         // 2. Determinar qué departamentos consultar (el propio y los subrogados).
         List<Long> deptoIds = getDeptoIdsIncluyendoSubrogancias(idDepto, subroganciasActivas);
@@ -355,12 +355,11 @@ public class DerivacionServiceImpl implements DerivacionService {
         return entradaDerivacionRepository.findByDerivacionId(derivacion.getId()).isPresent();
     }
 
-    // Obtiene las subrogancias activas donde un jefe de departamento es el subrogante.
-    private List<Subrogancia> getSubroganciasActivasParaJefe(Long idDepto) {
-        DepartamentoResponse depto = departamentoService.getDepartamentoById(idDepto);
+    // Obtiene las subrogancias activas donde un usuario es el subrogante.
+    private List<Subrogancia> getSubroganciasActivasParaRut(Integer rut) {
         LocalDate hoy = FechaUtils.fechaActual();
         return subroganciaRepository
-                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(depto.getRutJefe(), hoy, hoy);
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rut, hoy, hoy);
     }
 
     // Obtiene la URL del PDF de una solicitud si ya ha sido aprobada.
