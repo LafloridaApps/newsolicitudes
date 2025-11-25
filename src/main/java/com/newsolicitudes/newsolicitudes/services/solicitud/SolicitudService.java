@@ -2,8 +2,7 @@ package com.newsolicitudes.newsolicitudes.services.solicitud;
 
 import java.time.LocalDate;
 
-import java.util.Map;
-
+import com.newsolicitudes.newsolicitudes.dto.ExisteSolicitudResponseDto;
 import com.newsolicitudes.newsolicitudes.dto.PageMiSolicitudResponse;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDetalleDto;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudRequest;
@@ -14,7 +13,7 @@ public interface SolicitudService {
 
     SolicitudResponse createSolicitud(SolicitudRequest request);
 
-    Map<String, Object> existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo);
+    ExisteSolicitudResponseDto existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo);
 
     PageMiSolicitudResponse getSolicitudesByRut(Integer rut, int page, int size);
 

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.DerivacionDto;
+import com.newsolicitudes.newsolicitudes.dto.ExisteSolicitudResponseDto;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.MiSolicitudDto;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudDetalleDto;
@@ -107,5 +108,15 @@ public class SolicitudMapper {
         miSolicitudDto.setUrlPdf(urlPdf);
         miSolicitudDto.setTrazabilidad(trazabilidad);
         return miSolicitudDto;
+    }
+
+    public ExisteSolicitudResponseDto solicitudToExisteSolicitudResponseDto(Solicitud solicitud) {
+        return new ExisteSolicitudResponseDto(
+                true,
+                solicitud.getEstado() != null ? solicitud.getEstado().name() : null,
+                solicitud.getFechaInicio() != null ? solicitud.getFechaInicio().toString() : null,
+                solicitud.getFechaTermino() != null ? solicitud.getFechaTermino().toString() : null,
+                solicitud.getJornadaInicio() != null ? solicitud.getJornadaInicio().name() : null,
+                solicitud.getJornadaTermino() != null ? solicitud.getJornadaTermino().name() : null);
     }
 }

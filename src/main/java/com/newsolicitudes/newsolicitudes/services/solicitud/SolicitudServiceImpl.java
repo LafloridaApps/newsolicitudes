@@ -1,8 +1,6 @@
 package com.newsolicitudes.newsolicitudes.services.solicitud;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.newsolicitudes.newsolicitudes.config.AppProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.DerivacionDto;
+import com.newsolicitudes.newsolicitudes.dto.ExisteSolicitudResponseDto;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.MiSolicitudDto;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
@@ -28,25 +28,24 @@ import com.newsolicitudes.newsolicitudes.dto.Trazabilidad;
 import com.newsolicitudes.newsolicitudes.dto.UpdateSolicitudRequest;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
-import com.newsolicitudes.newsolicitudes.entities.EntradaDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Postergacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
-import com.newsolicitudes.newsolicitudes.entities.enums.EstadoTrazabilidad;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
-import com.newsolicitudes.newsolicitudes.repositories.FeriadoRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.mappers.SolicitudMapper;
+import com.newsolicitudes.newsolicitudes.services.calculodias.CalculadoraDiasService;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.derivacion.DerivacionService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
-import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
+import com.newsolicitudes.newsolicitudes.services.notificacion.NotificacionService;
 import com.newsolicitudes.newsolicitudes.services.subrogancia.SubroganciaService;
+import com.newsolicitudes.newsolicitudes.services.trazabilidad.TrazabilidadService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 
 import jakarta.transaction.Transactional;
@@ -62,9 +61,11 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final SolicitudMapper solicitudMapper;
     private final AprobacionRepository aprobacionRepository;
     private final PostergacionRepository postergacionRepository;
-    private final ApiMailService apiMailService;
+    private final NotificacionService notificacionService;
     private final SubroganciaRepository subroganciaRepository;
-    private final FeriadoRepository feriadoRepository;
+    private final CalculadoraDiasService calculadoraDiasService;
+    private final TrazabilidadService trazabilidadService;
+    private final AppProperties appProperties;
 
     public SolicitudServiceImpl(DerivacionService derivacionService, SolicitudRepository solicitudRepository,
             SubroganciaService subroganciaService,
@@ -73,9 +74,11 @@ public class SolicitudServiceImpl implements SolicitudService {
             SolicitudMapper solicitudMapper,
             AprobacionRepository aprobacionRepository,
             PostergacionRepository postergacionRepository,
-            ApiMailService apiMailService,
+            NotificacionService notificacionService,
             SubroganciaRepository subroganciaRepository,
-            FeriadoRepository feriadoRepository) {
+            CalculadoraDiasService calculadoraDiasService,
+            TrazabilidadService trazabilidadService,
+            AppProperties appProperties) {
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaService = subroganciaService;
@@ -84,102 +87,136 @@ public class SolicitudServiceImpl implements SolicitudService {
         this.solicitudMapper = solicitudMapper;
         this.aprobacionRepository = aprobacionRepository;
         this.postergacionRepository = postergacionRepository;
-        this.apiMailService = apiMailService;
+        this.notificacionService = notificacionService;
         this.subroganciaRepository = subroganciaRepository;
-        this.feriadoRepository = feriadoRepository;
+        this.calculadoraDiasService = calculadoraDiasService;
+        this.trazabilidadService = trazabilidadService;
+        this.appProperties = appProperties;
     }
 
+    // Record privado para encapsular el resultado de la lógica de enrutamiento.
+    private record RutaDerivacion(DepartamentoResponse departamentoDestino, TipoDerivacion tipoDerivacion) {
+    }
+
+    // Orquesta el proceso completo de creación de una nueva solicitud.
     @Override
     @Transactional
     public SolicitudResponse createSolicitud(SolicitudRequest request) {
+        // 1. Obtener datos iniciales del funcionario y su departamento.
         FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
-        DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
-                departamentoActual, request.getFechaInicio(), request.getFechaFin());
 
-        NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
-        TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
+        // 2. Determinar la ruta de derivación (departamento destino y tipo).
+        RutaDerivacion ruta = determinarRutaDerivacion(request, departamentoActual);
 
-        double cantidadDias = calcularDias(request);
-        Solicitud solicitud = solicitudMapper.solicitudRequestToSolicitud(request, funcionario.getRut(),
-                funcionario.getCodDepto(), cantidadDias);
+        // 3. Calcular días y crear la entidad Solicitud principal.
+        double cantidadDias = calculadoraDiasService.calcularDias(request);
+        Solicitud solicitud = crearYGuardarSolicitud(request, funcionario.getRut(), funcionario.getCodDepto(),
+                cantidadDias);
 
-        solicitud = solicitudRepository.save(solicitud);
-        derivacionService.createSolicitudDerivacion(solicitud, tipoDerivacion, departamentoDestino.getId(),
+        // 4. Crear entidades relacionadas (derivación y subrogancia).
+        derivacionService.createSolicitudDerivacion(solicitud, ruta.tipoDerivacion(),
+                ruta.departamentoDestino().getId(),
                 EstadoDerivacion.PENDIENTE);
         if (request.getSubrogancia() != null) {
             createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(),
                     request.getDepto());
         }
 
-        sendMailSolicitud(solicitud, departamentoDestino, funcionario, departamentoActual.getNombre());
-        return new SolicitudResponse(solicitud.getId(), departamentoDestino.getNombre());
+        // 5. Enviar notificación de la nueva solicitud.
+        enviarNotificacionNuevaSolicitud(solicitud, ruta.departamentoDestino(), funcionario,
+                departamentoActual.getNombre());
+
+        return new SolicitudResponse(solicitud.getId(), ruta.departamentoDestino().getNombre());
     }
 
+    // Determina el departamento de destino y el tipo de derivación para una
+    // solicitud.
+    private RutaDerivacion determinarRutaDerivacion(SolicitudRequest request, DepartamentoResponse deptoActual) {
+        DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
+                deptoActual, request.getFechaInicio(), request.getFechaFin());
+        NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
+        TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
+        return new RutaDerivacion(departamentoDestino, tipoDerivacion);
+    }
+
+    // Mapea los datos de la solicitud a una entidad y la persiste en la base de
+    // datos.
+    private Solicitud crearYGuardarSolicitud(SolicitudRequest request, int rutFuncionario, long idDepto,
+            double cantidadDias) {
+        Solicitud solicitud = solicitudMapper.solicitudRequestToSolicitud(request, rutFuncionario,
+                idDepto, cantidadDias);
+        return solicitudRepository.save(solicitud);
+    }
+
+    // Llama al servicio de subrogancia para crear un registro de subrogancia
+    // asociado a la solicitud.
     private void createSubroganciaSol(SubroganciaRequest subrogancia, LocalDate fechaInicio, LocalDate fechaFin,
             Long idDepto) {
         subroganciaService.createSubrogancia(subrogancia, fechaInicio, fechaFin, idDepto);
     }
 
-    private void sendMailSolicitud(Solicitud solicitud, DepartamentoResponse departamentoDestino,
+    // Orquesta el envío de notificaciones para una nueva solicitud.
+    private void enviarNotificacionNuevaSolicitud(Solicitud solicitud, DepartamentoResponse departamentoDestino,
             FuncionarioResponseApi funcionario, String nombreDepartamentoActual) {
 
+        // 1. Determinar el destinatario final (jefe o subrogante).
+        FuncionarioResponseApi destinatario = determinarDestinatarioNotificacion(departamentoDestino);
+
+        // 2. Preparar el contenido del correo.
+        String to = destinatario.getEmail();
+        String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
+        Map<String, Object> body = prepararCuerpoNotificacion(destinatario, funcionario, solicitud,
+                nombreDepartamentoActual);
+
+        // 3. Enviar la notificación a través del servicio correspondiente.
+        notificacionService.enviarNotificacion(to, subject, "solicitud", body);
+    }
+
+    // Determina el destinatario final para una notificación, considerando la
+    // subrogancia activa.
+    private FuncionarioResponseApi determinarDestinatarioNotificacion(DepartamentoResponse departamentoDestino) {
         Integer rutJefeDestino = departamentoDestino.getRutJefe();
         LocalDate hoy = LocalDate.now();
         List<Subrogancia> subrogancias = subroganciaRepository
                 .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
 
-        FuncionarioResponseApi destinatario;
         if (!subrogancias.isEmpty()) {
-            destinatario = funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
+            // Si hay subrogancia activa, el destinatario es el subrogante.
+            return funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
         } else {
-            destinatario = funcionarioService.getFuncionarioByRut(rutJefeDestino);
+            // De lo contrario, el destinatario es el jefe titular del departamento.
+            return funcionarioService.getFuncionarioByRut(rutJefeDestino);
         }
-
-        String to = destinatario.getEmail();
-        String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
-        String templateName = "solicitud";
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("nombreJefe", destinatario.getNombreCompleto());
-        body.put("nombre", funcionario.getNombreCompleto());
-        body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
-        body.put("departamento", nombreDepartamentoActual);
-        body.put("link", "https://appx.laflorida.cl/login");
-
-        apiMailService.enviarMail(to, subject, templateName, body);
     }
 
+    // Prepara el cuerpo del correo con los datos necesarios para la plantilla de
+    // notificación.
+    private Map<String, Object> prepararCuerpoNotificacion(FuncionarioResponseApi destinatario,
+            FuncionarioResponseApi funcionarioSolicitante, Solicitud solicitud, String nombreDepartamentoActual) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("nombreJefe", destinatario.getNombreCompleto());
+        body.put("nombre", funcionarioSolicitante.getNombreCompleto());
+        body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
+        body.put("departamento", nombreDepartamentoActual);
+        body.put("link", appProperties.getLinkUrl());
+        return body;
+    }
+
+    // Verifica si ya existe una solicitud para un funcionario en un rango de fechas
+    // determinado.
     @Override
-    public Map<String, Object> existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo) {
+    public ExisteSolicitudResponseDto existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo) {
         Optional<Solicitud> solicitudOptional = solicitudRepository
                 .findFirstByRutAndTipoSolicitudAndFechaInicioLessThanEqualAndFechaTerminoGreaterThanEqual(
                         rut, Solicitud.TipoSolicitud.valueOf(tipo), fechaInicio, fechaInicio);
-        Map<String, Object> response = new HashMap<>();
 
-        if (solicitudOptional.isPresent()) {
-            Solicitud solicitud = solicitudOptional.get();
-            response.put("existe", true);
-            response.put("estado", solicitud.getEstado() != null ? solicitud.getEstado().name() : null);
-            response.put("fechaInicio",
-                    solicitud.getFechaInicio() != null ? solicitud.getFechaInicio().toString() : null);
-            response.put("fechaTermino",
-                    solicitud.getFechaTermino() != null ? solicitud.getFechaTermino().toString() : null);
-            response.put("jornadaInicio",
-                    solicitud.getJornadaInicio() != null ? solicitud.getJornadaInicio().name() : null);
-            response.put("jornadaTermino",
-                    solicitud.getJornadaTermino() != null ? solicitud.getJornadaTermino().name() : null);
-        } else {
-            response.put("existe", false);
-            response.put("estado", null);
-            response.put("fechaInicio", null);
-            response.put("fechaTermino", null);
-            response.put("jornadaInicio", null);
-            response.put("jornadaTermino", null);
-        }
-        return response;
+        return solicitudOptional
+                .map(solicitudMapper::solicitudToExisteSolicitudResponseDto)
+                .orElse(new ExisteSolicitudResponseDto(false, null, null, null, null, null));
     }
 
+    // Obtiene una lista paginada de las solicitudes de un funcionario.
     @Override
     public PageMiSolicitudResponse getSolicitudesByRut(Integer rut, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
@@ -198,189 +235,63 @@ public class SolicitudServiceImpl implements SolicitudService {
         return pageMiSolicitudResponse;
     }
 
+    // Mapea una entidad Solicitud al DTO utilizado en la lista "Mis Solicitudes".
     private MiSolicitudDto mapToMiSolicitudDto(Solicitud solicitud) {
         String urlPdf = getUrlPdf(solicitud);
-
-        List<Trazabilidad> trazabilidadList = new ArrayList<>(solicitud.getDerivaciones().stream()
-                .map(this::mapToTrazabilidad)
-                .toList());
-
-        if (solicitud.getEstado() == Solicitud.EstadoSolicitud.POSTERGADA) {
-            Optional<Postergacion> postergacionOpt = postergacionRepository.findBySolicitud(solicitud);
-            if (postergacionOpt.isPresent()) {
-                Postergacion postergacion = postergacionOpt.get();
-                Trazabilidad t = new Trazabilidad();
-                t.setAccion("Postergación");
-                t.setEstado(EstadoTrazabilidad.POSTERGADA);
-                t.setFecha(postergacion.getFechaPostergacion().toString());
-                FuncionarioResponseApi fr = funcionarioService.getFuncionarioByRut(postergacion.getRutPostergacion());
-                t.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
-                DepartamentoResponse dr = departamentoService.getDepartamentoById(fr.getCodDepto());
-                t.setDepartamento(dr.getNombre());
-                t.setGlosa(postergacion.getGlosa());
-                trazabilidadList.add(t);
-            }
-        }
-
+        List<Trazabilidad> trazabilidadList = trazabilidadService.construirTrazabilidad(solicitud);
         return solicitudMapper.solicitudToMiSolicitudDto(solicitud, urlPdf, trazabilidadList);
     }
 
-    private Trazabilidad mapToTrazabilidad(Derivacion derivacion) {
-        Trazabilidad trazabilidad = new Trazabilidad();
-        trazabilidad.setId(derivacion.getId());
-        trazabilidad.setFecha(derivacion.getFechaDerivacion().toString());
-
-        DepartamentoResponse depto = departamentoService.getDepartamentoById(derivacion.getIdDepto());
-        trazabilidad.setDepartamento(depto.getNombre());
-
-        if (derivacion.getTipo() == TipoDerivacion.VISACION) {
-            handleVisacion(trazabilidad, derivacion);
-        } else if (derivacion.getTipo() == TipoDerivacion.FIRMA) {
-            handleFirma(trazabilidad, derivacion);
-        }
-
-        return trazabilidad;
-    }
-
-    private void handleVisacion(Trazabilidad trazabilidad, Derivacion derivacion) {
-        trazabilidad.setAccion("Visación");
-        EntradaDerivacion entrada = derivacion.getEntrada();
-        if (entrada != null) {
-            setUsuarioFromEntrada(trazabilidad, entrada);
-            if (derivacion.getEstadoDerivacion() == EstadoDerivacion.DERIVADA
-                    || derivacion.getEstadoDerivacion() == EstadoDerivacion.FINALIZADA) {
-                trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
-            } else {
-                trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);
-            }
-        } else {
-            setEstadoPendiente(trazabilidad);
-        }
-    }
-
-    private void handleFirma(Trazabilidad trazabilidad, Derivacion derivacion) {
-        trazabilidad.setAccion("Aprobación");
-        Optional<Aprobacion> aprobacionOpt = aprobacionRepository.findBySolicitud(derivacion.getSolicitud());
-        if (aprobacionOpt.isPresent()) {
-            setUsuarioFromAprobacion(trazabilidad, aprobacionOpt.get());
-            trazabilidad.setEstado(EstadoTrazabilidad.REALIZADO);
-        } else {
-            EntradaDerivacion entrada = derivacion.getEntrada();
-            if (entrada != null) {
-                setUsuarioFromEntrada(trazabilidad, entrada);
-                trazabilidad.setEstado(EstadoTrazabilidad.RECIBIDO);
-            } else {
-                setEstadoPendiente(trazabilidad);
-            }
-        }
-    }
-
-    private void setUsuarioFromEntrada(Trazabilidad trazabilidad, EntradaDerivacion entrada) {
-        FuncionarioResponseApi fr = funcionarioService.getFuncionarioByRut(entrada.getRut());
-        trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
-    }
-
-    private void setUsuarioFromAprobacion(Trazabilidad trazabilidad, Aprobacion aprobacion) {
-        FuncionarioResponseApi fr = funcionarioService.getFuncionarioByRut(aprobacion.getRut());
-        trazabilidad.setUsuario(fr.getNombre() + " " + fr.getApellidoPaterno());
-    }
-
-    private void setEstadoPendiente(Trazabilidad trazabilidad) {
-        trazabilidad.setUsuario("Pendiente");
-        trazabilidad.setEstado(EstadoTrazabilidad.PENDIENTE);
-    }
-
+    // Obtiene los detalles completos de una solicitud específica por su ID.
     @Override
     public SolicitudDetalleDto getSolicitudDetalleById(Long idSolicitud) {
-        Optional<Solicitud> solicitudOpt = solicitudRepository.findById(idSolicitud);
-        if (solicitudOpt.isPresent()) {
-            Solicitud solicitud = solicitudOpt.get();
+        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                .orElseThrow(() -> new NotFounException("Solicitud no encontrada con id: " + idSolicitud));
 
-            FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
-            String nombreFuncionario = funcionario.getNombreCompleto();
+        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
+        String nombreFuncionario = funcionario.getNombreCompleto();
 
-            DepartamentoResponse departamento = departamentoService.getDepartamentoById(solicitud.getIdDepto());
-            String nombreDepartamento = departamento.getNombre();
+        DepartamentoResponse departamento = departamentoService.getDepartamentoById(solicitud.getIdDepto());
+        String nombreDepartamento = departamento.getNombre();
 
-            String urlPdf = getUrlPdf(solicitud);
+        String urlPdf = getUrlPdf(solicitud);
 
-            List<DerivacionDto> derivaciones = solicitud.getDerivaciones().stream().map(der -> {
-                DepartamentoResponse depto = departamentoService.getDepartamentoById(der.getIdDepto());
-                return solicitudMapper.derivacionToDerivacionDto(der, depto.getNombre());
-            }).toList();
+        List<DerivacionDto> derivaciones = solicitud.getDerivaciones().stream()
+                .map(this::mapToDerivacionDto)
+                .toList();
 
-            return solicitudMapper.solicitudToSolicitudDetalleDto(solicitud, nombreFuncionario, nombreDepartamento,
-                    urlPdf, derivaciones);
-        }
-        return null;
+        return solicitudMapper.solicitudToSolicitudDetalleDto(solicitud, nombreFuncionario, nombreDepartamento,
+                urlPdf, derivaciones);
     }
 
+    // Mapea una entidad Derivacion a su DTO, enriqueciendo con el nombre del
+    // departamento.
+    private DerivacionDto mapToDerivacionDto(Derivacion derivacion) {
+        DepartamentoResponse depto = departamentoService.getDepartamentoById(derivacion.getIdDepto());
+        return solicitudMapper.derivacionToDerivacionDto(derivacion, depto.getNombre());
+    }
+
+    // Obtiene la URL del PDF de una solicitud si ya ha sido aprobada.
     private String getUrlPdf(Solicitud solicitud) {
         Optional<Aprobacion> optAprobacion = aprobacionRepository.findBySolicitud(solicitud);
         return optAprobacion.map(Aprobacion::getUrlPdf).orElse(null);
     }
 
-    private double calcularDias(SolicitudRequest request) {
-        String tipo = request.getTipoSolicitud();
-        if (tipo.equalsIgnoreCase("ADMINISTRATIVO")) {
-            return calcularDiasAdministrativo(request);
-        } else if (tipo.equalsIgnoreCase("FERIADO")) {
-            return calcularDiasFeriado(request);
-        }
-        return 0;
-    }
-
-    private double calcularDiasAdministrativo(SolicitudRequest request) {
-        LocalDate inicio = request.getFechaInicio();
-        LocalDate fin = request.getFechaFin();
-
-        if (inicio.equals(fin)) {
-            return request.getJornadaInicio().equals(request.getJornadaTermino()) ? 0.5 : 1.0;
-        }
-
-        double diasHabiles = contarDiasHabiles(inicio, fin);
-
-        if (request.getJornadaInicio().equalsIgnoreCase(request.getJornadaTermino())) {
-            diasHabiles -= 0.5;
-        }
-
-        return diasHabiles;
-    }
-
-    private double calcularDiasFeriado(SolicitudRequest request) {
-        LocalDate inicio = request.getFechaInicio();
-        LocalDate fin = request.getFechaFin();
-        return contarDiasHabiles(inicio, fin);
-    }
-
-    private double contarDiasHabiles(LocalDate inicio, LocalDate fin) {
-        double dias = 0;
-        LocalDate fecha = inicio;
-
-        while (!fecha.isAfter(fin)) {
-            if (esDiaHabil(fecha)) {
-                dias++;
-            }
-            fecha = fecha.plusDays(1);
-        }
-
-        return dias;
-    }
-
-    private boolean esDiaHabil(LocalDate fecha) {
-        DayOfWeek dia = fecha.getDayOfWeek();
-        boolean esFinDeSemana = (dia == DayOfWeek.SATURDAY || dia == DayOfWeek.SUNDAY);
-        boolean esFeriado = feriadoRepository.existsByFecha(fecha);
-
-        return !esFinDeSemana && !esFeriado;
-    }
-
+    // Orquesta la actualización de una solicitud existente.
     @Override
     @Transactional
     public void updateSolicitud(Long idSolicitud, UpdateSolicitudRequest request) {
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
                 .orElseThrow(() -> new NotFounException("Solicitud no encontrada con id: " + idSolicitud));
 
+        actualizarFechasSiEsNecesario(solicitud, request);
+        gestionarCambioDeEstado(solicitud, request);
+
+        solicitudRepository.save(solicitud);
+    }
+
+    // Actualiza las fechas de la solicitud y recalcula los días si han cambiado.
+    private void actualizarFechasSiEsNecesario(Solicitud solicitud, UpdateSolicitudRequest request) {
         boolean datesUpdated = false;
         if (request.getFechaInicio() != null && !request.getFechaInicio().equals(solicitud.getFechaInicio())) {
             solicitud.setFechaInicio(request.getFechaInicio());
@@ -399,30 +310,35 @@ public class SolicitudServiceImpl implements SolicitudService {
             solicitudRequest.setJornadaInicio(solicitud.getJornadaInicio().name());
             solicitudRequest.setJornadaTermino(solicitud.getJornadaTermino().name());
 
-            double cantidadDias = calcularDias(solicitudRequest);
+            double cantidadDias = calculadoraDiasService.calcularDias(solicitudRequest);
             solicitud.setCantidadDias(cantidadDias);
         }
+    }
 
-        if (request.getEstadoSolicitud() != null) {
-            Solicitud.EstadoSolicitud nuevoEstado = Solicitud.EstadoSolicitud.valueOf(request.getEstadoSolicitud());
-            if (nuevoEstado != solicitud.getEstado()) {
-                if (nuevoEstado == Solicitud.EstadoSolicitud.POSTERGADA) {
-                    Aprobacion aprobacion = aprobacionRepository.findBySolicitud(solicitud)
-                            .orElseThrow(() -> new NotFounException("No se puede postergar una solicitud que no ha sido aprobada."));
-
-                    Postergacion postergacion = new Postergacion();
-                    postergacion.setFechaPostergacion(LocalDate.now());
-                    postergacion.setRutPostergacion(aprobacion.getRut());
-                    postergacion.setSolicitud(solicitud);
-                    postergacion.setGlosa("Postergación a través del mantenedor de solicitudes.");
-                    postergacionRepository.save(postergacion);
-                }
-                solicitud.setEstado(nuevoEstado);
-            }
+    // Gestiona la transición de estado de una solicitud, incluyendo el caso
+    // especial de postergación.
+    private void gestionarCambioDeEstado(Solicitud solicitud, UpdateSolicitudRequest request) {
+        if (request.getEstadoSolicitud() == null) {
+            return;
         }
 
-        solicitudRepository.save(solicitud);
+        Solicitud.EstadoSolicitud nuevoEstado = Solicitud.EstadoSolicitud.valueOf(request.getEstadoSolicitud());
+        if (nuevoEstado == solicitud.getEstado()) {
+            return;
+        }
+
+        if (nuevoEstado == Solicitud.EstadoSolicitud.POSTERGADA) {
+            Aprobacion aprobacion = aprobacionRepository.findBySolicitud(solicitud)
+                    .orElseThrow(
+                            () -> new NotFounException("No se puede postergar una solicitud que no ha sido aprobada."));
+
+            Postergacion postergacion = new Postergacion();
+            postergacion.setFechaPostergacion(LocalDate.now());
+            postergacion.setRutPostergacion(aprobacion.getRut());
+            postergacion.setSolicitud(solicitud);
+            postergacion.setGlosa("Postergación a través del mantenedor de solicitudes.");
+            postergacionRepository.save(postergacion);
+        }
+        solicitud.setEstado(nuevoEstado);
     }
 }
-
-    

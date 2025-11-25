@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.services.derivacion.DerivacionService;
-import com.newsolicitudes.newsolicitudes.services.derivacioncreate.DerivacionCreateService;
 import com.newsolicitudes.newsolicitudes.services.noleidas.NoLeidasService;
 
 @RestController
@@ -24,13 +23,11 @@ import com.newsolicitudes.newsolicitudes.services.noleidas.NoLeidasService;
 @CrossOrigin(origins = "http://localhost:5173")
 public class DerivacionController {
 
-    private final DerivacionCreateService derivacionCreateService;
     private final DerivacionService derivacionService;
     private final NoLeidasService noLeidasService;
 
-    public DerivacionController(DerivacionCreateService derivacionCreateService, DerivacionService derivacionService,
+    public DerivacionController(DerivacionService derivacionService,
             NoLeidasService noLeidasService) {
-        this.derivacionCreateService = derivacionCreateService;
         this.derivacionService = derivacionService;
         this.noLeidasService = noLeidasService;
     }
@@ -40,7 +37,7 @@ public class DerivacionController {
             @RequestParam Integer rut) {
         try {
 
-            derivacionCreateService.createDerivacionDepto(idDerivacion, rut);
+            derivacionService.crearSiguienteDerivacion(idDerivacion, rut);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Derivacion Creada con Exito");
             return ResponseEntity.ok(response);
