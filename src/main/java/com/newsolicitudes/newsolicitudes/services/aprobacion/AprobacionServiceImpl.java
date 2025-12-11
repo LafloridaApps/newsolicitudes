@@ -20,6 +20,7 @@ import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.exceptions.AprobacionException;
+import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
@@ -30,6 +31,7 @@ import com.newsolicitudes.newsolicitudes.services.firma.FirmaService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
 import com.newsolicitudes.newsolicitudes.services.mapper.PdfDtoMapper;
+import com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
@@ -47,6 +49,7 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final FirmaService firmaService;
     private final FuncionarioService funcionarioService;
     private final ApiMailService apiMailService;
+    private final SolicitudService solicitudService;
     private static final String URL_LOGIN = "https://appx.laflorida.cl/login";
     private static final String SUBJECT_MAIL = "Aprobación de Solicitud";
     private static final String TEMPLATE_MAIL = "aprobacion";
@@ -62,7 +65,8 @@ public class AprobacionServiceImpl implements AprobacionService {
             PdfDtoMapper pdfDtoMapper,
             FirmaService firmaService,
             FuncionarioService funcionarioService,
-            ApiMailService apiMailService) {
+            ApiMailService apiMailService,
+            SolicitudService solicitudService) {
         this.aprobacionRepository = aprobacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.derivacionRepository = derivacionRepository;
@@ -73,6 +77,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         this.firmaService = firmaService;
         this.funcionarioService = funcionarioService;
         this.apiMailService = apiMailService;
+        this.solicitudService = solicitudService;
     }
 
     @Override
@@ -91,6 +96,12 @@ public class AprobacionServiceImpl implements AprobacionService {
         if (!shouldSkipVisacion(solicitud, request.getAprobadoPor(), derivacion) && !verificaVisacion(solicitud)) {
             throw new AprobacionException("El funcionario " + solicitud.getRut()
                     + " no tiene visación para la solicitud " + solicitud.getId());
+        }
+
+        if (solicitudService.buscarSolicitudesPendientesAprobacion(solicitud.getTipoSolicitud().toString(),
+                solicitud.getRut())) {
+            throw new SolicitudException("El funcionario " + solicitud.getRut()
+                    + " tiene solicitudes pendientes de aprobación del mismo tipo.");
         }
 
         derivacion.setEstadoDerivacion(EstadoDerivacion.FINALIZADA);
@@ -229,4 +240,5 @@ public class AprobacionServiceImpl implements AprobacionService {
         aprobacionRepository.save(aprobacion);
 
     }
+
 }

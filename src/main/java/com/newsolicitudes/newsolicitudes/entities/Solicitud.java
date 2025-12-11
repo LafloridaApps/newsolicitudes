@@ -56,7 +56,7 @@ public class Solicitud {
     }
 
     public enum Jornada {
-        COMPLETA,
+        DIA,
         AM,
         PM
     }

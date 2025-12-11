@@ -54,6 +54,7 @@ public class PdfDtoMapper {
                 .rutDirector(String.valueOf(director.getRut()))
                 .nombreDirector(director.getNombre() + " " + director.getApellidoPaterno())
                 .tipoSolicitud(getTipoSolicitud(solicitud.getTipoSolicitud()))
+                .anio(String.valueOf(solicitud.getFechaTermino().getYear()))
                 .build();
     }
 
@@ -89,7 +90,7 @@ public class PdfDtoMapper {
        if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
             // Si la duración es de más de un día, siempre es jornada completa
             if (!solicitud.getFechaInicio().isEqual(solicitud.getFechaTermino())) {
-                return "COMPLETA";
+                return "DIA";
             } else { // Es el mismo día
                 if (solicitud.getJornadaInicio() != null) {
                     if (solicitud.getJornadaInicio().equals(Solicitud.Jornada.AM)
@@ -102,7 +103,7 @@ public class PdfDtoMapper {
                 }
                 // Si es el mismo día y no es AM ni PM, o jornadaInicio es COMPLETA, se
                 // considera completa por defecto
-                return "COMPLETA";
+                return "DIA";
             }
         }
         return "";

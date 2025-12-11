@@ -24,6 +24,7 @@ public class PdfDto {
     private String rutDirector;
     private String nombreDirector;
     private String nombreSolicitud;
+    private String anio;
 
     private PdfDto(Builder builder) {
         this.idSol = builder.idSol;
@@ -48,6 +49,7 @@ public class PdfDto {
         this.nombreDirector = builder.nombreDirector;
         this.tipoSolicitud = builder.tipoSolicitud;
         this.nombreSolicitud = builder.nombreSolicitud;
+        this.anio = builder.anio;
 
     }
 
@@ -231,6 +233,10 @@ public class PdfDto {
         this.nombreSolicitud = nombreSolicitud;
     }
 
+    public String getAnio() {
+        return anio;
+    }
+
     public static class Builder {
 
         private Long idSol;
@@ -255,6 +261,7 @@ public class PdfDto {
         private String rutDirector;
         private String nombreDirector;
         private String nombreSolicitud;
+        private String anio;
 
         public Builder idSol(Long idSol) {
             this.idSol = idSol;
@@ -363,6 +370,10 @@ public class PdfDto {
 
         public Builder nombreSolicitud(String nombreSolicitud) {
             this.nombreSolicitud = nombreSolicitud;
+            return this;
+        }
+        public Builder anio(String anio) {
+            this.anio = anio;
             return this;
         }
 

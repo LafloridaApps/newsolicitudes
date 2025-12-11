@@ -21,4 +21,6 @@ public interface SolicitudService {
 
     void updateSolicitud(Long idSolicitud, UpdateSolicitudRequest request);
 
+    boolean buscarSolicitudesPendientesAprobacion(String tipoSolicitud, Integer rutFuncionario);
+
 }

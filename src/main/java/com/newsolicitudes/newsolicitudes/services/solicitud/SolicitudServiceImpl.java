@@ -30,9 +30,12 @@ import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Postergacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
+import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
+import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
@@ -105,6 +108,12 @@ public class SolicitudServiceImpl implements SolicitudService {
         // 1. Obtener datos iniciales del funcionario y su departamento.
         FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
         DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
+
+        if (buscarSolicitudesPendientesAprobacion(request.getTipoSolicitud(), request.getRut())) {
+            throw new SolicitudException(
+                    "El funcionario ya tiene una solicitud pendiente de aprobación para el tipo de solicitud especificado.");
+
+        }
 
         // 2. Determinar la ruta de derivación (departamento destino y tipo).
         RutaDerivacion ruta = determinarRutaDerivacion(request, departamentoActual);
@@ -340,5 +349,15 @@ public class SolicitudServiceImpl implements SolicitudService {
             postergacionRepository.save(postergacion);
         }
         solicitud.setEstado(nuevoEstado);
+    }
+
+    @Override
+    public boolean buscarSolicitudesPendientesAprobacion(String tipoSolicitud, Integer rutFuncionario) {
+
+        TipoSolicitud tipoSol = (tipoSolicitud != null) ? TipoSolicitud.valueOf(tipoSolicitud) : null;
+
+        List<Solicitud> solicitudesPendientes = solicitudRepository
+                .findByTipoSolicitudAndEstadoAndRut(tipoSol, EstadoSolicitud.PENDIENTE, rutFuncionario);
+        return !solicitudesPendientes.isEmpty();
     }
 }

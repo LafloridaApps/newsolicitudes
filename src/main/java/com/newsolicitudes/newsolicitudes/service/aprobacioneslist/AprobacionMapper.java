@@ -105,7 +105,7 @@ public class AprobacionMapper {
         if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
             // Si es más de un día, es COMPLETA
             if (!solicitud.getFechaInicio().isEqual(solicitud.getFechaTermino())) {
-                return Solicitud.Jornada.COMPLETA.name();
+                return Solicitud.Jornada.DIA.name();
             }
 
             // Lógica para un solo día
@@ -114,12 +114,12 @@ public class AprobacionMapper {
 
             // Si ambas son AM y PM, es COMPLETA
             if (jornadaInicio == Solicitud.Jornada.AM && jornadaTermino == Solicitud.Jornada.PM) {
-                return Solicitud.Jornada.COMPLETA.name();
+                return Solicitud.Jornada.DIA.name();
             }
 
             // Si inicio es COMPLETA, es COMPLETA
-            if (jornadaInicio == Solicitud.Jornada.COMPLETA) {
-                return Solicitud.Jornada.COMPLETA.name();
+            if (jornadaInicio == Solicitud.Jornada.DIA) {
+                return Solicitud.Jornada.DIA.name();
             }
             
             // Si inicio es AM y termino no es PM (o es nulo), es AM
@@ -133,10 +133,10 @@ public class AprobacionMapper {
             }
 
             // Por defecto, si no hay jornada de inicio, es COMPLETA
-            return Solicitud.Jornada.COMPLETA.name();
+            return Solicitud.Jornada.DIA.name();
 
         } else if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.FERIADO)) {
-            return Solicitud.Jornada.COMPLETA.name();
+            return Solicitud.Jornada.DIA.name();
         }
         return "";
     }
