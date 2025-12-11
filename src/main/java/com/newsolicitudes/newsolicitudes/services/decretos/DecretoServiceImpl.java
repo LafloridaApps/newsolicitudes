@@ -29,7 +29,11 @@ import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -140,12 +144,31 @@ public class DecretoServiceImpl implements DecretoService {
     @Transactional(readOnly = true)
     public Page<DecretoConSolicitudesDTO> searchDecretos(Long id, LocalDate fechaDesde, LocalDate fechaHasta, Integer rut, Long idSolicitud, String nombreFuncionario, Pageable pageable) {
         Specification<Decreto> spec = buildDecretoSpecification(id, fechaDesde, fechaHasta, rut, idSolicitud, nombreFuncionario);
-        Page<Decreto> decretos = decretoRepository.findAll(spec.and((root, query, criteriaBuilder) -> {
+        List<Decreto> decretos = decretoRepository.findAll(spec.and((root, query, criteriaBuilder) -> {
             query.distinct(true);
             return criteriaBuilder.conjunction();
-        }), pageable);
+        }));
 
-        return decretos.map(decreto -> mapDecretoToDto(decreto, rut, idSolicitud));
+        List<DecretoConSolicitudesDTO> dtos = decretos.stream()
+                .map(decreto -> mapDecretoToDto(decreto, rut, idSolicitud))
+                .collect(Collectors.toList());
+
+        // Sort by apellidoPaterno
+        Collections.sort(dtos, Comparator.comparing(dto -> {
+            if (dto.getSolicitudes() == null || dto.getSolicitudes().isEmpty()) {
+                return "";
+            }
+            String nombreCompleto = dto.getSolicitudes().get(0).getNombreFuncionario();
+            if (nombreCompleto == null || nombreCompleto.equals("No disponible")) {
+                return "";
+            }
+            String[] parts = nombreCompleto.split(" ");
+            return parts.length > 1 ? parts[1] : "";
+        }));
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), dtos.size());
+        return new PageImpl<>(dtos.subList(start, end), pageable, dtos.size());
     }
 
     private Specification<Decreto> buildDecretoSpecification(Long id, LocalDate fechaDesde, LocalDate fechaHasta, Integer rut, Long idSolicitud, String nombreFuncionario) {
