@@ -90,13 +90,22 @@ public class DecretoServiceImpl implements DecretoService {
             decretadas.add(dto);
         }
 
-        byte[] generatedDocument = documentoDecretoService.generarDocumento(decretadas, template);
+        List<AprobacionList> listaOrdenada = ordenarAprobaciones(decretadas);
+
+        byte[] generatedDocument = documentoDecretoService.generarDocumento(listaOrdenada, template);
         nuevoDecreto.setDocumentoPdf(generatedDocument);
         decretoRepository.save(nuevoDecreto);
 
         solicitudRepository.saveAll(solicitudes);
 
-        return decretadas;
+        return listaOrdenada;
+    }
+
+    private List<AprobacionList> ordenarAprobaciones(List<AprobacionList> aprobaciones) {
+        return aprobaciones.stream()
+                .sorted(Comparator.comparing(AprobacionList::getNombres, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(AprobacionList::getFechaSolicitud, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     @Override
@@ -142,8 +151,10 @@ public class DecretoServiceImpl implements DecretoService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DecretoConSolicitudesDTO> searchDecretos(Long id, LocalDate fechaDesde, LocalDate fechaHasta, Integer rut, Long idSolicitud, String nombreFuncionario, Pageable pageable) {
-        Specification<Decreto> spec = buildDecretoSpecification(id, fechaDesde, fechaHasta, rut, idSolicitud, nombreFuncionario);
+    public Page<DecretoConSolicitudesDTO> searchDecretos(Long id, LocalDate fechaDesde, LocalDate fechaHasta,
+            Integer rut, Long idSolicitud, String nombreFuncionario, Pageable pageable) {
+        Specification<Decreto> spec = buildDecretoSpecification(id, fechaDesde, fechaHasta, rut, idSolicitud,
+                nombreFuncionario);
         List<Decreto> decretos = decretoRepository.findAll(spec.and((root, query, criteriaBuilder) -> {
             query.distinct(true);
             return criteriaBuilder.conjunction();
@@ -171,11 +182,12 @@ public class DecretoServiceImpl implements DecretoService {
         return new PageImpl<>(dtos.subList(start, end), pageable, dtos.size());
     }
 
-    private Specification<Decreto> buildDecretoSpecification(Long id, LocalDate fechaDesde, LocalDate fechaHasta, Integer rut, Long idSolicitud, String nombreFuncionario) {
+    private Specification<Decreto> buildDecretoSpecification(Long id, LocalDate fechaDesde, LocalDate fechaHasta,
+            Integer rut, Long idSolicitud, String nombreFuncionario) {
         Specification<Decreto> spec = DecretoSpecification.withDecretoId(id)
-            .and(DecretoSpecification.withFechaDecretoBetween(fechaDesde, fechaHasta))
-            .and(DecretoSpecification.withRutFuncionario(rut))
-            .and(DecretoSpecification.withSolicitudId(idSolicitud));
+                .and(DecretoSpecification.withFechaDecretoBetween(fechaDesde, fechaHasta))
+                .and(DecretoSpecification.withRutFuncionario(rut))
+                .and(DecretoSpecification.withSolicitudId(idSolicitud));
 
         if (nombreFuncionario != null && !nombreFuncionario.trim().isEmpty()) {
             java.util.List<Integer> rutsEncontrados = getRutsByFuncionarioName(nombreFuncionario);
@@ -188,40 +200,39 @@ public class DecretoServiceImpl implements DecretoService {
         return spec;
     }
 
-    
-
     private DecretoConSolicitudesDTO mapDecretoToDto(Decreto decreto, Integer rut, Long idSolicitud) {
         List<SolicitudInfoDTO> solicitudInfos = decreto.getDecretoSolicitudes().stream()
-            .filter(decretoSolicitud -> {
-                Solicitud solicitud = decretoSolicitud.getSolicitud();
-                boolean matchesRut = (rut == null || solicitud.getRut().equals(rut));
-                boolean matchesIdSolicitud = (idSolicitud == null || solicitud.getId().equals(idSolicitud));
-                return matchesRut && matchesIdSolicitud;
-            })
-            .map(decretoSolicitud -> {
-                Solicitud solicitud = decretoSolicitud.getSolicitud();
-                String funcionarioNombreDisplay = "No disponible";
-                try {
-                    FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
-                    if (funcionario != null) {
-                        funcionarioNombreDisplay = funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " " + funcionario.getApellidoMaterno();
+                .filter(decretoSolicitud -> {
+                    Solicitud solicitud = decretoSolicitud.getSolicitud();
+                    boolean matchesRut = (rut == null || solicitud.getRut().equals(rut));
+                    boolean matchesIdSolicitud = (idSolicitud == null || solicitud.getId().equals(idSolicitud));
+                    return matchesRut && matchesIdSolicitud;
+                })
+                .map(decretoSolicitud -> {
+                    Solicitud solicitud = decretoSolicitud.getSolicitud();
+                    String funcionarioNombreDisplay = "No disponible";
+                    try {
+                        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
+                        if (funcionario != null) {
+                            funcionarioNombreDisplay = funcionario.getNombre() + " " + funcionario.getApellidoPaterno()
+                                    + " " + funcionario.getApellidoMaterno();
+                        }
+                    } catch (Exception e) {
+                        // Si la API de funcionario falla, simplemente no se pone el nombre.
                     }
-                } catch (Exception e) {
-                    // Si la API de funcionario falla, simplemente no se pone el nombre.
-                }
 
-                String urlPdf = aprobacionRepository.findBySolicitud(solicitud)
-                    .map(com.newsolicitudes.newsolicitudes.entities.Aprobacion::getUrlPdf)
-                    .orElse(null);
+                    String urlPdf = aprobacionRepository.findBySolicitud(solicitud)
+                            .map(com.newsolicitudes.newsolicitudes.entities.Aprobacion::getUrlPdf)
+                            .orElse(null);
 
-                return new SolicitudInfoDTO(solicitud.getId(), solicitud.getRut(), funcionarioNombreDisplay, solicitud.getTipoSolicitud(), urlPdf);
-            }).toList();
+                    return new SolicitudInfoDTO(solicitud.getId(), solicitud.getRut(), funcionarioNombreDisplay,
+                            solicitud.getTipoSolicitud(), urlPdf);
+                }).toList();
 
         return new DecretoConSolicitudesDTO(
-            decreto.getId(),
-            decreto.getFechaDecreto(),
-            solicitudInfos
-        );
+                decreto.getId(),
+                decreto.getFechaDecreto(),
+                solicitudInfos);
     }
 
     private java.util.List<Integer> getRutsByFuncionarioName(String nombreFuncionario) {
@@ -231,7 +242,8 @@ public class DecretoServiceImpl implements DecretoService {
         do {
             response = apiExtFuncionarioService.buscarFuncionarioByNombre(nombreFuncionario, pageNumber);
             if (response != null && response.getFuncionarios() != null) {
-                for (com.newsolicitudes.newsolicitudes.dto.FuncionarioDtoSearch funcionario : response.getFuncionarios()) {
+                for (com.newsolicitudes.newsolicitudes.dto.FuncionarioDtoSearch funcionario : response
+                        .getFuncionarios()) {
                     if (funcionario.getRut() != null) {
                         rutsEncontrados.add(funcionario.getRut());
                     }

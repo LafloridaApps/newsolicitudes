@@ -27,7 +27,6 @@ public class AprobacionesDecretadasMapper {
                 .idSolicitud(solicitud.getId())
                 .rut(getRut(funcionario.getRut()))
                 .nombres(obtenerNombres(funcionario.getRut()))
-                .apellidos(obtnerApellidos(funcionario.getRut()))
                 .departamento(obtenerDepartamento(solicitud.getIdDepto()))
                 .jornada(obtenerJornada(solicitud)) // Assuming jornada is relevant
                 .desde(solicitud.getFechaInicio().toString())
@@ -51,15 +50,7 @@ public class AprobacionesDecretadasMapper {
 
     private String obtenerNombres(Integer rut) {
 
-        return funcionarioService.getFuncionarioByRut(rut).getNombre();
-
-    }
-
-    private String obtnerApellidos(Integer rut) {
-
-        FuncionarioResponseApi funcionarioResponse = funcionarioService.getFuncionarioByRut(rut);
-
-        return funcionarioResponse.getApellidoPaterno().concat(" ").concat(funcionarioResponse.getApellidoMaterno());
+        return funcionarioService.getFuncionarioByRut(rut).getNombreCompletoReverse();
 
     }
 

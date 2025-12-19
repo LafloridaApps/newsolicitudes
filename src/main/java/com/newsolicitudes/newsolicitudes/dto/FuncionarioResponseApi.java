@@ -158,4 +158,10 @@ public class FuncionarioResponseApi {
     public String getRutCompleto() {
         return rut + "-" + vrut;
     }
+
+
+    public String getNombreCompletoReverse() {
+        return apellidoPaterno + " " + apellidoMaterno + " " + nombre;
+    }
+
 }

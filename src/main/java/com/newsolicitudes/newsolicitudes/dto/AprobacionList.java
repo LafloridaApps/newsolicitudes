@@ -1,13 +1,11 @@
 package com.newsolicitudes.newsolicitudes.dto;
 
-
 public class AprobacionList {
 
     private Long nroDecreto;
     private Long idSolicitud;
     private String rut;
     private String nombres;
-    private String apellidos;
     private String departamento;
     private String jornada;
     private String desde;
@@ -23,7 +21,6 @@ public class AprobacionList {
         this.idSolicitud = builder.idSolicitud;
         this.rut = builder.rut;
         this.nombres = builder.nombres;
-        this.apellidos = builder.apellidos;
         this.departamento = builder.departamento;
         this.jornada = builder.jornada;
         this.desde = builder.desde;
@@ -64,13 +61,7 @@ public class AprobacionList {
         this.nombres = nombres;
     }
 
-    public String getApellidos() {
-        return apellidos;
-    }
-
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
-    }
+   
 
     public String getDepartamento() {
         return departamento;
@@ -127,6 +118,7 @@ public class AprobacionList {
     public void setTipoContrato(String tipoContrato) {
         this.tipoContrato = tipoContrato;
     }
+
     public String getDesde() {
         return desde;
     }
@@ -157,7 +149,6 @@ public class AprobacionList {
         private Long idSolicitud;
         private String rut;
         private String nombres;
-        private String apellidos;
         private String departamento;
         private String jornada;
         private Double duracion;
@@ -180,11 +171,6 @@ public class AprobacionList {
 
         public Builder nombres(String nombres) {
             this.nombres = nombres;
-            return this;
-        }
-
-        public Builder apellidos(String apellidos) {
-            this.apellidos = apellidos;
             return this;
         }
 
@@ -237,8 +223,6 @@ public class AprobacionList {
             this.nroDecreto = nroDecreto;
             return this;
         }
-
-        
 
         public AprobacionList build() {
             return new AprobacionList(this);

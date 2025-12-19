@@ -44,10 +44,8 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
         }
         logger.info("Template encontrado: {}", docTemplate.getDocFile());
 
-
-        String  rutaPlantilla = docProperties.getTemplatesPath().concat(docTemplate.getDocFile());
+        String rutaPlantilla = docProperties.getTemplatesPath().concat(docTemplate.getDocFile());
         logger.info("Ruta de la plantilla: {}", rutaPlantilla);
-
 
         try {
             // 1. Cargar plantilla Word (colócala en resources/plantillas/aprobaciones.docx)
@@ -88,15 +86,14 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
                 Tr nuevaFila = XmlUtils.deepCopy(filaEjemplo);
 
                 reemplazarTextoEnCelda(nuevaFila, 0, String.valueOf(contador));
-                reemplazarTextoEnCelda(nuevaFila, 1, a.getNombres() + " " + a.getApellidos());
+                reemplazarTextoEnCelda(nuevaFila, 1, a.getNombres());
                 reemplazarTextoEnCelda(nuevaFila, 2, a.getRut());
                 reemplazarTextoEnCelda(nuevaFila, 3, a.getDesde());
                 reemplazarTextoEnCelda(nuevaFila, 4, a.getHasta());
-                reemplazarTextoEnCelda(nuevaFila, 5 , a.getJornada());
+                reemplazarTextoEnCelda(nuevaFila, 5, a.getJornada());
                 reemplazarTextoEnCelda(nuevaFila, 6, a.getDuracion().toString());
                 reemplazarTextoEnCelda(nuevaFila, 7, a.getNroDecreto().toString());
                 reemplazarTextoEnCelda(nuevaFila, 8, a.getIdSolicitud().toString());
-
 
                 tabla.getContent().add(nuevaFila);
                 contador++;

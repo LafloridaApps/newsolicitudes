@@ -65,7 +65,6 @@ public class AprobacionMapper {
                             .idSolicitud(aprobacion.getIdSolicitud())
                             .rut(getRut(funcionario))
                             .nombres(obtenerNombres(funcionario))
-                            .apellidos(obtnerApellidos(funcionario))
                             .departamento(obtenerDepartamento(departamento))
                             .jornada(obtenerJornada(aprobacion.getSolicitud()))
                             .desde(aprobacion.getFechaInicioSolicitud().toString())
@@ -77,7 +76,7 @@ public class AprobacionMapper {
                             .url(aprobacion.getUrlPdf())
                             .build();
                 })
-                .sorted(Comparator.comparing(AprobacionList::getApellidos))
+                .sorted(Comparator.comparing(AprobacionList::getNombres))
                 .toList();
     }
 
@@ -88,14 +87,10 @@ public class AprobacionMapper {
 
     private String obtenerNombres(FuncionarioResponseApi funcionario) {
         if (funcionario == null) return "";
-        return funcionario.getNombre();
+        return funcionario.getNombreCompletoReverse();
     }
 
-    private String obtnerApellidos(FuncionarioResponseApi funcionario) {
-        if (funcionario == null) return "";
-        return funcionario.getApellidoPaterno().concat(" ").concat(funcionario.getApellidoMaterno());
-    }
-
+    
     private String obtenerDepartamento(DepartamentoResponse departamento) {
         if (departamento == null) return "";
         return departamento.getNombre();
