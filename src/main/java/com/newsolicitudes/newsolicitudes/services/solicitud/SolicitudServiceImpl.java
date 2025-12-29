@@ -111,7 +111,7 @@ public class SolicitudServiceImpl implements SolicitudService {
 
         if (buscarSolicitudesPendientesAprobacion(request.getTipoSolicitud(), request.getRut())) {
             throw new SolicitudException(
-                    "El funcionario ya tiene una solicitud pendiente de aprobación para el tipo de solicitud especificado.");
+                    "Tiene un formulario pendiente de firma.");
 
         }
 

@@ -52,7 +52,8 @@ public class Solicitud {
         PENDIENTE,
         APROBADA,
         POSTERGADA,
-        DECRETADA
+        DECRETADA,
+        FORMULARIO_EN_RRHH
     }
 
     public enum Jornada {
