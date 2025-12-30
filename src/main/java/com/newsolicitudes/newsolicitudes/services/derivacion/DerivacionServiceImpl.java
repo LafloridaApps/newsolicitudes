@@ -84,7 +84,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     public void createSolicitudDerivacion(Solicitud solicitud, TipoDerivacion tipo,
             Long idDepto, EstadoDerivacion estadoDerivacion)
             throws DerivacionExceptions {
-        crearYNotificarNuevaDerivacion(solicitud, tipo, idDepto, estadoDerivacion);
+        crearNuevaDerivacion(solicitud, tipo, idDepto, estadoDerivacion);
     }
 
     // Crea la siguiente derivación en la cadena, típicamente después de una visación.
@@ -117,8 +117,9 @@ public class DerivacionServiceImpl implements DerivacionService {
         derivacionRepository.save(derivacionAnterior);
 
         // Crea y guarda la nueva derivación pendiente.
-        crearYNotificarNuevaDerivacion(solicitud, tipoSiguienteDerivacion, departamentoSiguiente.getId(),
+        Derivacion nuevaDerivacion = crearNuevaDerivacion(solicitud, tipoSiguienteDerivacion, departamentoSiguiente.getId(),
                 EstadoDerivacion.PENDIENTE);
+        enviarNotificacionNuevaDerivacion(nuevaDerivacion);
     }
 
     // Obtiene una página de solicitudes basadas en las derivaciones de un departamento.
@@ -149,7 +150,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     // =====================================================================================
 
     // Lógica central para crear una derivación, persistirla y enviar la notificación.
-    private void crearYNotificarNuevaDerivacion(Solicitud solicitud, TipoDerivacion tipo,
+    private Derivacion crearNuevaDerivacion(Solicitud solicitud, TipoDerivacion tipo,
             Long idDepto, EstadoDerivacion estadoDerivacion) {
         Derivacion derivacion = new Derivacion();
         derivacion.setSolicitud(solicitud);
@@ -158,8 +159,7 @@ public class DerivacionServiceImpl implements DerivacionService {
         derivacion.setEstadoDerivacion(estadoDerivacion);
         derivacion.setTipo(tipo);
 
-        derivacionRepository.save(derivacion);
-        enviarNotificacionNuevaDerivacion(derivacion);
+        return derivacionRepository.save(derivacion);
     }
     
     // Construye la lista de IDs de departamento a consultar, incluyendo el principal y los subrogados.

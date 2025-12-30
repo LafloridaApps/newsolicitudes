@@ -28,8 +28,8 @@ import com.newsolicitudes.newsolicitudes.repositories.VisacionRepository;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.firma.FirmaService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
-import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
 import com.newsolicitudes.newsolicitudes.services.mapper.PdfDtoMapper;
+import com.newsolicitudes.newsolicitudes.services.notificacion.NotificacionService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
@@ -46,7 +46,7 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final PdfDtoMapper pdfDtoMapper;
     private final FirmaService firmaService;
     private final FuncionarioService funcionarioService;
-    private final ApiMailService apiMailService;
+    private final NotificacionService notificacionService;
     private static final String URL_LOGIN = "https://appx.laflorida.cl/login";
     private static final String SUBJECT_MAIL = "Aprobación de Solicitud";
     private static final String TEMPLATE_MAIL = "aprobacion";
@@ -62,7 +62,7 @@ public class AprobacionServiceImpl implements AprobacionService {
             PdfDtoMapper pdfDtoMapper,
             FirmaService firmaService,
             FuncionarioService funcionarioService,
-            ApiMailService apiMailService) {
+            NotificacionService notificacionService) {
         this.aprobacionRepository = aprobacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.derivacionRepository = derivacionRepository;
@@ -72,7 +72,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         this.pdfDtoMapper = pdfDtoMapper;
         this.firmaService = firmaService;
         this.funcionarioService = funcionarioService;
-        this.apiMailService = apiMailService;
+        this.notificacionService = notificacionService;
     }
 
     @Override
@@ -137,7 +137,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         body.put("link", URL_LOGIN);
         body.put("idSolicitud", idSolicitud);
 
-        apiMailService.enviarMail(to, subject, templateName, body);
+        notificacionService.enviarNotificacion(to, subject, templateName, body);
     }
 
     private String firmarPdf(Solicitud solicitud) {
