@@ -15,15 +15,16 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 
 public interface AprobacionRepository extends JpaRepository<Aprobacion, Long> {
 
-    Optional<Aprobacion> findBySolicitud(Solicitud solicitud);
+        Optional<Aprobacion> findBySolicitud(Solicitud solicitud);
 
-    Optional<Aprobacion> findBySolicitudAndFechaAprobacionBetween(Solicitud solicitud, LocalDate fechaInicio,
-            LocalDate fechaFin);
+        Optional<Aprobacion> findBySolicitudAndFechaAprobacionBetween(Solicitud solicitud, LocalDate fechaInicio,
+                        LocalDate fechaFin);
 
-    List<Aprobacion> findByFechaAprobacionBetween(LocalDate fechaInicio, LocalDate fechaFin);
+        List<Aprobacion> findByFechaAprobacionBetween(LocalDate fechaInicio, LocalDate fechaFin);
 
-    @Query("SELECT a FROM Aprobacion a WHERE a.fechaAprobacion BETWEEN :fechaInicio AND :fechaFin")
-    Page<Aprobacion> findByFechaAprobacionBetween(@Param("fechaInicio") LocalDate fechaInicio,
-            @Param("fechaFin") LocalDate fechaFin, Pageable pageable);
+        @Query("SELECT a FROM Aprobacion a WHERE a.fechaAprobacion BETWEEN :fechaInicio AND :fechaFin")
+        Page<Aprobacion> findByFechaAprobacionBetween(@Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin, Pageable pageable);
 
+        boolean existsBySolicitud(Solicitud solicitud);
 }

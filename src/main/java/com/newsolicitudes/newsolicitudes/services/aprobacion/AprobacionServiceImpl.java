@@ -82,6 +82,10 @@ public class AprobacionServiceImpl implements AprobacionService {
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
         Solicitud solicitud = derivacion.getSolicitud();
 
+        if (tieneAprobacion(solicitud)) {
+            throw new AprobacionException(
+                    "La solicitud " + solicitud.getId() + " ya ha sido aprobada.");
+        }
         EntradaDerivacion entrada = derivacion.getEntrada();
         if (entrada == null || entrada.getRut() == null) {
             throw new AprobacionException(
@@ -115,6 +119,10 @@ public class AprobacionServiceImpl implements AprobacionService {
             sendMail(solicitud.getRut(), solicitud.getId());
         }
 
+    }
+
+    private boolean tieneAprobacion(Solicitud solicitud) {
+        return aprobacionRepository.existsBySolicitud(solicitud);
     }
 
     private void validarUrl(String url) {
