@@ -12,18 +12,21 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.firmante.FirmanteService;
 
 @Component
 public class PdfDtoMapper {
 
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
+    private final FirmanteService firmanteService;
 
     public PdfDtoMapper(ApiExtFuncionarioService apiExtFuncionarioService,
-            ApiDepartamentoService apiDepartamentoService
-            ) {
+            ApiDepartamentoService apiDepartamentoService,
+            FirmanteService firmanteService) {
         this.apiExtFuncionarioService = apiExtFuncionarioService;
         this.apiDepartamentoService = apiDepartamentoService;
+        this.firmanteService = firmanteService;
     }
 
     public PdfDto toPdfDto(Solicitud solicitud) {
@@ -46,9 +49,9 @@ public class PdfDtoMapper {
                 .materno(funcionario.getApellidoMaterno())
                 .nombres(funcionario.getNombre())
                 .depto(departamento.getNombre())
-                .escalafon(funcionario.getTipoContrato()) 
+                .escalafon(funcionario.getTipoContrato())
                 .grado(funcionario.getGrado().toString())
-                .telefono("0") 
+                .telefono("0")
                 .rutJefe(String.valueOf(jefe.getRut()))
                 .nombreJefe(jefe.getNombre() + " " + jefe.getApellidoPaterno())
                 .rutDirector(String.valueOf(director.getRut()))
@@ -59,24 +62,7 @@ public class PdfDtoMapper {
     }
 
     private Integer getRutFirma(Solicitud solicitud) {
-        DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(solicitud.getIdDepto());
-        while (departamento != null) {
-            String nivel = departamento.getNivelDepartamento();
-            if (nivel != null && (nivel.equalsIgnoreCase("DIRECCION") || nivel.equalsIgnoreCase("ALCALDIA")
-                    || nivel.equalsIgnoreCase("ADMINISTRACION") || nivel.equalsIgnoreCase("SUBDIRECCION"))) {
-
-                if (departamento.getRutJefe().equals(solicitud.getRut()) && departamento.getIdDeptoSuperior() != null) {
-                    departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
-                } else {
-                    return departamento.getRutJefe();
-                }
-            } else if (departamento.getIdDeptoSuperior() != null) {
-                departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
-            } else {
-                departamento = null;
-            }
-        }
-        return null;
+        return firmanteService.getRutFirmante(solicitud);
     }
 
     private Long getTipoSolicitud(TipoSolicitud tipoSolicitud) {
@@ -87,7 +73,7 @@ public class PdfDtoMapper {
     }
 
     private String getJornada(Solicitud solicitud) {
-       if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
+        if (solicitud.getTipoSolicitud().equals(Solicitud.TipoSolicitud.ADMINISTRATIVO)) {
             // Si la duración es de más de un día, siempre es jornada completa
             if (!solicitud.getFechaInicio().isEqual(solicitud.getFechaTermino())) {
                 return "DIA";
@@ -109,3 +95,4 @@ public class PdfDtoMapper {
         return "";
     }
 }
+

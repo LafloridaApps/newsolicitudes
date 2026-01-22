@@ -2,16 +2,18 @@ package com.newsolicitudes.newsolicitudes.services.mail;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
-import com.newsolicitudes.newsolicitudes.exceptions.MailServiceException;
 
 @Service
 public class ApiMailService implements APiMailService {
 
     private final WebClient webClient;
+    private static final Logger logger = LoggerFactory.getLogger(ApiMailService.class);
 
     public ApiMailService(WebClient.Builder webClientBuilder,
             ApiProperties apiProperties) {
@@ -31,7 +33,7 @@ public class ApiMailService implements APiMailService {
             .bodyValue(body) // 👈 envía el Map como JSON en el cuerpo del POST
             .retrieve()
             .toBodilessEntity() // 👈 no espera respuesta con contenido
-            .onErrorMap(e -> new MailServiceException("Error al enviar correo al microservicio Mail", e))
+            .doOnError(e -> logger.error("Fallo al enviar correo a {}: {}", to, e.getMessage()))
             .block();
 
     }

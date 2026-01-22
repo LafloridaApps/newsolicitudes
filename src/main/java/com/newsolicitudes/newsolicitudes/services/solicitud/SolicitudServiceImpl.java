@@ -170,7 +170,7 @@ public class SolicitudServiceImpl implements SolicitudService {
             FuncionarioResponseApi funcionario, String nombreDepartamentoActual) {
 
         // 1. Determinar el destinatario final (jefe o subrogante).
-        FuncionarioResponseApi destinatario = determinarDestinatarioNotificacion(departamentoDestino);
+        FuncionarioResponseApi destinatario = determinarDestinatarioNotificacion(departamentoDestino, solicitud);
 
         // 2. Preparar el contenido del correo.
         String to = destinatario.getEmail();
@@ -184,11 +184,11 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     // Determina el destinatario final para una notificación, considerando la
     // subrogancia activa.
-    private FuncionarioResponseApi determinarDestinatarioNotificacion(DepartamentoResponse departamentoDestino) {
+    private FuncionarioResponseApi determinarDestinatarioNotificacion(DepartamentoResponse departamentoDestino, Solicitud solicitud) {
         Integer rutJefeDestino = departamentoDestino.getRutJefe();
-        LocalDate hoy = LocalDate.now();
+        LocalDate fechaReferencia = solicitud.getFechaInicio(); 
         List<Subrogancia> subrogancias = subroganciaRepository
-                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
+                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, fechaReferencia, fechaReferencia);
 
         if (!subrogancias.isEmpty()) {
             // Si hay subrogancia activa, el destinatario es el subrogante.

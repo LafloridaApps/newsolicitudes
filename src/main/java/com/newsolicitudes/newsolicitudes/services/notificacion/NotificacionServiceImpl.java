@@ -1,11 +1,16 @@
 package com.newsolicitudes.newsolicitudes.services.notificacion;
 
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import com.newsolicitudes.newsolicitudes.services.mail.ApiMailService;
 
 @Service
 public class NotificacionServiceImpl implements NotificacionService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificacionServiceImpl.class);
 
     private final ApiMailService apiMailService;
 
@@ -15,6 +20,10 @@ public class NotificacionServiceImpl implements NotificacionService {
 
     @Override
     public void enviarNotificacion(String to, String subject, String templateName, Map<String, Object> templateModel) {
-        apiMailService.enviarMail(to, subject, templateName, templateModel);
+        try {
+            apiMailService.enviarMail(to, subject, templateName, templateModel);
+        } catch (Exception e) {
+            LOGGER.error("Error al enviar notificación a {}: {}", to, e.getMessage(), e);
+        }
     }
 }
