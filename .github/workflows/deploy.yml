@@ -16,14 +16,16 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # Usamos tu secreto personal (GH_PAT) en lugar del token automático
+          # Esto permite crear el paquete en la organización sin errores de permiso
+          password: ${{ secrets.GH_PAT }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # Forzamos manualmente las minúsculas para evitar el error 'invalid tag'
+          # Mantenemos la ruta manual en minúsculas para evitar el error de 'invalid tag'
           tags: |
             ghcr.io/lafloridaapps/new-solicitudes:latest
           labels: |
