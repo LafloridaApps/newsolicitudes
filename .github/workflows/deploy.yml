@@ -23,8 +23,8 @@ jobs:
         with:
           context: .
           push: true
-          # Usamos 'lower' para evitar el error de mayúsculas en el nombre del dueño
+          # Forzamos manualmente las minúsculas para evitar el error 'invalid tag'
           tags: |
-            ghcr.io/${{ github.repository_owner }}/new-solicitudes:latest
+            ghcr.io/lafloridaapps/new-solicitudes:latest
           labels: |
             org.opencontainers.image.title=new-solicitudes-container
