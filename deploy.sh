@@ -6,7 +6,7 @@
 NOMBRE_APP="newsolicitudes"
 PUERTO="8081"
 # Cambiamos la ruta de Docker Hub a GitHub Container Registry
-IMAGEN_HUB="ghcr.io/mirkogutierrez/new-solicitudes" 
+IMAGEN_HUB="ghcr.io/lafloridaapps/new-solicitudes"
 # =========================================================
 
 OPCION=${1:-"dev"}
