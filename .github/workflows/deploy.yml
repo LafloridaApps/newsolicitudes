@@ -2,7 +2,7 @@ name: Docker CI New solicitudes
 
 on:
   push:
-    branches: [ "main" ] # Se activa cuando haces push a la rama main
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -15,9 +15,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          # github.actor toma tu nombre de usuario de GitHub automáticamente
           username: ${{ github.actor }}
-          # GITHUB_TOKEN es un secreto que GitHub genera solo, no tienes que crearlo tú
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
@@ -25,6 +23,8 @@ jobs:
         with:
           context: .
           push: true
-          # IMPORTANTE: El formato ahora es ghcr.io/usuario/imagen
+          # Usamos 'lower' para evitar el error de mayúsculas en el nombre del dueño
           tags: |
             ghcr.io/${{ github.repository_owner }}/new-solicitudes:latest
+          labels: |
+            org.opencontainers.image.title=new-solicitudes-container
