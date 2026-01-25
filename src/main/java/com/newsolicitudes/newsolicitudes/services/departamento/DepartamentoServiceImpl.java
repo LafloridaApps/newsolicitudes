@@ -62,7 +62,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
                 continue;
             }
 
-            boolean jefeAusente = isAusenteEnFecha(rutJefe, fechaInicio) || hasAprobacion(rutJefe, fechaInicio, fechaFin);
+            boolean jefeAusente = isAusenteEnFecha(rutJefe, fechaInicio)
+                    || hasAprobacion(rutJefe, fechaInicio, fechaFin);
 
             if (!jefeAusente) {
                 // El jefe está disponible, este es el departamento de destino.
@@ -78,16 +79,19 @@ public class DepartamentoServiceImpl implements DepartamentoService {
                 Integer rutSubrogante = subroganciaActiva.get().getSubrogante();
                 FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
                 DepartamentoResponse dptoSubrogante = getDepartamentoById(funcionarioSubrogante.getCodDepto());
-                logger.info("Jefe {} ausente, pero se encontró subrogante {}. Redirigiendo a departamento {}.", dptoActual.getNombre(), funcionarioSubrogante.getNombreCompleto(), dptoSubrogante.getNombre());
+                logger.info("Jefe {} ausente, pero se encontró subrogante {}. Redirigiendo a departamento {}.",
+                        dptoActual.getNombre(), funcionarioSubrogante.getNombreCompleto(), dptoSubrogante.getNombre());
                 return dptoSubrogante;
             }
 
             // Si el jefe está ausente y no hay subrogante, continuar al superior.
-            logger.info("Jefe de departamento {} no disponible y sin subrogancia. Buscando en jerarquía superior.", dptoActual.getNombre());
+            logger.info("Jefe de departamento {} no disponible y sin subrogancia. Buscando en jerarquía superior.",
+                    dptoActual.getNombre());
             dptoActual = getSuperior(dptoActual);
         }
 
-        logger.warn("No se pudo determinar un departamento de destino. Se retorna el departamento inicial como fallback.");
+        logger.warn(
+                "No se pudo determinar un departamento de destino. Se retorna el departamento inicial como fallback.");
         return departamentoInicial;
     }
 
@@ -145,6 +149,9 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         return apiDepartamentoService.getDepartamentosList();
     }
 
-   
+    @Override
+    public void updateJefeDepartamento(Long idDepto, Integer rutJefe) {
+        apiDepartamentoService.updateJefeDepartamento(idDepto, rutJefe);
+    }
 
 }

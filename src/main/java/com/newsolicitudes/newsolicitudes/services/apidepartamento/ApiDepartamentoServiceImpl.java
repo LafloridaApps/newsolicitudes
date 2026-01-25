@@ -1,8 +1,12 @@
 package com.newsolicitudes.newsolicitudes.services.apidepartamento;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
 
     private final WebClient webClient;
     private final SubroganciaRepository subroganciaRepository;
+    private static final Logger logger = LoggerFactory.getLogger(ApiDepartamentoServiceImpl.class);
 
     public ApiDepartamentoServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties,
             SubroganciaRepository subroganciaRepository) {
@@ -118,4 +123,26 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 .block();
     }
 
+    @Override
+    public Object updateJefeDepartamento(Long idDepto, Integer rut) {
+
+        Map<String, Integer> body = new HashMap<>();
+        body.put("rut", rut);
+
+        Object response = webClient.put()
+                .uri("/api/departamentos/update/{idDepto}", idDepto)
+                .bodyValue(body)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        response1 -> response1.createException().flatMap(Mono::error))
+                .bodyToMono(Object.class)
+                .onErrorResume(e -> {
+                    logger.error("Error al llamar a la API externa para actualizar jefe de departamento", e);
+                    return Mono.empty();
+                })
+                .block();
+
+        logger.info("Respuesta de la API externa al actualizar jefe de departamento: {}", response);
+        return response;
+    }
 }

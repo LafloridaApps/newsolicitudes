@@ -16,6 +16,9 @@ public class DepartamentoList {
     private Integer rutJefe;
     private String vrutJefe;
     private String email;
+    private String codigoExterno;
+
+    
 
     public Long getId() {
         return id;
@@ -79,6 +82,14 @@ public class DepartamentoList {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getCodigoExterno() {
+        return codigoExterno;
+    }
+
+    public void setCodigoExterno(String codigoExterno) {
+        this.codigoExterno = codigoExterno;
     }
 
 }

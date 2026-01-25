@@ -15,4 +15,6 @@ public interface DepartamentoService {
 
     List<DepartamentoList> getDepartamentos();
 
+    void updateJefeDepartamento(Long idDepto, Integer rutJefe);
+
 }

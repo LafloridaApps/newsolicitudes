@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
 
 import com.newsolicitudes.newsolicitudes.dto.ErrorResponse;
 import com.newsolicitudes.newsolicitudes.exceptions.AprobacionException;
@@ -111,6 +112,15 @@ public class HandlerExceptions {
 
   }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<Object> handeleResourceException(NoResourceFoundException e,
+      HttpServletRequest request) {
+
+    ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.NOT_FOUND);
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+
+  }
 
   private <T extends Exception> ErrorResponse maptoErrorResponse(T e, HttpServletRequest request, HttpStatus status) {
 
