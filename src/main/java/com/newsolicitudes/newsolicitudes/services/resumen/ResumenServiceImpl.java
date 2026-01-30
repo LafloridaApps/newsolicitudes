@@ -6,7 +6,6 @@ import com.newsolicitudes.newsolicitudes.dto.ResumenJefeDepartamentoDTO;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudPendienteDTO;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
-import com.newsolicitudes.newsolicitudes.entities.Derivacion; // Nuevo import
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository; // Nuevo import
@@ -38,6 +37,8 @@ public class ResumenServiceImpl implements ResumenService {
     private final ApiDepartamentoService apiDepartamentoService;
     private final DerivacionRepository derivacionRepository; // Nueva inyección
     public static final String DEFAULTVALUE = "Desconocido";
+public static final String TIME_ZONE = "America/Santiago";
+
 
     public ResumenServiceImpl(SubroganciaRepository subroganciaRepository,
             SolicitudRepository solicitudRepository,
@@ -55,12 +56,13 @@ public class ResumenServiceImpl implements ResumenService {
     public ResumenJefeDepartamentoDTO getResumenJefeDepartamento(Integer rutJefe, Long idDepartamento) {
         List<DepartamentoSubrogadoDTO> departamentosSubrogados = getDepartamentosSubrogados(rutJefe);
     
+        LocalDate today = LocalDate.now(ZoneId.of(TIME_ZONE));
         List<Long> idDepartamentos = new ArrayList<>();
         idDepartamentos.add(idDepartamento);
         List<Subrogancia> subrogancias = subroganciaRepository.findBySubrogante(rutJefe);
-        for (Subrogancia subrogancia : subrogancias) {
-            idDepartamentos.add(subrogancia.getIdDepto());
-        }
+        subrogancias.stream()
+                .filter(s -> !today.isBefore(s.getFechaInicio()) && !today.isAfter(s.getFechaFin()))
+                .forEach(subrogancia -> idDepartamentos.add(subrogancia.getIdDepto()));
     
         List<SolicitudPendienteDTO> solicitudesPendientes = getSolicitudesPendientes(idDepartamentos);
         List<ProximaAusenciaDTO> proximasAusencias = getProximasAusencias(idDepartamento);
@@ -72,7 +74,7 @@ public class ResumenServiceImpl implements ResumenService {
 
     private List<DepartamentoSubrogadoDTO> getDepartamentosSubrogados(Integer rutJefe) {
         List<Subrogancia> subrogancias = subroganciaRepository.findBySubrogante(rutJefe);
-        LocalDate today = LocalDate.now(ZoneId.of("America/Santiago"));
+        LocalDate today = LocalDate.now(ZoneId.of(TIME_ZONE));
 
         return subrogancias.stream()
                 .filter(s -> !today.isBefore(s.getFechaInicio()) && !today.isAfter(s.getFechaFin()))
@@ -95,12 +97,35 @@ public class ResumenServiceImpl implements ResumenService {
     }
 
     private List<SolicitudPendienteDTO> getSolicitudesPendientes(List<Long> idDepartamentos) {
-        List<Solicitud> todasLasSolicitudesPendientes = solicitudRepository
-                .findByEstado(Solicitud.EstadoSolicitud.PENDIENTE);
-        List<SolicitudPendienteDTO> pendientes = new ArrayList<>();
+        Map<Long, Solicitud> solicitudesMap = new HashMap<>();
 
-        for (Solicitud solicitud : todasLasSolicitudesPendientes) {
-            if (isSolicitudPendingForDepartments(solicitud, idDepartamentos)) {
+        // 1. Get requests derived to the user's departments that are pending
+        List<Long> idsDeSolicitudesDerivadas = derivacionRepository.findSolicitudIdsByDeptoIdsAndEstadoPendiente(idDepartamentos);
+        if (!idsDeSolicitudesDerivadas.isEmpty()) {
+            // We use findAllById as the previous query already filtered by PENDIENTE state
+            List<Solicitud> solicitudesDerivadas = solicitudRepository.findAllById(idsDeSolicitudesDerivadas);
+            solicitudesDerivadas.forEach(s -> solicitudesMap.put(s.getId(), s));
+        }
+
+        // 2. Get pending requests with no derivations and check their original department
+        List<Solicitud> solicitudesSinDerivacion = solicitudRepository.findByEstadoAndDerivacionesIsEmpty(Solicitud.EstadoSolicitud.PENDIENTE);
+        for (Solicitud solicitud : solicitudesSinDerivacion) {
+            if (solicitudesMap.containsKey(solicitud.getId())) {
+                continue; // Already processed from the derived list
+            }
+            try {
+                FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
+                if (funcionario != null && idDepartamentos.contains(funcionario.getCodDepto())) {
+                    solicitudesMap.put(solicitud.getId(), solicitud);
+                }
+            } catch (Exception e) {
+                logger.error("Error al obtener el funcionario para el rut: {}. Error: {}", solicitud.getRut(), e.getMessage());
+            }
+        }
+
+        // 3. Convert the unique solicitations to DTOs
+        return solicitudesMap.values().stream()
+            .map(solicitud -> {
                 String nombreFuncionario = DEFAULTVALUE;
                 try {
                     FuncionarioResponseApi funcionario = apiExtFuncionarioService
@@ -112,33 +137,9 @@ public class ResumenServiceImpl implements ResumenService {
                     logger.error("Error al obtener funcionario para solicitud {}: {}", solicitud.getRut(),
                             e.getMessage());
                 }
-                pendientes.add(new SolicitudPendienteDTO(nombreFuncionario, solicitud.getTipoSolicitud().name()));
-            }
-        }
-        return pendientes;
-    }
-
-    private boolean isSolicitudPendingForDepartments(Solicitud solicitud, List<Long> departmentIds) {
-        List<Derivacion> allDerivaciones = derivacionRepository
-                .findBySolicitudIdOrderByFechaDerivacionDescIdDesc(solicitud.getId());
-
-        if (allDerivaciones.isEmpty()) {
-            try {
-                FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
-                if (funcionario != null) {
-                    return departmentIds.contains(funcionario.getCodDepto());
-                } else {
-                    logger.error("No se pudo obtener el funcionario para el rut: {}", solicitud.getRut());
-                    return false;
-                }
-            } catch (Exception e) {
-                logger.error("Error al obtener el funcionario para el rut: {}. Error: {}", solicitud.getRut(), e.getMessage());
-                return false;
-            }
-        } else {
-            Derivacion ultimaDerivacion = allDerivaciones.get(0);
-            return departmentIds.contains(ultimaDerivacion.getIdDepto());
-        }
+                return new SolicitudPendienteDTO(nombreFuncionario, solicitud.getTipoSolicitud().name());
+            })
+            .toList();
     }
 
     private List<ProximaAusenciaDTO> getProximasAusencias(Long idDepartamento) {
@@ -184,7 +185,7 @@ public class ResumenServiceImpl implements ResumenService {
     }
 
     private Integer getAusenciasEquipoHoy(Long idDepartamento) {
-        LocalDate todayStgo = LocalDate.now(ZoneId.of("America/Santiago"));
+        LocalDate todayStgo = LocalDate.now(ZoneId.of(TIME_ZONE));
 
         List<Solicitud> ausenciasHoy = solicitudRepository
                 .findByEstadoInAndIdDeptoAndFechaInicioLessThanEqualAndFechaTerminoGreaterThanEqual(

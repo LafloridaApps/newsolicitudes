@@ -32,4 +32,7 @@ public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
 
     Optional<Derivacion> findTopBySolicitudIdAndIdDeptoOrderByFechaDerivacionDesc(Long solicitudId, Long idDepto);
 
+    @Query("SELECT DISTINCT d.solicitud.id FROM Derivacion d WHERE d.idDepto IN :deptoIds AND d.solicitud.estado = com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud.PENDIENTE")
+    List<Long> findSolicitudIdsByDeptoIdsAndEstadoPendiente(@Param("deptoIds") List<Long> deptoIds);
+
 }

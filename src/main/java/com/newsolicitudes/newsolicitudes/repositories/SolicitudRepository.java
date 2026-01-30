@@ -56,4 +56,8 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
 
         List<Solicitud> findByTipoSolicitudAndEstadoAndRut(TipoSolicitud tipo, Solicitud.EstadoSolicitud estado, Integer rut);
 
+        List<Solicitud> findByEstadoAndDerivacionesIsEmpty(Solicitud.EstadoSolicitud estado);
+
+        List<Solicitud> findByIdInAndEstado(List<Long> ids, Solicitud.EstadoSolicitud estado);
+
 }

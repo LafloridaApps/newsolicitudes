@@ -1,6 +1,5 @@
 package com.newsolicitudes.newsolicitudes.services.apifuncionario;
 
-import java.net.URI;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,14 +28,10 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
     public FuncionarioResponseApi obtenerDetalleColaborador(Integer rut) {
 
         return webClient.get()
-                .uri(uriBuilder -> {
-                    String uri = uriBuilder
-                            .path("/api/funcionario")
-                            .queryParam("rut", rut)
-                            .build()
-                            .toString();
-                    return URI.create(uri);
-                })
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/funcionario")
+                        .queryParam("rut", rut)
+                        .build())
                 .header("Accept", "application/json")
                 .retrieve()
                 .onStatus(response -> response.value() == 404, 
@@ -57,15 +52,11 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
     @Override
     public SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNmber) {
         return webClient.get()
-                .uri(uriBuilder -> {
-                    String uri = uriBuilder
-                            .path("/api/funcionario/search")
-                            .queryParam("pattern", pattern)
-                            .queryParam("pageNumber", pageNmber)
-                            .build()
-                            .toString();
-                    return URI.create(uri);
-                })
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/funcionario/search")
+                        .queryParam("pattern", pattern)
+                        .queryParam("pageNumber", pageNmber)
+                        .build())
                 .header("Accept", "application/json")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
