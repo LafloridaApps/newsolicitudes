@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,8 @@ import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
 public class AprobacionServiceImpl implements AprobacionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AprobacionServiceImpl.class);
 
     private final AprobacionRepository aprobacionRepository;
     private final SolicitudRepository solicitudRepository;
@@ -81,6 +85,8 @@ public class AprobacionServiceImpl implements AprobacionService {
 
         Derivacion derivacion = getDerivacionById(request.getIdDerivacion());
         Solicitud solicitud = derivacion.getSolicitud();
+        logger.info("Solicitud recuperada: id={}, fechaInicio={}, fechaTermino={}",
+            solicitud.getId(), solicitud.getFechaInicio(), solicitud.getFechaTermino());
 
         if (tieneAprobacion(solicitud)) {
             throw new AprobacionException(
@@ -109,6 +115,7 @@ public class AprobacionServiceImpl implements AprobacionService {
 
         String url = firmarPdf(solicitud);
 
+        logger.debug(url);
         validarUrl(url);
 
         aprobacion.setUrlPdf(url);

@@ -32,7 +32,9 @@ public class PdfDtoMapper {
     public PdfDto toPdfDto(Solicitud solicitud) {
         FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
         DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(solicitud.getIdDepto());
-        FuncionarioResponseApi jefe = apiExtFuncionarioService.obtenerDetalleColaborador(departamento.getRutJefe());
+
+        FuncionarioResponseApi jefe = validaJefe(departamento);
+
         FuncionarioResponseApi director = apiExtFuncionarioService.obtenerDetalleColaborador(getRutFirma(solicitud));
 
         return PdfDto.builder()
@@ -59,6 +61,19 @@ public class PdfDtoMapper {
                 .tipoSolicitud(getTipoSolicitud(solicitud.getTipoSolicitud()))
                 .anio(String.valueOf(solicitud.getFechaTermino().getYear()))
                 .build();
+    }
+
+    private FuncionarioResponseApi validaJefe(DepartamentoResponse departamento) {
+
+        FuncionarioResponseApi jefe = new FuncionarioResponseApi();
+        if (departamento.getRutJefe() != null) {
+            jefe = apiExtFuncionarioService.obtenerDetalleColaborador(departamento.getRutJefe());
+        } else {
+            jefe.setRut(0);
+        }
+
+        return jefe;
+
     }
 
     private Integer getRutFirma(Solicitud solicitud) {
@@ -95,4 +110,3 @@ public class PdfDtoMapper {
         return "";
     }
 }
-

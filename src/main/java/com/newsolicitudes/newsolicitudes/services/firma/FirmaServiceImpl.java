@@ -1,5 +1,7 @@
 package com.newsolicitudes.newsolicitudes.services.firma;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,6 +17,9 @@ public class FirmaServiceImpl implements FirmaService {
 
     private final ApiProperties apiProperties;
 
+    private static final Logger logger = LoggerFactory.getLogger(FirmaServiceImpl.class);
+
+
     public FirmaServiceImpl(RestTemplate restTemplate, ApiProperties apiProperties) {
         this.restTemplate = restTemplate;
         this.apiProperties = apiProperties;
@@ -25,6 +30,8 @@ public class FirmaServiceImpl implements FirmaService {
 
         String apiUrl = apiProperties.getFirmaUrl();
         String url = apiProperties.getPdfUrl();
+        logger.debug("Rut {}", pdfDto.getRutDirector());
+
 
         try {
 

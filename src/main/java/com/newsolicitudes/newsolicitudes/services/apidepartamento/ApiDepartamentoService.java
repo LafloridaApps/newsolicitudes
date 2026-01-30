@@ -18,6 +18,8 @@ public interface ApiDepartamentoService {
 
     List<DepartamentoList> getDepartamentosList();
 
-     DepartamentoJerarquiaDTO getJerarquiaPorId(Long id);
+    DepartamentoJerarquiaDTO getJerarquiaPorId(Long id);
+
+    Object updateJefeDepartamento(Long idDepto, Integer rut);
 
 }

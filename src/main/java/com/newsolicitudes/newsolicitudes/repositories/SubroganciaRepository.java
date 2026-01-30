@@ -35,6 +35,6 @@ public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long> 
         LocalDate fechaTermino
 );
 
-
+    Optional<Subrogancia> findFirstByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(Integer jefe, LocalDate fechaTermino, LocalDate fechaInicio);
 
 }
