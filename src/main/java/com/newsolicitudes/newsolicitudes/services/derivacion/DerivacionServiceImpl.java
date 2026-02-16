@@ -98,10 +98,10 @@ public class DerivacionServiceImpl implements DerivacionService {
         // Determina el siguiente departamento en la jerarquía.
         DepartamentoResponse departamentoSiguiente = departamentoService.getDepartamentoDestino(
                 departamentoActual.getRutJefe(),
-                departamentoActual, solicitud.getFechaInicio(), solicitud.getFechaTermino());
+                departamentoActual, LocalDate.now(), LocalDate.now());
 
         // Determina si la siguiente derivación es para visación o para firma final.
-        TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, solicitud.getFechaSolicitud());
+        TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, LocalDate.now());
         logger.info("Tipo de derivacion determinado: {}", tipoSiguienteDerivacion);
 
         // Actualiza el estado de la derivación anterior.

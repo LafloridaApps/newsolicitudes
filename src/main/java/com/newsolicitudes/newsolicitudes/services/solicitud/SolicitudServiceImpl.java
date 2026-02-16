@@ -143,7 +143,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     // solicitud.
     private RutaDerivacion determinarRutaDerivacion(SolicitudRequest request, DepartamentoResponse deptoActual) {
         DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
-                deptoActual, request.getFechaInicio(), request.getFechaFin());
+                deptoActual, LocalDate.now(), LocalDate.now());
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
         return new RutaDerivacion(departamentoDestino, tipoDerivacion);
@@ -186,7 +186,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     // subrogancia activa.
     private FuncionarioResponseApi determinarDestinatarioNotificacion(DepartamentoResponse departamentoDestino, Solicitud solicitud) {
         Integer rutJefeDestino = departamentoDestino.getRutJefe();
-        LocalDate fechaReferencia = solicitud.getFechaInicio(); 
+        LocalDate fechaReferencia = LocalDate.now(); 
         List<Subrogancia> subrogancias = subroganciaRepository
                 .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, fechaReferencia, fechaReferencia);
 
