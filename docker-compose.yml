@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  newsolicitudes-container:
+    build: .
+    container_name: newsolicitudes-container
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=Maga2025!
+      - HOST=host.docker.internal
+      - FUNCIONARIO=api-funcionarios-container
+      - DEPARTAMENTO=api-departamentos-container
+      - FIRMA=api-firma-container
+      - MAIL=api-mail-container 
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
+    restart: always
+    networks:
+      - laflorida  # Aquí solo se nombra la red
+
+  api-departamentos-container:
+    build: ../api-departamentos/
+    container_name: api-departamentos-container
+    ports:
+      - "8085:8085"
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=Maga2025!
+      - HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
+    restart: always
+    networks:
+      - laflorida  # Aquí solo se nombra la red
+  
+  api-funcionarios-container:
+    build: ../api-funcionarios/
+    container_name: api-funcionarios-container
+    ports:
+      - "8084:8084"
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=Maga2025!
+      - HOST=host.docker.internal
+      - FUNCIONARIOS=smcapis-container
+      - DEPARTAMENTOS=api-departamentos-container
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
+    restart: always
+    networks:
+      - laflorida  # Aquí solo se nombra la red
+
+  smcapis-container:
+    build: ../smcapis/
+    container_name: smcapis-container
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_SMC_USER=consultaDesa
+      - DB_SMC_PASSWORD=TRcv378
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
+    restart: always
+    networks:
+      - laflorida  # Aquí solo se nombra la red
+
+  api-mail-container:
+    build: ../mail/
+    container_name: api-mailcontainer
+    ports:
+      - "8087:8087"
+    environment:
+      - MAIL_PASSWORD=laflorida2022
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
+    restart: always
+    networks:
+      - laflorida  # Aquí solo se nombra la red
+
+  
+  api-firma-container:
+    build: ../firma/
+    container_name: api-firma-container
+    ports:
+      - "8086:8086"
+    environment:
+      - DB_USER=root
+      - DB_PASSWORD=Maga2025!
+      - HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
+    restart: always
+    networks:
+      - laflorida  # Aquí solo se nombra la red
+
+  
+# Esta sección va al final, al mismo nivel que 'services'
+networks:
+  laflorida:
+    external: true
