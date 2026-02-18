@@ -32,26 +32,37 @@ public class FirmanteServiceImpl implements FirmanteService {
         while (departamento != null) {
             logger.info("Procesando departamento: idDepto={}, nombre={}, rutJefe={}, nivelDepartamento={}",
                 departamento.getId(), departamento.getNombre(), departamento.getRutJefe(), departamento.getNivelDepartamento());
-
-            if (departamento.getRutJefe() != null && departamento.getRutJefe().equals(solicitud.getRut()) && departamento.getIdDeptoSuperior() != null) {
-                logger.info("El solicitante {} es el jefe del departamento. Buscando en el superior.", solicitud.getRut());
-                departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
-                continue;
-            }
-
-            Integer firmanteRut = findSignerInDepartment(departamento, solicitud);
-
-            if (firmanteRut != null && firmanteRut.equals(solicitud.getRut()) && departamento.getIdDeptoSuperior() != null) {
-                // Si el firmante calculado (jefe o subrogante) es el mismo solicitante, subimos al superior.
-                logger.info("El firmante {} es el solicitante. Subiendo al departamento superior.", firmanteRut);
+            if (isSigningDepartment(departamento)) {
+                logger.info("Departamento {} es firmante. Solicitud: fechaInicio={}, fechaTermino={}",
+                    departamento.getNombre(), solicitud.getFechaInicio(), solicitud.getFechaTermino());
+                Integer firmanteRut = findSignerInDepartment(departamento, solicitud);
+                if (firmanteRut.equals(departamento.getRutJefe()) && departamento.getRutJefe().equals(solicitud.getRut()) && departamento.getIdDeptoSuperior() != null) {
+                    // Si el jefe es el solicitante y no hay subrogancia, y hay un departamento superior, subimos.
+                    logger.info("Jefe {} es el solicitante y no hay subrogancia. Subiendo al departamento superior.", departamento.getRutJefe());
+                    departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
+                } else {
+                    // Si hay un subrogante, o el jefe no es el solicitante, o el jefe es el solicitante pero no hay departamento superior, este es el firmante.
+                    logger.info("Firmante encontrado en departamento {}: {}", departamento.getNombre(), firmanteRut);
+                    return firmanteRut;
+                }
+            } else if (departamento.getIdDeptoSuperior() != null) {
+                logger.info("Departamento {} no es firmante. Subiendo al departamento superior.", departamento.getNombre());
                 departamento = apiDepartamentoService.obtenerDepartamento(departamento.getIdDeptoSuperior());
             } else {
-                // Si hay un subrogante, o el jefe no es el solicitante, o el jefe es el solicitante pero no hay departamento superior, este es el firmante.
-                logger.info("Firmante encontrado en departamento {}: {}", departamento.getNombre(), firmanteRut);
-                return firmanteRut;
+                logger.info("Departamento {} no es firmante y no tiene departamento superior. Terminando búsqueda.", departamento.getNombre());
+                departamento = null;
             }
         }
         return null;
+    }
+
+    private boolean isSigningDepartment(DepartamentoResponse departamento) {
+        if (departamento == null || departamento.getNivelDepartamento() == null) {
+            return false;
+        }
+        String nivel = departamento.getNivelDepartamento();
+        return nivel.equalsIgnoreCase("DIRECCION") || nivel.equalsIgnoreCase("ALCALDIA")
+                || nivel.equalsIgnoreCase("ADMINISTRACION") || nivel.equalsIgnoreCase("SUBDIRECCION");
     }
 
     private Integer findSignerInDepartment(DepartamentoResponse departamento, Solicitud solicitud) {
