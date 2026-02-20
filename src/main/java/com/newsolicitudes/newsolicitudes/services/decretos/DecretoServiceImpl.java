@@ -79,7 +79,7 @@ public class DecretoServiceImpl implements DecretoService {
         Decreto decretoGuardado = decretoRepository.save(nuevoDecreto);
 
         for (Solicitud solicitud : solicitudes) {
-            solicitud.setEstado(Solicitud.EstadoSolicitud.FORMULARIO_EN_RRHH);
+            solicitud.setEstado(Solicitud.EstadoSolicitud.DECRETADA);
 
             DecretoSolicitud decretoSolicitud = new DecretoSolicitud(decretoGuardado, solicitud);
             decretoSolicitudRepository.save(decretoSolicitud);
