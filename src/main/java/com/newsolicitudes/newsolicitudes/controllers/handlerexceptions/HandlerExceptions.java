@@ -16,7 +16,7 @@ import com.newsolicitudes.newsolicitudes.exceptions.DepartamentoException;
 import com.newsolicitudes.newsolicitudes.exceptions.DocumentException;
 import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
 import com.newsolicitudes.newsolicitudes.exceptions.MailServiceException;
-import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
+import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,8 +24,8 @@ import jakarta.servlet.http.HttpServletRequest;
 @ControllerAdvice
 public class HandlerExceptions {
 
-  @ExceptionHandler(NotFounException.class)
-  public ResponseEntity<Object> handlerNotFoundException(NotFounException e, HttpServletRequest request) {
+  @ExceptionHandler(NotFoundException.class)
+  public ResponseEntity<Object> handlerNotFoundException(NotFoundException e, HttpServletRequest request) {
 
     ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.NOT_FOUND);
 

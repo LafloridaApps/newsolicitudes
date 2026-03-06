@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.SearchFuncionarioResponse;
-import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
+import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 
 import reactor.core.publisher.Mono;
 
@@ -35,7 +35,7 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
                 .header("Accept", "application/json")
                 .retrieve()
                 .onStatus(response -> response.value() == 404, 
-                          response -> Mono.error(new NotFounException("Funcionario no encontrado con RUT: " + rut)))
+                          response -> Mono.error(new NotFoundException("Funcionario no encontrado con RUT: " + rut)))
                 .onStatus(HttpStatusCode::is4xxClientError, response -> {
                     logger.error("Error 4xx llamando a la API externa de funcionario: {}", response.statusCode());
                     return Mono.error(new RuntimeException("Error del cliente en API externa: " + response.statusCode()));

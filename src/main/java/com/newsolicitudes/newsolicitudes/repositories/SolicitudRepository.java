@@ -3,8 +3,11 @@ package com.newsolicitudes.newsolicitudes.repositories;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
@@ -54,10 +57,27 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
                         List<Long> idDeptos,
                         LocalDate fechaInicio, LocalDate fechaFin);
 
-        List<Solicitud> findByTipoSolicitudAndEstadoAndRut(TipoSolicitud tipo, Solicitud.EstadoSolicitud estado, Integer rut);
+        List<Solicitud> findByTipoSolicitudAndEstadoAndRut(TipoSolicitud tipo, Solicitud.EstadoSolicitud estado,
+                        Integer rut);
 
         List<Solicitud> findByEstadoAndDerivacionesIsEmpty(Solicitud.EstadoSolicitud estado);
 
         List<Solicitud> findByIdInAndEstado(List<Long> ids, Solicitud.EstadoSolicitud estado);
+
+        @Query(value = "select *  from solicitudes.solicitud\n" + //
+                        "where estado in (:estados) and id_depto in (:deptos) and :hoy >= fecha_inicio and :hoy <= fecha_termino\t", nativeQuery = true)
+        List<Solicitud> findAusenciaToday(
+                        @Param("estados") List<String> estados,
+                        @Param("deptos") Set<Long> deptos,
+                        @Param("hoy") LocalDate today);
+
+        @Query(value = "select *  from solicitudes.solicitud\n" + //
+                        "where estado in (:estados) and id_depto in (:deptos) and fecha_inicio <= :fechaFin and fecha_termino >= :fechaInicio\t", nativeQuery = true)            
+      List<Solicitud> findAusenciasMes(
+        @Param("estados") List<String> estados,
+        @Param("deptos") Set<Long> deptos,
+        @Param("fechaInicio") LocalDate fechaInicio,
+        @Param("fechaFin") LocalDate fechaFin );
+
 
 }

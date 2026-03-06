@@ -3,7 +3,7 @@ package com.newsolicitudes.newsolicitudes.utlils;
 
 import java.util.Optional;
 
-import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
+import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 
 public class RepositoryUtils {
 
@@ -12,7 +12,7 @@ public class RepositoryUtils {
     }
 
     public static <T> T findOrThrow(Optional<T> optional, String mensajeError) {
-        return optional.orElseThrow(() -> new NotFounException(mensajeError));
+        return optional.orElseThrow(() -> new NotFoundException(mensajeError));
     }
 
 }

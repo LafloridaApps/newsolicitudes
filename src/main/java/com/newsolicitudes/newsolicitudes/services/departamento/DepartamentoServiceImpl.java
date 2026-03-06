@@ -49,50 +49,77 @@ public class DepartamentoServiceImpl implements DepartamentoService {
             LocalDate fechaInicio, LocalDate fechaFin) {
 
         DepartamentoResponse dptoActual = departamentoInicial;
-        // Si el solicitante es su propio jefe, empezar por el superior.
-        if (rutSolicitante.equals(dptoActual.getRutJefe()) && dptoActual.getIdDeptoSuperior() != null) {
-            dptoActual = getSuperior(dptoActual);
+
+        // Verificar si el solicitante está subrogando actualmente a otro departamento.
+        // Si es así, el flujo debe comenzar desde el superior del departamento subrogado.
+        List<Subrogancia> subroganciasActivas = subroganciaRepository
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante, LocalDate.now(), LocalDate.now());
+
+        if (!subroganciasActivas.isEmpty()) {
+            Long idDeptoSubrogado = subroganciasActivas.get(0).getIdDepto();
+            DepartamentoResponse deptoSubrogado = getDepartamentoById(idDeptoSubrogado);
+            if (deptoSubrogado != null) {
+                dptoActual = getSuperior(deptoSubrogado);
+            }
+        } else {
+            // Si el solicitante es su propio jefe (titular), empezar por el superior.
+            if (rutSolicitante.equals(dptoActual.getRutJefe()) && dptoActual.getIdDeptoSuperior() != null) {
+                dptoActual = getSuperior(dptoActual);
+            }
         }
 
         while (dptoActual != null) {
-            Integer rutJefe = dptoActual.getRutJefe();
-            if (rutJefe == null) {
-                // Si no hay jefe en el depto actual, pasar al siguiente nivel.
-                dptoActual = getSuperior(dptoActual);
-                continue;
+            DepartamentoResponse resultado = procesarDepartamento(dptoActual, rutSolicitante, fechaInicio, fechaFin);
+            if (resultado != null) {
+                return resultado;
             }
-
-            boolean jefeAusente = isAusenteEnFecha(rutJefe, fechaInicio)
-                    || hasAprobacion(rutJefe, fechaInicio, fechaFin);
-
-            if (!jefeAusente) {
-                // El jefe está disponible, este es el departamento de destino.
-                logger.info("Jefe de departamento {} disponible. Retornando departamento.", dptoActual.getNombre());
-                return dptoActual;
-            }
-
-            // Si el jefe está ausente, buscar subrogancia.
-            Optional<Subrogancia> subroganciaActiva = findActiveSubrogate(rutJefe, fechaInicio, fechaFin);
-
-            if (subroganciaActiva.isPresent()) {
-                // Se encontró un subrogante. El destino es el departamento del subrogante.
-                Integer rutSubrogante = subroganciaActiva.get().getSubrogante();
-                FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
-                DepartamentoResponse dptoSubrogante = getDepartamentoById(funcionarioSubrogante.getCodDepto());
-                logger.info("Jefe {} ausente, pero se encontró subrogante {}. Redirigiendo a departamento {}.",
-                        dptoActual.getNombre(), funcionarioSubrogante.getNombreCompleto(), dptoSubrogante.getNombre());
-                return dptoSubrogante;
-            }
-
-            // Si el jefe está ausente y no hay subrogante, continuar al superior.
-            logger.info("Jefe de departamento {} no disponible y sin subrogancia. Buscando en jerarquía superior.",
-                    dptoActual.getNombre());
+            // Si no hay jefe en el depto actual, pasar al siguiente nivel.
             dptoActual = getSuperior(dptoActual);
         }
 
         logger.warn(
                 "No se pudo determinar un departamento de destino. Se retorna el departamento inicial como fallback.");
         return departamentoInicial;
+    }
+
+    private DepartamentoResponse procesarDepartamento(DepartamentoResponse dptoActual, Integer rutSolicitante,
+            LocalDate fechaInicio, LocalDate fechaFin) {
+        Integer rutJefe = dptoActual.getRutJefe();
+        if (rutJefe == null) {
+            return null;
+        }
+
+        boolean jefeAusente = isAusenteEnFecha(rutJefe, fechaInicio)
+                || hasAprobacion(rutJefe, fechaInicio, fechaFin);
+
+        if (!jefeAusente) {
+            // El jefe está disponible, este es el departamento de destino.
+            logger.info("Jefe de departamento {} disponible. Retornando departamento.", dptoActual.getNombre());
+            return dptoActual;
+        }
+
+        // Si el jefe está ausente, buscar subrogancia.
+        Optional<Subrogancia> subroganciaActiva = findActiveSubrogate(rutJefe, fechaInicio, fechaFin);
+
+        if (subroganciaActiva.isPresent()) {
+            Integer rutSubrogante = subroganciaActiva.get().getSubrogante();
+
+            if (!rutSubrogante.equals(rutSolicitante)) {
+                // Se encontró un subrogante. El destino es el departamento del subrogante.
+                FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
+                DepartamentoResponse dptoSubrogante = getDepartamentoById(funcionarioSubrogante.getCodDepto());
+                logger.info("Jefe {} ausente, pero se encontró subrogante {}. Redirigiendo a departamento {}.",
+                        dptoActual.getNombre(), funcionarioSubrogante.getNombreCompleto(), dptoSubrogante.getNombre());
+                return dptoSubrogante;
+            } else {
+                logger.info("El subrogante es el mismo solicitante. Buscando en jerarquía superior.");
+            }
+        } else {
+            // Si el jefe está ausente y no hay subrogante, continuar al superior.
+            logger.info("Jefe de departamento {} no disponible y sin subrogancia. Buscando en jerarquía superior.",
+                    dptoActual.getNombre());
+        }
+        return null;
     }
 
     private DepartamentoResponse getSuperior(DepartamentoResponse d) {

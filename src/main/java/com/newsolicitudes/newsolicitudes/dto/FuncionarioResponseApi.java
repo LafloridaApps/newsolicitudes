@@ -155,6 +155,10 @@ public class FuncionarioResponseApi {
         return nombre + " " + apellidoPaterno + " " + apellidoMaterno;
     }
 
+    public String nombreCorto(){
+        return nombre+" " + apellidoMaterno;
+    }
+
     public String getRutCompleto() {
         return rut + "-" + vrut;
     }

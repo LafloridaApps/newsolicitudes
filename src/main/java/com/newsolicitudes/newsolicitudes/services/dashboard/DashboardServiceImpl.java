@@ -1,11 +1,12 @@
 package com.newsolicitudes.newsolicitudes.services.dashboard;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,6 @@ import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.PeriodoDto;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
-import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
@@ -46,17 +46,17 @@ public class DashboardServiceImpl implements DashboardService {
 
 
         Map<Long, String> deptoNombres = new HashMap<>();
-        List<Long> deptoIds = new ArrayList<>();
+        Set<Long> deptoIds = new HashSet<>();
         collectDeptoInfo(deptoJerarquia, deptoIds, deptoNombres);
 
-        List<Solicitud> solicitudes = solicitudRepository.findByEstadoInAndIdDeptoInAndFechaInicioGreaterThanEqualAndFechaTerminoLessThanEqual(
-                List.of(EstadoSolicitud.APROBADA, EstadoSolicitud.DECRETADA), deptoIds, primerDia, ultimoDia);
+        List<Solicitud> solicitudes = solicitudRepository.findAusenciasMes(
+                List.of("APROBADA","DECRETADA"), deptoIds, primerDia, ultimoDia);
 
         return solicitudes.stream().map(solicitud -> mapToDashboardDto(solicitud, deptoNombres))
                 .toList();
     }
 
-    private void collectDeptoInfo(DepartamentoJerarquiaDTO depto, List<Long> ids, Map<Long, String> nombres) {
+    private void collectDeptoInfo(DepartamentoJerarquiaDTO depto, Set<Long> ids, Map<Long, String> nombres) {
         if (depto != null) {
             ids.add(depto.getId());
             nombres.put(depto.getId(), depto.getNombre());

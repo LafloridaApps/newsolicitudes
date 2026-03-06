@@ -27,7 +27,7 @@ import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
-import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
+import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -117,7 +117,7 @@ public class DecretoServiceImpl implements DecretoService {
 
         for (Long decretoId : request.getIds()) {
             Decreto decreto = decretoRepository.findById(decretoId)
-                    .orElseThrow(() -> new NotFounException("Decreto no encontrado con id: " + decretoId));
+                    .orElseThrow(() -> new NotFoundException("Decreto no encontrado con id: " + decretoId));
 
             // Revertir solicitudes asociadas
             List<Solicitud> solicitudesARevertir = new ArrayList<>();
@@ -145,7 +145,7 @@ public class DecretoServiceImpl implements DecretoService {
     @Override
     public byte[] getDecretoDocumento(Long id) {
         Decreto decreto = decretoRepository.findById(id)
-                .orElseThrow(() -> new NotFounException("Decreto no encontrado con id: " + id));
+                .orElseThrow(() -> new NotFoundException("Decreto no encontrado con id: " + id));
         return decreto.getDocumentoPdf();
     }
 

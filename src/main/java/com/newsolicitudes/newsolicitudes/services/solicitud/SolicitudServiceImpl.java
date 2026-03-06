@@ -34,7 +34,7 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
-import com.newsolicitudes.newsolicitudes.exceptions.NotFounException;
+import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
@@ -255,7 +255,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     public SolicitudDetalleDto getSolicitudDetalleById(Long idSolicitud) {
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new NotFounException("Solicitud no encontrada con id: " + idSolicitud));
+                .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con id: " + idSolicitud));
 
         FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
         String nombreFuncionario = funcionario.getNombreCompleto();
@@ -291,7 +291,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Transactional
     public void updateSolicitud(Long idSolicitud, UpdateSolicitudRequest request) {
         Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new NotFounException("Solicitud no encontrada con id: " + idSolicitud));
+                .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con id: " + idSolicitud));
 
         actualizarFechasSiEsNecesario(solicitud, request);
         gestionarCambioDeEstado(solicitud, request);
@@ -339,7 +339,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         if (nuevoEstado == Solicitud.EstadoSolicitud.POSTERGADA) {
             Aprobacion aprobacion = aprobacionRepository.findBySolicitud(solicitud)
                     .orElseThrow(
-                            () -> new NotFounException("No se puede postergar una solicitud que no ha sido aprobada."));
+                            () -> new NotFoundException("No se puede postergar una solicitud que no ha sido aprobada."));
 
             Postergacion postergacion = new Postergacion();
             postergacion.setFechaPostergacion(LocalDate.now());

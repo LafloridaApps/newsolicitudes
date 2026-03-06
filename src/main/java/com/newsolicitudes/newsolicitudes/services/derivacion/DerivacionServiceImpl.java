@@ -47,6 +47,7 @@ public class DerivacionServiceImpl implements DerivacionService {
 
     private static final Logger logger = LoggerFactory.getLogger(DerivacionServiceImpl.class);
 
+
     private final DerivacionRepository derivacionRepository;
     private final EntradaDerivacionRepository entradaDerivacionRepository;
     private final SolicitudMapper solicitudMapper;
