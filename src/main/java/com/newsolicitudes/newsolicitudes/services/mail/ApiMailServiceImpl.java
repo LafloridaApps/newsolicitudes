@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.newsolicitudes.newsolicitudes.config.ApiProperties;
 
 @Service
-public class ApiMailServiceImpl implements ApiMailService {
+public class ApiMailServiceImpl implements APiMailService {
 
     private final WebClient webClient;
     private static final Logger logger = LoggerFactory.getLogger(ApiMailServiceImpl.class);
