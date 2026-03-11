@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
+import com.newsolicitudes.newsolicitudes.dto.RecordDepartamentoRequest;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
@@ -51,9 +52,11 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         DepartamentoResponse dptoActual = departamentoInicial;
 
         // Verificar si el solicitante está subrogando actualmente a otro departamento.
-        // Si es así, el flujo debe comenzar desde el superior del departamento subrogado.
+        // Si es así, el flujo debe comenzar desde el superior del departamento
+        // subrogado.
         List<Subrogancia> subroganciasActivas = subroganciaRepository
-                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante, LocalDate.now(), LocalDate.now());
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante, LocalDate.now(),
+                        LocalDate.now());
 
         if (!subroganciasActivas.isEmpty()) {
             Long idDeptoSubrogado = subroganciasActivas.get(0).getIdDepto();
@@ -179,6 +182,28 @@ public class DepartamentoServiceImpl implements DepartamentoService {
     @Override
     public void updateJefeDepartamento(Long idDepto, Integer rutJefe) {
         apiDepartamentoService.updateJefeDepartamento(idDepto, rutJefe);
+    }
+
+    @Override
+    public void updateNombreDepartamento(Long idDepto, String nombre) {
+        apiDepartamentoService.updateNombreDepartamento(idDepto, nombre);
+    }
+
+    @Override
+    public void updateCodigoExterno(Long idDepto, String codigoExterno) {
+        apiDepartamentoService.updateCodigoExternoDepartamento(idDepto, codigoExterno);
+    }
+
+    @Override
+    public void delteCodigoExternoByIdDepto(Long idDepto) {
+
+        apiDepartamentoService.delteCodigoExternoByIdDepto(idDepto);
+
+    }
+
+    @Override
+    public void agregarDepartamento(RecordDepartamentoRequest request) {
+        apiDepartamentoService.agregarDepartamento(request);
     }
 
 }

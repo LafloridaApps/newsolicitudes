@@ -19,6 +19,10 @@ public class ApiProperties {
 
     private String consultafirmaUrl;
 
+    private String externoUrl;
+
+   
+
     public String getFuncionarioUrl() {
         return funcionarioUrl;
     }
@@ -65,6 +69,14 @@ public class ApiProperties {
 
     public void setConsultafirmaUrl(String consultafirmaUrl) {
         this.consultafirmaUrl = consultafirmaUrl;
+    }
+
+    public String getExternoUrl() {
+        return externoUrl;
+    }
+
+    public void setExternoUrl(String externoUrl) {
+        this.externoUrl = externoUrl;
     }
 
 }

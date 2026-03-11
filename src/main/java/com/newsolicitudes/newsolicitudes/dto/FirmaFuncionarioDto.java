@@ -1,5 +1,7 @@
 package com.newsolicitudes.newsolicitudes.dto;
 
+import java.time.LocalDate;
+
 public class FirmaFuncionarioDto {
 
     private Long id;
@@ -8,6 +10,9 @@ public class FirmaFuncionarioDto {
     private String dv;
     private EstadoFirma estadoFirma;
     private Long diasRestantes;
+     private LocalDate fechaExpiracion;
+
+     
 
     public enum EstadoFirma {
         VIGENTE, VENCIDA
@@ -59,6 +64,14 @@ public class FirmaFuncionarioDto {
 
     public void setDiasRestantes(Long diasRestantes) {
         this.diasRestantes = diasRestantes;
+    }
+
+    public LocalDate getFechaExpiracion() {
+        return fechaExpiracion;
+    }
+
+    public void setFechaExpiracion(LocalDate fechaExpiracion) {
+        this.fechaExpiracion = fechaExpiracion;
     }
 
 }

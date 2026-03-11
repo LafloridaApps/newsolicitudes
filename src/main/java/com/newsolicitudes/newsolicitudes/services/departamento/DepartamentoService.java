@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoList;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.dto.RecordDepartamentoRequest;
 
 public interface DepartamentoService {
 
@@ -16,5 +17,13 @@ public interface DepartamentoService {
     List<DepartamentoList> getDepartamentos();
 
     void updateJefeDepartamento(Long idDepto, Integer rutJefe);
+
+    void updateNombreDepartamento(Long idDepto, String rut);
+
+    void updateCodigoExterno(Long idDepto, String codigoExterno);
+
+    void delteCodigoExternoByIdDepto(Long idDepto);
+
+    void agregarDepartamento(RecordDepartamentoRequest request);
 
 }
