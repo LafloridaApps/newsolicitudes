@@ -18,6 +18,7 @@ import com.newsolicitudes.newsolicitudes.exceptions.FuncionarioException;
 import com.newsolicitudes.newsolicitudes.exceptions.MailServiceException;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
+import com.newsolicitudes.newsolicitudes.exceptions.SubroganciaException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -101,7 +102,6 @@ public class HandlerExceptions {
 
   }
 
-
   @ExceptionHandler(SolicitudException.class)
   public ResponseEntity<Object> handlerSolicitudException(SolicitudException e,
       HttpServletRequest request) {
@@ -112,11 +112,22 @@ public class HandlerExceptions {
 
   }
 
-    @ExceptionHandler(NoResourceFoundException.class)
+  @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<Object> handeleResourceException(NoResourceFoundException e,
       HttpServletRequest request) {
 
     ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.NOT_FOUND);
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+
+  }
+
+
+  @ExceptionHandler(SubroganciaException.class)
+  public ResponseEntity<Object> handeleSubroganciaException(SubroganciaException e,
+      HttpServletRequest request) {
+
+    ErrorResponse error = maptoErrorResponse(e, request, HttpStatus.CONFLICT);
 
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 

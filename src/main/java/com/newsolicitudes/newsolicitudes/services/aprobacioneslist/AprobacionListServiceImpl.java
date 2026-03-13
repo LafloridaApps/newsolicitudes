@@ -1,4 +1,4 @@
-package com.newsolicitudes.newsolicitudes.service.aprobacioneslist;
+package com.newsolicitudes.newsolicitudes.services.aprobacioneslist;
 
 import java.time.LocalDate;
 import java.util.List;

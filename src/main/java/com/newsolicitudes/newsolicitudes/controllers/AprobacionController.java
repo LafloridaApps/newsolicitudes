@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
-import com.newsolicitudes.newsolicitudes.service.aprobacioneslist.AprobacionListService;
 import com.newsolicitudes.newsolicitudes.services.aprobacion.AprobacionService;
+import com.newsolicitudes.newsolicitudes.services.aprobacioneslist.AprobacionListService;
 
 @RestController
 @RequestMapping("/solicitudes/aprobaciones")

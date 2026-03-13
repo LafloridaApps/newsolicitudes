@@ -3,17 +3,22 @@ package com.newsolicitudes.newsolicitudes.controllers;
 import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.newsolicitudes.newsolicitudes.dto.SearchViewFuncionarioResponse;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.foto.FotoService;
 import com.newsolicitudes.newsolicitudes.services.funcionarioapi.FuncionarioApiService;
 import com.newsolicitudes.newsolicitudes.services.resumeninicio.ResmuenFuncInicioService;
 import com.newsolicitudes.newsolicitudes.services.searchfunc.SearchFuncServcie;
+import com.newsolicitudes.newsolicitudes.services.searchfunc.SearchViewFuncService;
 
 @RestController
 @RequestMapping("/solicitudes/funcionario")
@@ -24,15 +29,20 @@ public class FuncionarioController {
     private final ApiDepartamentoService apiDepartamentoService;
     private final SearchFuncServcie searchFuncServcie;
     private final ResmuenFuncInicioService resmuenFuncInicioService;
+    private final FotoService fotoService;
+    private final SearchViewFuncService searchView;
 
     public FuncionarioController(FuncionarioApiService funcionarioApiService,
             ApiDepartamentoService apiDepartamentoService,
             SearchFuncServcie searchFuncServcie,
-            ResmuenFuncInicioService resmuenFuncInicioService) {
+            ResmuenFuncInicioService resmuenFuncInicioService,
+            FotoService fotoService, SearchViewFuncService searchView) {
         this.funcionarioApiService = funcionarioApiService;
         this.apiDepartamentoService = apiDepartamentoService;
         this.searchFuncServcie = searchFuncServcie;
         this.resmuenFuncInicioService = resmuenFuncInicioService;
+        this.fotoService = fotoService;
+        this.searchView = searchView;
     }
 
     @GetMapping
@@ -77,5 +87,21 @@ public class FuncionarioController {
             @RequestParam Integer rut) {
 
         return ResponseEntity.ok(resmuenFuncInicioService.getResumen(rut));
+    }
+
+    @GetMapping("/foto/{rut}")
+    public String getFotoByRut(@PathVariable Integer rut) {
+
+        return fotoService.getFotoByRut(rut);
+
+    }
+
+    @GetMapping("/buscar-nombre")
+    public ResponseEntity<Object> obtenerFuncionarioPorNombre(@RequestParam String pattern,
+            @RequestParam int pageNumber) {
+
+        SearchViewFuncionarioResponse response = searchView.buscarFuncionarioPorNombre(pattern, pageNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+
     }
 }
