@@ -7,8 +7,8 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - DB_USER=root
-      - DB_PASSWORD=Maga2025!
+      - DB_USER=adefault
+      - DB_PASSWORD=Muni2025!
       - HOST=host.docker.internal
       - FUNCIONARIO=api-funcionarios-container
       - DEPARTAMENTO=api-departamentos-container
@@ -26,9 +26,10 @@ services:
     ports:
       - "8085:8085"
     environment:
-      - DB_USER=root
-      - DB_PASSWORD=Maga2025!
+      - DB_USER=adefault
+      - DB_PASSWORD=Muni2025!
       - HOST=host.docker.internal
+      - FUNCIONARIOS=api-funcionarios-container
     extra_hosts:
       - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
     restart: always
@@ -41,8 +42,8 @@ services:
     ports:
       - "8084:8084"
     environment:
-      - DB_USER=root
-      - DB_PASSWORD=Maga2025!
+      - DB_USER=adefault
+      - DB_PASSWORD=Muni2025!
       - HOST=host.docker.internal
       - FUNCIONARIOS=smcapis-container
       - DEPARTAMENTOS=api-departamentos-container
@@ -86,8 +87,8 @@ services:
     ports:
       - "8086:8086"
     environment:
-      - DB_USER=root
-      - DB_PASSWORD=Maga2025!
+      - DB_USER=adefault
+      - DB_PASSWORD=Muni2025!
       - HOST=host.docker.internal
     extra_hosts:
       - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST

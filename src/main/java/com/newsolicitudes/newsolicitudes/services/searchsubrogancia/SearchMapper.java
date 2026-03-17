@@ -45,6 +45,7 @@ public class SearchMapper {
                     .vrutJefe(vrutJefe)
                     .rutSobrogante(subrogante.getRut())
                     .vrutSubrogante(vrutSubrogante)
+                    .idSubrogancia(s.getId())
                     .build();
 
         }

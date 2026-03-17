@@ -14,6 +14,7 @@ public class SearchSubroganciResponse {
         private Character vrutJefe;
         private Integer rutSubrogante;
         private Character vrutSubrogante;
+        private Long idSubrogancia;
 
         public String getNombreJefe() {
                 return nombreJefe;
@@ -55,6 +56,10 @@ public class SearchSubroganciResponse {
                 return vrutSubrogante;
         }
 
+        public Long getIdSubrogancia(){
+                return idSubrogancia;
+        }
+
         private SearchSubroganciResponse(Builder builder) {
                 this.nombreJefe = builder.nombreJefe;
                 this.subrogante = builder.subrogante;
@@ -66,6 +71,7 @@ public class SearchSubroganciResponse {
                 this.vrutJefe = builder.vrutJefe;
                 this.rutSubrogante = builder.rutSubrogante;
                 this.vrutSubrogante = builder.vrutSubrogante;
+                this.idSubrogancia = builder.idSubrogancia;
 
         }
 
@@ -81,6 +87,7 @@ public class SearchSubroganciResponse {
                 private Character vrutJefe;
                 private Integer rutSubrogante;
                 private Character vrutSubrogante;
+                private Long idSubrogancia;
 
                 public Builder nombreJefe(String nombreJefe) {
                         this.nombreJefe = nombreJefe;
@@ -131,6 +138,12 @@ public class SearchSubroganciResponse {
                         this.vrutSubrogante = vrutSubrogante;
                         return this;
                 }
+
+                public Builder idSubrogancia(Long idSubrogancia) {
+                        this.idSubrogancia = idSubrogancia;
+                        return this;
+                }
+
 
                 public SearchSubroganciResponse build() {
                         return new SearchSubroganciResponse(this);

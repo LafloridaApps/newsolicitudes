@@ -8,6 +8,7 @@ import com.newsolicitudes.newsolicitudes.dto.SubroganciaRequest;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.exceptions.SubroganciaException;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
+import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
 public class SubroganciaServiceImpl implements SubroganciaService {
@@ -38,6 +39,14 @@ public class SubroganciaServiceImpl implements SubroganciaService {
 
                 return subroganciaRepository.existeSubrogancia(rut, fechaInicio, fechaFin, idDepto).isPresent();
 
+        }
+
+        @Override
+        public void borrarSubrogancia(Long idSubrogancia) {
+                Subrogancia subrogancia = RepositoryUtils.findOrThrow(subroganciaRepository.findById(idSubrogancia),
+                                String.format("No existe la subrogancia %d", idSubrogancia));
+
+                subroganciaRepository.delete(subrogancia);
         }
 
 }

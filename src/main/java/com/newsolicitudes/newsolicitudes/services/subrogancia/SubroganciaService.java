@@ -8,5 +8,6 @@ public interface SubroganciaService {
 
     void createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin, Long idDepto);
 
+    void borrarSubrogancia(Long idSubrogancia);
 
 }
