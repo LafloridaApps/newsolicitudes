@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  newsolicitudes-container:
+  new-solicitudes-container:
     build: .
-    container_name: newsolicitudes-container
+    container_name: new-solicitudes-container
     ports:
       - "8081:8081"
     environment:
