@@ -146,6 +146,28 @@ public class SolicitudServiceImpl implements SolicitudService {
                 deptoActual, LocalDate.now(), LocalDate.now());
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
+
+        // Validar si el jefe del departamento destino está subrogando a un cargo con nivel de FIRMA
+        // para otorgarle el permiso resolutivo en lugar de solo VISACION inicial.
+        if (departamentoDestino.getRutJefe() != null) {
+            LocalDate hoy = LocalDate.now();
+            List<Subrogancia> subrogancias = subroganciaRepository
+                    .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                            departamentoDestino.getRutJefe(), hoy, hoy);
+
+            for (Subrogancia subrogancia : subrogancias) {
+                DepartamentoResponse deptoSubrogado = departamentoService.getDepartamentoById(subrogancia.getIdDepto());
+                if (deptoSubrogado != null) {
+                    NivelDepartamento nivelSubrogado = DepartamentoUtils.getNivelDepartamento(deptoSubrogado);
+                    TipoDerivacion tipoSubrogado = DepartamentoUtils.tipoPorNivel(nivelSubrogado);
+                    if (tipoSubrogado == TipoDerivacion.FIRMA) {
+                        tipoDerivacion = TipoDerivacion.FIRMA;
+                        break;
+                    }
+                }
+            }
+        }
+
         return new RutaDerivacion(departamentoDestino, tipoDerivacion);
     }
 
