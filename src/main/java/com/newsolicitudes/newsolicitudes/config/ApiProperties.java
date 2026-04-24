@@ -21,8 +21,6 @@ public class ApiProperties {
 
     private String externoUrl;
 
-   
-
     public String getFuncionarioUrl() {
         return funcionarioUrl;
     }
