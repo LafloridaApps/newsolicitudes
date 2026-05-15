@@ -1,45 +1,33 @@
 #!/bin/bash
 
 # =========================================================
-# CONFIGURACIÓN DEL MICROSERVICIO (Actualizado a GHCR)
+# CONFIGURACIÓN DEL MICROSERVICIO Y SERVIDOR
 # =========================================================
 NOMBRE_APP="newsolicitudes"
 PUERTO="8081"
-# Cambiamos la ruta de Docker Hub a GitHub Container Registry
-IMAGEN_HUB="ghcr.io/lafloridaapps/new-solicitudes"
+TARGET_IMAGE="$NOMBRE_APP:local"
+REMOTO="desarrollo@app-server"
+NETWORK="laflorida"
 # =========================================================
 
-OPCION=${1:-"dev"}
+# 1. Construcción local
+echo "--- 1. Creando archivo JAR y construyendo imagen local ---"
+./mvnw clean package -DskipTests && \
+echo "Elimnando imagen local anterior (si existe)..." && \
+docker rmi -f $TARGET_IMAGE 2>/dev/null || true && \
+echo "Construyendo imagen local..." && \
+docker build -t $TARGET_IMAGE .
 
-case $OPCION in
-    "prod")
-        echo "--- MODO PRODUCCIÓN: Bajando de GitHub Packages ($IMAGEN_HUB) ---"
-        # Ahora el pull se hace desde el registro privado de GitHub
-        docker pull $IMAGEN_HUB:latest
-        TARGET_IMAGE="$IMAGEN_HUB:latest"
-        ;;
-    *)
-        echo "--- MODO DESARROLLO: Compilando localmente ($NOMBRE_APP) ---"
-        ./mvnw clean package -DskipTests
-        docker build -t $NOMBRE_APP:local .
-        TARGET_IMAGE="$NOMBRE_APP:local"
-        ;;
-esac
+if [ $? -ne 0 ]; then
+    echo "❌ Error en la construcción local. Abortando."
+    exit 1
+fi
 
-echo "--- Limpiando contenedor anterior ---"
-docker stop ${NOMBRE_APP}-container 2>/dev/null
-docker rm ${NOMBRE_APP}-container 2>/dev/null
 
-echo "--- Iniciando contenedor en puerto $PUERTO ---"
-docker run \
-           --restart always \
-           -d -p ${PUERTO}:${PUERTO} \
-           --env-file docker.env \
-           --network laflorida \
-           --add-host=host.docker.internal:host-gateway \
-           --name ${NOMBRE_APP}-container \
-           $TARGET_IMAGE
 
-# Limpia imágenes antiguas para no llenar el disco del PC de la oficina
+
+# 5. Limpieza local
+echo "--- 5. Limpieza de imágenes locales ---"
 docker image prune -f
-echo "--- Proceso Terminado ($OPCION) ---"
+
+echo "✅ ¡Proceso completado! La aplicación $NOMBRE_APP ya está corriendo en $REMOTO:$PUERTO"
