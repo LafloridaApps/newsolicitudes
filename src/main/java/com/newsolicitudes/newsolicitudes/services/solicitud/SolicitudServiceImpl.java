@@ -2,10 +2,13 @@ package com.newsolicitudes.newsolicitudes.services.solicitud;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +66,8 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudServiceImpl implements SolicitudService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SolicitudServiceImpl.class);
 
     private final FuncionarioService funcionarioService;
     private final SolicitudRepository solicitudRepository;
@@ -409,6 +414,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     @Transactional
     public String anularSolicitud(Long idSolicitud, String motivo) {
+        logger.info("Iniciando anulación de solicitud ID: {}. Motivo: {}", idSolicitud, motivo);
 
         Solicitud solicitud = getSolicitudById(idSolicitud);
 
@@ -420,10 +426,21 @@ public class SolicitudServiceImpl implements SolicitudService {
             throw new AnulacionException("Ya existe una solicitud de anulación para esta solicitud.");
         }
 
-        if (tieneRecepcion(solicitud)) {
+        Optional<Derivacion> recepcionMasReciente = getRecepcionMasReciente(solicitud);
+
+        if (recepcionMasReciente.isPresent()) {
+            Derivacion derivacionTarget = recepcionMasReciente.get();
+            logger.info("La solicitud ID: {} ya fue recepcionada (Derivación más reciente ID: {}, Depto destino: {}). Se creará una solicitud de anulación.", 
+                    idSolicitud, derivacionTarget.getId(), derivacionTarget.getIdDepto());
+            
             crearSolicitudAnulacion(solicitud, motivo, SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE);
+            
+           
+            // o guardar este idDepto dentro de la entidad SolicitudAnulacion para mostrarla en su bandeja de entrada.
+
             return "REQUIERE_APROBACION"; // El frontend puede evaluar este string para mostrar un mensaje
         } else {
+            logger.info("La solicitud ID: {} no ha sido recepcionada. Anulando directamente.", idSolicitud);
             // Anulación directa
             SolicitudAnulacion solAnulacion = crearSolicitudAnulacion(solicitud, motivo, SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
             
@@ -448,15 +465,19 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     @Override
     @Transactional
-    public String resolverSolicitudAnulacion(Long idSolicitudAnulacion, Integer rutAprobador, boolean aprueba) {
-        SolicitudAnulacion solAnulacion = solicitudAnulacionRepository.findById(idSolicitudAnulacion)
-                .orElseThrow(() -> new NotFoundException("Solicitud de anulación no encontrada"));
+    public String resolverSolicitudAnulacion(Long idSolicitud, Integer rutAprobador, boolean aprueba) {
+        logger.info("Resolviendo solicitud de anulación para Solicitud ID: {}. RUT Aprobador: {}, Aprueba: {}", idSolicitud, rutAprobador, aprueba);
+
+        SolicitudAnulacion solAnulacion = solicitudAnulacionRepository.findBySolicitudId(idSolicitud)
+                .orElseThrow(() -> new NotFoundException("Solicitud de anulación no encontrada para la solicitud " + idSolicitud));
                 
         if (solAnulacion.getEstado() != SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE) {
+            logger.warn("La solicitud de anulación para la Solicitud ID: {} ya fue resuelta anteriormente. Estado actual: {}", idSolicitud, solAnulacion.getEstado());
             throw new AnulacionException("La solicitud de anulación ya ha sido resuelta.");
         }
         
         if (aprueba) {
+            logger.info("Aprobando solicitud de anulación ID: {}", solAnulacion.getId());
             solAnulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
             
             Anulacion anulacion = new Anulacion();
@@ -472,6 +493,7 @@ public class SolicitudServiceImpl implements SolicitudService {
             
             return "La solicitud ha sido anulada exitosamente.";
         } else {
+            logger.info("Rechazando solicitud de anulación ID: {}", solAnulacion.getId());
             solAnulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.RECHAZADA);
             return "La solicitud de anulación ha sido rechazada.";
         }
@@ -483,11 +505,15 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .orElseThrow(() -> new NotFoundException("No se encuentra la solicitud"));
     }
 
-    private boolean tieneRecepcion(Solicitud solicitud) {
-        if (solicitud.getDerivaciones() == null) return false;
-        // Verifica si alguna de las derivaciones asociadas tiene una EntradaDerivacion (es decir, ya se visualizó o recepcionó)
+    private Optional<Derivacion> getRecepcionMasReciente(Solicitud solicitud) {
+        if (solicitud.getDerivaciones() == null || solicitud.getDerivaciones().isEmpty()) {
+            return Optional.empty();
+        }
+        // Busca la derivación más reciente (ID más alto) que tenga una entrada de recepción
         return solicitud.getDerivaciones().stream()
-                .anyMatch(d -> entradaDerivacionRepository.existsByDerivacionId(d.getId()));
+                .sorted(Comparator.comparing(Derivacion::getId).reversed())
+                .filter(d -> entradaDerivacionRepository.existsByDerivacionId(d.getId()))
+                .findFirst();
     }
 
     private SolicitudAnulacion crearSolicitudAnulacion(Solicitud solicitud, String motivo, SolicitudAnulacion.EstadoSolicitudAnulacion estado) {

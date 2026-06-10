@@ -25,6 +25,6 @@ public interface SolicitudService {
 
     String anularSolicitud(Long idSolicitud, String motivo);
 
-    String resolverSolicitudAnulacion(Long idSolicitudAnulacion, Integer rutAprobador, boolean aprueba);
+    String resolverSolicitudAnulacion(Long idSolicitud, Integer rutAprobador, boolean aprueba);
 
 }

@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,6 +29,7 @@ public class SolicitudController {
 
     private final SolicitudService solicitudService;
     private static final String KEY="message";
+    private static final Logger logger = LoggerFactory.getLogger(SolicitudController.class);
 
     public SolicitudController(SolicitudService solicitudService) {
         this.solicitudService = solicitudService;
@@ -69,6 +72,7 @@ public class SolicitudController {
 
     @PostMapping("/anular")
     public ResponseEntity<Object> anularSolicitud(@RequestParam Long idSolicitud, @RequestParam String motivo) {
+        logger.info("Recibida petición para anular solicitud con id: {} y motivo: {}", idSolicitud, motivo);
         String resultado = solicitudService.anularSolicitud(idSolicitud, motivo);
         Map<String, String> response = new HashMap<>();
         
@@ -85,10 +89,11 @@ public class SolicitudController {
 
     @PostMapping("/aprobar-anulacion")
     public ResponseEntity<Object> resolverSolicitudAnulacion(
-            @RequestParam Long idSolicitudAnulacion,
+            @RequestParam Long idSolicitud,
             @RequestParam Integer rutAprobador,
             @RequestParam boolean aprueba) {
-        String mensaje = solicitudService.resolverSolicitudAnulacion(idSolicitudAnulacion, rutAprobador, aprueba);
+        logger.info("Recibida petición para aprobar/rechazar anulación. ID Solicitud: {}, RUT Aprobador: {}, Aprueba: {}", idSolicitud, rutAprobador, aprueba);
+        String mensaje = solicitudService.resolverSolicitudAnulacion(idSolicitud, rutAprobador, aprueba);
         return ResponseEntity.ok().body(Map.of(KEY, mensaje));
     }
 }
