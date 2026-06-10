@@ -11,12 +11,14 @@ import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.entities.SolicitudAnulacion;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.exceptions.DerivacionExceptions;
 import com.newsolicitudes.newsolicitudes.mappers.SolicitudMapper;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SolicitudAnulacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
@@ -57,6 +59,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     private final NotificacionService notificacionService;
     private final AprobacionRepository aprobacionRepository;
     private final VisacionService visacionService;
+    private final SolicitudAnulacionRepository solicitudAnulacionRepository;
 
     public DerivacionServiceImpl(
             DerivacionRepository derivacionRepository,
@@ -67,7 +70,8 @@ public class DerivacionServiceImpl implements DerivacionService {
             FuncionarioService funcionarioService,
             NotificacionService notificacionService,
             AprobacionRepository aprobacionRepository,
-            VisacionService visacionService) {
+            VisacionService visacionService,
+            SolicitudAnulacionRepository solicitudAnulacionRepository) {
         this.derivacionRepository = derivacionRepository;
         this.entradaDerivacionRepository = entradaDerivacionRepository;
         this.solicitudMapper = solicitudDtoMapper;
@@ -77,6 +81,7 @@ public class DerivacionServiceImpl implements DerivacionService {
         this.notificacionService = notificacionService;
         this.aprobacionRepository = aprobacionRepository;
         this.visacionService = visacionService;
+        this.solicitudAnulacionRepository = solicitudAnulacionRepository;
     }
 
     // Crea la derivación inicial para una nueva solicitud.
@@ -207,6 +212,11 @@ public class DerivacionServiceImpl implements DerivacionService {
 
         // 3. Añadir información de subrogancia si corresponde a esta derivación.
         enriquecerConSubroganciaInfo(dto, derivacion, subroganciasActivas);
+        
+        // 4. Verificar si tiene anulación pendiente
+        boolean tieneAnulacionPendiente = solicitudAnulacionRepository.existsBySolicitudIdAndEstado(
+                solicitud.getId(), SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE);
+        dto.setTieneAnulacionPendiente(tieneAnulacionPendiente);
         
         return dto;
     }

@@ -1,6 +1,8 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ import com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudService;
 public class SolicitudController {
 
     private final SolicitudService solicitudService;
+    private static final String KEY="message";
 
     public SolicitudController(SolicitudService solicitudService) {
         this.solicitudService = solicitudService;
@@ -62,5 +65,30 @@ public class SolicitudController {
     public ResponseEntity<Object> updateSolicitud(@PathVariable Long idSolicitud, @RequestBody com.newsolicitudes.newsolicitudes.dto.UpdateSolicitudRequest request) {
         solicitudService.updateSolicitud(idSolicitud, request);
         return ResponseEntity.ok().body("Solicitud actualizada correctamente.");
+    }
+
+    @PostMapping("/anular")
+    public ResponseEntity<Object> anularSolicitud(@RequestParam Long idSolicitud, @RequestParam String motivo) {
+        String resultado = solicitudService.anularSolicitud(idSolicitud, motivo);
+        Map<String, String> response = new HashMap<>();
+        
+        if ("REQUIERE_APROBACION".equals(resultado)) {
+            response.put("status", "REQUIERE_APROBACION");
+            response.put(KEY, "La solicitud ya fue recepcionada. Se ha creado una solicitud de anulación que requiere aprobación de su jefatura.");
+            return ResponseEntity.ok().body(response);
+        } else {
+            response.put("status", "ANULADA_DIRECTAMENTE");
+            response.put(KEY, "La solicitud fue anulada exitosamente.");
+            return ResponseEntity.ok().body(response);
+        }
+    }   
+
+    @PostMapping("/aprobar-anulacion")
+    public ResponseEntity<Object> resolverSolicitudAnulacion(
+            @RequestParam Long idSolicitudAnulacion,
+            @RequestParam Integer rutAprobador,
+            @RequestParam boolean aprueba) {
+        String mensaje = solicitudService.resolverSolicitudAnulacion(idSolicitudAnulacion, rutAprobador, aprueba);
+        return ResponseEntity.ok().body(Map.of(KEY, mensaje));
     }
 }

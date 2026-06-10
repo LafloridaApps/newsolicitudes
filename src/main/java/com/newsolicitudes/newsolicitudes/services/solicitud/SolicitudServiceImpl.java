@@ -26,18 +26,25 @@ import com.newsolicitudes.newsolicitudes.dto.SolicitudResponse;
 import com.newsolicitudes.newsolicitudes.dto.SubroganciaRequest;
 import com.newsolicitudes.newsolicitudes.dto.Trazabilidad;
 import com.newsolicitudes.newsolicitudes.dto.UpdateSolicitudRequest;
+import com.newsolicitudes.newsolicitudes.entities.Anulacion;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Postergacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
+import com.newsolicitudes.newsolicitudes.entities.SolicitudAnulacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
+import com.newsolicitudes.newsolicitudes.exceptions.AnulacionException;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
+import com.newsolicitudes.newsolicitudes.repositories.AnulacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
+import com.newsolicitudes.newsolicitudes.repositories.SolicitudAnulacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
@@ -50,6 +57,7 @@ import com.newsolicitudes.newsolicitudes.services.notificacion.NotificacionServi
 import com.newsolicitudes.newsolicitudes.services.subrogancia.SubroganciaService;
 import com.newsolicitudes.newsolicitudes.services.trazabilidad.TrazabilidadService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 import jakarta.transaction.Transactional;
 
@@ -69,6 +77,10 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final CalculadoraDiasService calculadoraDiasService;
     private final TrazabilidadService trazabilidadService;
     private final AppProperties appProperties;
+    private final AnulacionRepository anulacionRepository;
+    private final DerivacionRepository derivacionRepository;
+    private final SolicitudAnulacionRepository solicitudAnulacionRepository;
+    private final EntradaDerivacionRepository entradaDerivacionRepository;
 
     public SolicitudServiceImpl(DerivacionService derivacionService, SolicitudRepository solicitudRepository,
             SubroganciaService subroganciaService,
@@ -81,7 +93,11 @@ public class SolicitudServiceImpl implements SolicitudService {
             SubroganciaRepository subroganciaRepository,
             CalculadoraDiasService calculadoraDiasService,
             TrazabilidadService trazabilidadService,
-            AppProperties appProperties) {
+            AppProperties appProperties,
+            AnulacionRepository anulacionRepository,
+            DerivacionRepository derivacionRepository,
+            SolicitudAnulacionRepository solicitudAnulacionRepository,
+            EntradaDerivacionRepository entradaDerivacionRepository) {
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaService = subroganciaService;
@@ -95,6 +111,10 @@ public class SolicitudServiceImpl implements SolicitudService {
         this.calculadoraDiasService = calculadoraDiasService;
         this.trazabilidadService = trazabilidadService;
         this.appProperties = appProperties;
+        this.anulacionRepository = anulacionRepository;
+        this.derivacionRepository = derivacionRepository;
+        this.solicitudAnulacionRepository = solicitudAnulacionRepository;
+        this.entradaDerivacionRepository = entradaDerivacionRepository;
     }
 
     // Record privado para encapsular el resultado de la lógica de enrutamiento.
@@ -147,7 +167,8 @@ public class SolicitudServiceImpl implements SolicitudService {
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
 
-        // Validar si el jefe del departamento destino está subrogando a un cargo con nivel de FIRMA
+        // Validar si el jefe del departamento destino está subrogando a un cargo con
+        // nivel de FIRMA
         // para otorgarle el permiso resolutivo en lugar de solo VISACION inicial.
         if (departamentoDestino.getRutJefe() != null) {
             LocalDate hoy = LocalDate.now();
@@ -208,9 +229,10 @@ public class SolicitudServiceImpl implements SolicitudService {
     // subrogancia activa.
     private FuncionarioResponseApi determinarDestinatarioNotificacion(DepartamentoResponse departamentoDestino) {
         Integer rutJefeDestino = departamentoDestino.getRutJefe();
-        LocalDate fechaReferencia = LocalDate.now(); 
+        LocalDate fechaReferencia = LocalDate.now();
         List<Subrogancia> subrogancias = subroganciaRepository
-                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, fechaReferencia, fechaReferencia);
+                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino,
+                        fechaReferencia, fechaReferencia);
 
         if (!subrogancias.isEmpty()) {
             // Si hay subrogancia activa, el destinatario es el subrogante.
@@ -361,7 +383,8 @@ public class SolicitudServiceImpl implements SolicitudService {
         if (nuevoEstado == Solicitud.EstadoSolicitud.POSTERGADA) {
             Aprobacion aprobacion = aprobacionRepository.findBySolicitud(solicitud)
                     .orElseThrow(
-                            () -> new NotFoundException("No se puede postergar una solicitud que no ha sido aprobada."));
+                            () -> new NotFoundException(
+                                    "No se puede postergar una solicitud que no ha sido aprobada."));
 
             Postergacion postergacion = new Postergacion();
             postergacion.setFechaPostergacion(LocalDate.now());
@@ -381,5 +404,98 @@ public class SolicitudServiceImpl implements SolicitudService {
         List<Solicitud> solicitudesPendientes = solicitudRepository
                 .findByTipoSolicitudAndEstadoAndRut(tipoSol, EstadoSolicitud.PENDIENTE, rutFuncionario);
         return !solicitudesPendientes.isEmpty();
+    }
+
+    @Override
+    @Transactional
+    public String anularSolicitud(Long idSolicitud, String motivo) {
+
+        Solicitud solicitud = getSolicitudById(idSolicitud);
+
+        if (solicitud.getEstado() == EstadoSolicitud.ANULADA) {
+            throw new AnulacionException("La solicitud ya se encuentra anulada.");
+        }
+
+        if(solicitudAnulacionRepository.existsBySolicitudId(idSolicitud)){
+            throw new AnulacionException("Ya existe una solicitud de anulación para esta solicitud.");
+        }
+
+        if (tieneRecepcion(solicitud)) {
+            crearSolicitudAnulacion(solicitud, motivo, SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE);
+            return "REQUIERE_APROBACION"; // El frontend puede evaluar este string para mostrar un mensaje
+        } else {
+            // Anulación directa
+            SolicitudAnulacion solAnulacion = crearSolicitudAnulacion(solicitud, motivo, SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
+            
+            Anulacion anulacion = new Anulacion();
+            anulacion.setSolicitud(solicitud);
+            anulacion.setSolicitudAnulacion(solAnulacion);
+            anulacion.setFechaAnulacion(FechaUtils.fechaActual());
+            anulacionRepository.save(anulacion);
+            
+            solicitud.setEstado(EstadoSolicitud.ANULADA);
+            solicitudRepository.save(solicitud);
+            
+            // Cambiar derivaciones a anuladas
+            solicitud.getDerivaciones().forEach(d -> {
+                d.setEstadoDerivacion(EstadoDerivacion.ANULADA);
+                derivacionRepository.save(d);
+            });
+            
+            return "ANULADA_DIRECTAMENTE";
+        }
+    }
+
+    @Override
+    @Transactional
+    public String resolverSolicitudAnulacion(Long idSolicitudAnulacion, Integer rutAprobador, boolean aprueba) {
+        SolicitudAnulacion solAnulacion = solicitudAnulacionRepository.findById(idSolicitudAnulacion)
+                .orElseThrow(() -> new NotFoundException("Solicitud de anulación no encontrada"));
+                
+        if (solAnulacion.getEstado() != SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE) {
+            throw new AnulacionException("La solicitud de anulación ya ha sido resuelta.");
+        }
+        
+        if (aprueba) {
+            solAnulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
+            
+            Anulacion anulacion = new Anulacion();
+            anulacion.setSolicitud(solAnulacion.getSolicitud());
+            anulacion.setSolicitudAnulacion(solAnulacion);
+            anulacion.setFechaAnulacion(FechaUtils.fechaActual());
+            anulacion.setRutAprobador(rutAprobador);
+            anulacionRepository.save(anulacion);
+            
+            Solicitud solicitud = solAnulacion.getSolicitud();
+            solicitud.setEstado(EstadoSolicitud.ANULADA);
+            solicitudRepository.save(solicitud);
+            
+            return "La solicitud ha sido anulada exitosamente.";
+        } else {
+            solAnulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.RECHAZADA);
+            return "La solicitud de anulación ha sido rechazada.";
+        }
+    }
+
+    private Solicitud getSolicitudById(Long idSolicitud) {
+        return solicitudRepository
+                .findById(idSolicitud)
+                .orElseThrow(() -> new NotFoundException("No se encuentra la solicitud"));
+    }
+
+    private boolean tieneRecepcion(Solicitud solicitud) {
+        if (solicitud.getDerivaciones() == null) return false;
+        // Verifica si alguna de las derivaciones asociadas tiene una EntradaDerivacion (es decir, ya se visualizó o recepcionó)
+        return solicitud.getDerivaciones().stream()
+                .anyMatch(d -> entradaDerivacionRepository.existsByDerivacionId(d.getId()));
+    }
+
+    private SolicitudAnulacion crearSolicitudAnulacion(Solicitud solicitud, String motivo, SolicitudAnulacion.EstadoSolicitudAnulacion estado) {
+        SolicitudAnulacion solicitudAnulacion = new SolicitudAnulacion();
+        solicitudAnulacion.setMotivo(motivo);
+        solicitudAnulacion.setSolicitud(solicitud);
+        solicitudAnulacion.setFechaSolicitud(FechaUtils.fechaActual());
+        solicitudAnulacion.setEstado(estado);
+        return solicitudAnulacionRepository.save(solicitudAnulacion);
     }
 }

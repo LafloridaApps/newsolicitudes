@@ -18,6 +18,7 @@ public class SolicitudDto {
     private String nombreFuncionario;
     private String nombreDepartamento;
     private String urlPdf;
+    private boolean tieneAnulacionPendiente;
 
     private List<DerivacionDto> derivaciones;
 
@@ -149,5 +150,13 @@ public class SolicitudDto {
 
     public void setUrlPdf(String urlPdf) {
         this.urlPdf = urlPdf;
+    }
+
+    public boolean isTieneAnulacionPendiente() {
+        return tieneAnulacionPendiente;
+    }
+
+    public void setTieneAnulacionPendiente(boolean tieneAnulacionPendiente) {
+        this.tieneAnulacionPendiente = tieneAnulacionPendiente;
     }
 }

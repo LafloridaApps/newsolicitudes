@@ -1,6 +1,7 @@
 package com.newsolicitudes.newsolicitudes.repositories;
 
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
+import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,5 +35,9 @@ public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
 
     @Query("SELECT DISTINCT d.solicitud.id FROM Derivacion d WHERE d.idDepto IN :deptoIds AND d.solicitud.estado = com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud.PENDIENTE")
     List<Long> findSolicitudIdsByDeptoIdsAndEstadoPendiente(@Param("deptoIds") List<Long> deptoIds);
+
+    List<Derivacion> findBySolicitud(Solicitud solicitud);
+
+
 
 }

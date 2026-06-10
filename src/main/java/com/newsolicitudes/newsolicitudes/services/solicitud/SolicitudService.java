@@ -23,4 +23,8 @@ public interface SolicitudService {
 
     boolean buscarSolicitudesPendientesAprobacion(String tipoSolicitud, Integer rutFuncionario);
 
+    String anularSolicitud(Long idSolicitud, String motivo);
+
+    String resolverSolicitudAnulacion(Long idSolicitudAnulacion, Integer rutAprobador, boolean aprueba);
+
 }

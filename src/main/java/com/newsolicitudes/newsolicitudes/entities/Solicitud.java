@@ -53,7 +53,8 @@ public class Solicitud {
         APROBADA,
         POSTERGADA,
         DECRETADA,
-        FORMULARIO_EN_RRHH
+        FORMULARIO_EN_RRHH,
+        ANULADA
     }
 
     public enum Jornada {

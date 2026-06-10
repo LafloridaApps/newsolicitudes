@@ -1,5 +1,6 @@
 package com.newsolicitudes.newsolicitudes.dto;
 
+import java.time.LocalDate;
 import java.util.List; // Importar List
 
 public class FuncionarioResponseApi {
@@ -19,6 +20,33 @@ public class FuncionarioResponseApi {
     private String tipoContrato;
     private String escalafon;
     private Integer grado;
+    private LocalDate fechaNacimiento;
+    private LocalDate fechaFin;
+    private boolean vigente;
+
+    public LocalDate getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(LocalDate fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
+    }
+
+    public LocalDate getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(LocalDate fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public boolean isVigente() {
+        return vigente;
+    }
+
+    public void setVigente(boolean vigente) {
+        this.vigente = vigente;
+    }
 
     public String getEscalafon() {
         return escalafon;
@@ -155,14 +183,13 @@ public class FuncionarioResponseApi {
         return nombre + " " + apellidoPaterno + " " + apellidoMaterno;
     }
 
-    public String nombreCorto(){
-        return nombre+" " + apellidoMaterno;
+    public String nombreCorto() {
+        return nombre + " " + apellidoMaterno;
     }
 
     public String getRutCompleto() {
         return rut + "-" + vrut;
     }
-
 
     public String getNombreCompletoReverse() {
         return apellidoPaterno + " " + apellidoMaterno + " " + nombre;

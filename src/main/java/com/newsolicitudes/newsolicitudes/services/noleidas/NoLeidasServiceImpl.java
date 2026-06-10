@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
+import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
@@ -49,7 +50,8 @@ public class NoLeidasServiceImpl implements NoLeidasService {
         List<Derivacion> derivaciones = derivacionRepository.findByIdDeptoIn(deptoIds);
 
         long cantidad = derivaciones.stream()
-                .filter(derivacion -> !hasEntrada(derivacion))
+                .filter(derivacion -> !hasEntrada(derivacion) && derivacion.getEstadoDerivacion() != EstadoDerivacion.ANULADA)
+                
                 .count();
 
         return cantidad >= 0 ? cantidad : 0;

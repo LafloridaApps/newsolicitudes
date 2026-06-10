@@ -49,7 +49,8 @@ public class Derivacion {
         PENDIENTE,
         DERIVADA,
         FINALIZADA,
-        POSTERGADA
+        POSTERGADA,
+        ANULADA
     }
 
     // Getters y Setters
