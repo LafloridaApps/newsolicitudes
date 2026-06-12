@@ -5,4 +5,7 @@ public class SolicitudException extends RuntimeException {
         super(message);
     }
 
+    public SolicitudException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

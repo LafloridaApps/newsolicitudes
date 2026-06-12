@@ -14,6 +14,8 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.SolicitudAnulacion;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.exceptions.DerivacionExceptions;
+import com.newsolicitudes.newsolicitudes.exceptions.DerivacionProcesoException;
+import com.newsolicitudes.newsolicitudes.exceptions.NotificacionException;
 import com.newsolicitudes.newsolicitudes.mappers.SolicitudMapper;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
@@ -38,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -90,65 +93,81 @@ public class DerivacionServiceImpl implements DerivacionService {
     public void createSolicitudDerivacion(Solicitud solicitud, TipoDerivacion tipo,
             Long idDepto, EstadoDerivacion estadoDerivacion)
             throws DerivacionExceptions {
-        crearNuevaDerivacion(solicitud, tipo, idDepto, estadoDerivacion);
+        try {
+            crearNuevaDerivacion(solicitud, tipo, idDepto, estadoDerivacion);
+        } catch (Exception e) {
+            logger.error("Error al crear derivación inicial para solicitud ID {}: {}", solicitud != null ? solicitud.getId() : null, e.getMessage(), e);
+            if (e instanceof DerivacionExceptions derivacionExceptions) throw derivacionExceptions;
+            throw new DerivacionProcesoException("Error interno al crear derivacion", e);
+        }
     }
 
     // Crea la siguiente derivación en la cadena, típicamente después de una visación.
     @Override
     @Transactional(rollbackFor = DerivacionExceptions.class)
     public void crearSiguienteDerivacion(Long idDerivacionAnterior, Integer rutUsuario) {
-        Derivacion derivacionAnterior = getDerivacionBydId(idDerivacionAnterior);
-        Solicitud solicitud = derivacionAnterior.getSolicitud();
-        DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(derivacionAnterior.getIdDepto());
+        try {
+            Derivacion derivacionAnterior = getDerivacionBydId(idDerivacionAnterior);
+            Solicitud solicitud = derivacionAnterior.getSolicitud();
+            DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(derivacionAnterior.getIdDepto());
 
-        // Determina el siguiente departamento en la jerarquía.
-        DepartamentoResponse departamentoSiguiente = departamentoService.getDepartamentoDestino(
-                departamentoActual.getRutJefe(),
-                departamentoActual, LocalDate.now(), LocalDate.now());
+            // Determina el siguiente departamento en la jerarquía.
+            DepartamentoResponse departamentoSiguiente = departamentoService.getDepartamentoDestino(
+                    departamentoActual.getRutJefe(),
+                    departamentoActual, LocalDate.now(), LocalDate.now());
 
-        // Determina si la siguiente derivación es para visación o para firma final.
-        TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, LocalDate.now());
-        logger.info("Tipo de derivacion determinado: {}", tipoSiguienteDerivacion);
+            // Determina si la siguiente derivación es para visación o para firma final.
+            TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, LocalDate.now());
+            logger.info("Tipo de derivacion determinado: {}", tipoSiguienteDerivacion);
 
-        // Actualiza el estado de la derivación anterior.
-        EstadoDerivacion estadoAnterior = calcularEstadoDerivacion(derivacionAnterior);
-        if (estadoAnterior == EstadoDerivacion.DERIVADA
-                || DepartamentoUtils.getNivelDepartamento(departamentoSiguiente) == NivelDepartamento.DEPARTAMENTO
-                || DepartamentoUtils.getNivelDepartamento(departamentoSiguiente) == NivelDepartamento.SECCION
-                || DepartamentoUtils.getNivelDepartamento(departamentoSiguiente) == NivelDepartamento.OFICINA) {
+            // Actualiza el estado de la derivación anterior.
+            EstadoDerivacion estadoAnterior = calcularEstadoDerivacion(derivacionAnterior);
+            if (estadoAnterior == EstadoDerivacion.DERIVADA
+                    || DepartamentoUtils.getNivelDepartamento(departamentoSiguiente) == NivelDepartamento.DEPARTAMENTO
+                    || DepartamentoUtils.getNivelDepartamento(departamentoSiguiente) == NivelDepartamento.SECCION
+                    || DepartamentoUtils.getNivelDepartamento(departamentoSiguiente) == NivelDepartamento.OFICINA) {
 
-            visacionService.visarSolicitud(solicitud, departamentoActual.getRutJefeSuperior());
+                visacionService.visarSolicitud(solicitud, departamentoActual.getRutJefeSuperior());
+            }
+            derivacionAnterior.setEstadoDerivacion(estadoAnterior);
+            derivacionRepository.save(derivacionAnterior);
+
+            // Crea y guarda la nueva derivación pendiente.
+            Derivacion nuevaDerivacion = crearNuevaDerivacion(solicitud, tipoSiguienteDerivacion, departamentoSiguiente.getId(),
+                    EstadoDerivacion.PENDIENTE);
+            enviarNotificacionNuevaDerivacion(nuevaDerivacion);
+        } catch (Exception e) {
+            logger.error("Error al crear la siguiente derivación para idDerivacionAnterior {}: {}", idDerivacionAnterior, e.getMessage(), e);
+            throw new DerivacionProcesoException("Error al procesar la siguiente derivacion", e);
         }
-        derivacionAnterior.setEstadoDerivacion(estadoAnterior);
-        derivacionRepository.save(derivacionAnterior);
-
-        // Crea y guarda la nueva derivación pendiente.
-        Derivacion nuevaDerivacion = crearNuevaDerivacion(solicitud, tipoSiguienteDerivacion, departamentoSiguiente.getId(),
-                EstadoDerivacion.PENDIENTE);
-        enviarNotificacionNuevaDerivacion(nuevaDerivacion);
     }
 
     // Obtiene una página de solicitudes basadas en las derivaciones de un departamento.
     @Override
     public PageSolicitudesResponse getDerivacionesByDeptoId(Integer rut, Long idDepto, int pageNumber, Boolean noLeidas) {
-        // 1. Obtener subrogancias activas para el RUT del usuario.
-        List<Subrogancia> subroganciasActivas = getSubroganciasActivasParaRut(rut);
+        try {
+            // 1. Obtener subrogancias activas para el RUT del usuario.
+            List<Subrogancia> subroganciasActivas = getSubroganciasActivasParaRut(rut);
 
-        // 2. Determinar qué departamentos consultar (el propio y los subrogados).
-        List<Long> deptoIds = getDeptoIdsIncluyendoSubrogancias(idDepto, subroganciasActivas);
+            // 2. Determinar qué departamentos consultar (el propio y los subrogados).
+            List<Long> deptoIds = getDeptoIdsIncluyendoSubrogancias(idDepto, subroganciasActivas);
 
-        // 3. Obtener los datos paginados del repositorio.
-        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("solicitud.id").descending());
-        Page<Derivacion> derivacionesPage = fetchPaginaDerivaciones(deptoIds, noLeidas, pageable);
+            // 3. Obtener los datos paginados del repositorio.
+            Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("solicitud.id").descending());
+            Page<Derivacion> derivacionesPage = fetchPaginaDerivaciones(deptoIds, noLeidas, pageable);
 
-        // 4. Mapear las entidades a DTOs, pasando las subrogancias para enriquecer la información.
-        List<SolicitudDto> solicitudesDto = derivacionesPage.getContent().stream()
-                .map(derivacion -> mapDerivacionToSolicitudDto(derivacion, subroganciasActivas))
-                .sorted(Comparator.comparing(SolicitudDto::getId, Comparator.reverseOrder()))
-                .toList();
+            // 4. Mapear las entidades a DTOs, pasando las subrogancias para enriquecer la información.
+            List<SolicitudDto> solicitudesDto = derivacionesPage.getContent().stream()
+                    .map(derivacion -> mapDerivacionToSolicitudDto(derivacion, subroganciasActivas))
+                    .sorted(Comparator.comparing(SolicitudDto::getId, Comparator.reverseOrder()))
+                    .toList();
 
-        // 5. Construir y devolver la respuesta final paginada.
-        return toPageSolicitudesResponse(derivacionesPage, solicitudesDto);
+            // 5. Construir y devolver la respuesta final paginada.
+            return toPageSolicitudesResponse(derivacionesPage, solicitudesDto);
+        } catch (Exception e) {
+            logger.error("Error al obtener derivaciones para el depto {} y rut {}: {}", idDepto, rut, e.getMessage(), e);
+            throw new DerivacionProcesoException("Error al obtener lista de derivaciones", e);
+        }
     }
 
     // =====================================================================================
@@ -170,7 +189,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     
     // Construye la lista de IDs de departamento a consultar, incluyendo el principal y los subrogados.
     private List<Long> getDeptoIdsIncluyendoSubrogancias(Long idDeptoPrincipal, List<Subrogancia> subroganciasActivas) {
-        List<Long> deptoIds = new java.util.ArrayList<>();
+        List<Long> deptoIds = new ArrayList<>();
         deptoIds.add(idDeptoPrincipal);
         if (!subroganciasActivas.isEmpty()) {
             deptoIds.addAll(subroganciasActivas.stream().map(Subrogancia::getIdDepto).toList());
@@ -240,33 +259,38 @@ public class DerivacionServiceImpl implements DerivacionService {
 
     // Envía una notificación por correo para una nueva derivación.
     private void enviarNotificacionNuevaDerivacion(Derivacion derivacion) {
-        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(derivacion.getSolicitud().getRut());
-        DepartamentoResponse deptoDestino = departamentoService.getDepartamentoById(derivacion.getIdDepto());
-        Integer rutJefeDestino = deptoDestino.getRutJefe();
-        LocalDate hoy = FechaUtils.fechaActual();
+        try {
+            FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(derivacion.getSolicitud().getRut());
+            DepartamentoResponse deptoDestino = departamentoService.getDepartamentoById(derivacion.getIdDepto());
+            Integer rutJefeDestino = deptoDestino.getRutJefe();
+            LocalDate hoy = FechaUtils.fechaActual();
 
-        // Determina el destinatario final, considerando subrogancia.
-        List<Subrogancia> subrogancias = subroganciaRepository
-                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
-        FuncionarioResponseApi destinatario;
-        if (!subrogancias.isEmpty()) {
-            destinatario = funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
-        } else {
-            destinatario = funcionarioService.getFuncionarioByRut(rutJefeDestino);
+            // Determina el destinatario final, considerando subrogancia.
+            List<Subrogancia> subrogancias = subroganciaRepository
+                    .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
+            FuncionarioResponseApi destinatario;
+            if (!subrogancias.isEmpty()) {
+                destinatario = funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
+            } else {
+                destinatario = funcionarioService.getFuncionarioByRut(rutJefeDestino);
+            }
+
+            DepartamentoResponse deptoOrigen = departamentoService.getDepartamentoById(funcionario.getCodDepto());
+
+            // Prepara y envía el correo.
+            String to = destinatario.getEmail();
+            String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
+            Map<String, Object> body = new HashMap<>();
+            body.put("nombreJefe", destinatario.getNombreCompleto());
+            body.put("nombre", funcionario.getNombreCompleto());
+            body.put("tipoPermiso", derivacion.getSolicitud().getTipoSolicitud().name());
+            body.put("departamento", deptoOrigen.getNombre());
+            body.put("link", "https://appx.laflorida.cl/login");
+            notificacionService.enviarNotificacion(to, subject, "solicitud", body);
+        } catch (Exception e) {
+            logger.error("Error al enviar notificación de nueva derivación (Derivación ID: {}): {}", derivacion.getId(), e.getMessage(), e);
+            throw new NotificacionException("Error en el envío de la notificación de derivación", e);
         }
-
-        DepartamentoResponse deptoOrigen = departamentoService.getDepartamentoById(funcionario.getCodDepto());
-
-        // Prepara y envía el correo.
-        String to = destinatario.getEmail();
-        String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
-        Map<String, Object> body = new HashMap<>();
-        body.put("nombreJefe", destinatario.getNombreCompleto());
-        body.put("nombre", funcionario.getNombreCompleto());
-        body.put("tipoPermiso", derivacion.getSolicitud().getTipoSolicitud().name());
-        body.put("departamento", deptoOrigen.getNombre());
-        body.put("link", "https://appx.laflorida.cl/login");
-        notificacionService.enviarNotificacion(to, subject, "solicitud", body);
     }
 
     // Determina si la derivación es de tipo VISACION o FIRMA, considerando la jerarquía y subrogancias.

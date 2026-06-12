@@ -90,10 +90,19 @@ public class SolicitudController {
     @PostMapping("/aprobar-anulacion")
     public ResponseEntity<Object> resolverSolicitudAnulacion(
             @RequestParam Long idSolicitud,
-            @RequestParam Integer rutAprobador,
-            @RequestParam boolean aprueba) {
-        logger.info("Recibida petición para aprobar/rechazar anulación. ID Solicitud: {}, RUT Aprobador: {}, Aprueba: {}", idSolicitud, rutAprobador, aprueba);
-        String mensaje = solicitudService.resolverSolicitudAnulacion(idSolicitud, rutAprobador, aprueba);
+            @RequestParam Integer rutAprobador) {
+        logger.info("Recibida petición para aprobar anulación. ID Solicitud: {}, RUT Aprobador: {}", idSolicitud, rutAprobador);
+        String mensaje = solicitudService.resolverSolicitudAnulacion(idSolicitud, rutAprobador);
+        return ResponseEntity.ok().body(Map.of(KEY, mensaje));
+    }
+
+    @PostMapping("/anular-directo")
+    public ResponseEntity<Object> anularSolicitudDirecta(
+            @RequestParam Long idSolicitud,
+            @RequestParam String motivo,
+            @RequestParam Integer rutAprobador) {
+        logger.info("Recibida petición para anular directamente solicitud con id: {} por rut: {} y motivo: {}", idSolicitud, rutAprobador, motivo);
+        String mensaje = solicitudService.anularSolicitudDirecta(idSolicitud, motivo, rutAprobador);
         return ResponseEntity.ok().body(Map.of(KEY, mensaje));
     }
 }

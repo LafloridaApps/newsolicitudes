@@ -25,6 +25,9 @@ public interface SolicitudService {
 
     String anularSolicitud(Long idSolicitud, String motivo);
 
-    String resolverSolicitudAnulacion(Long idSolicitud, Integer rutAprobador, boolean aprueba);
+    String resolverSolicitudAnulacion(Long idSolicitud, Integer rutAprobador);
+
+    // Método para anular directamente sin requerir aprobación de jefatura
+    String anularSolicitudDirecta(Long idSolicitud, String motivo, Integer rutAprobador);
 
 }

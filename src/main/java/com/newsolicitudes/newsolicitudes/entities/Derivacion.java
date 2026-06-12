@@ -3,6 +3,7 @@ package com.newsolicitudes.newsolicitudes.entities;
 import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -143,6 +144,10 @@ public class Derivacion {
 
     public void setIdDepto(Long idDepto) {
         this.idDepto = idDepto;
+    }
+
+    public EstadoSolicitud estadoSolicitud(){
+        return solicitud.getEstado();
     }
 
 }

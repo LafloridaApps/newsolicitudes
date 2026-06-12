@@ -127,9 +127,9 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
 
     @Override
     public List<FuncionarioResponseApi> buscarFuncionarioByNombre(String pattern, LocalDate fechaInicioSolicitud,
-            LocalDate fechaFinSolicitud, int pageNmber, Long iddepto) {
+            LocalDate fechaFinSolicitud, int pageNumber, Long iddepto) {
 
-        SearchFuncionarioResponse searchFuncionarioResponse = buscarFuncionarioByNombre(pattern, pageNmber);
+        SearchFuncionarioResponse searchFuncionarioResponse = buscarFuncionarioByNombre(pattern, pageNumber);
 
         List<FuncionarioResponseApi> funcionarios = searchFuncionarioResponse.getFuncionarios().stream()
                 .map(f -> buscarFuncionarioByRut(f.getRut()))
@@ -153,8 +153,8 @@ public class SearchFuncServiceImpl implements SearchFuncServcie {
 
     
 
-    private SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNmber) {
-        return apiFuncionarioService.buscarFuncionarioByNombre(pattern, pageNmber);
+    private SearchFuncionarioResponse buscarFuncionarioByNombre(String pattern, int pageNumber) {
+        return apiFuncionarioService.buscarFuncionarioByNombre(pattern, pageNumber);
     }
 
 }

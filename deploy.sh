@@ -5,16 +5,15 @@
 # =========================================================
 NOMBRE_APP="newsolicitudes"
 PUERTO="8081"
-TARGET_IMAGE="$NOMBRE_APP:local"
-REMOTO="desarrollo@app-server"
+TARGET_IMAGE="$NOMBRE_APP:v1.0.0"
 NETWORK="laflorida"
 # =========================================================
 
 # 1. Construcción local
+echo "Elimnando  imagen anterior"
+docker rmi -f $TARGET_IMAGE 2>/dev/null 
 echo "--- 1. Creando archivo JAR y construyendo imagen local ---"
 ./mvnw clean package -DskipTests && \
-echo "Elimnando imagen local anterior (si existe)..." && \
-docker rmi -f $TARGET_IMAGE 2>/dev/null || true && \
 echo "Construyendo imagen local..." && \
 docker build -t $TARGET_IMAGE .
 

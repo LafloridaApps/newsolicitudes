@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.dto.PdfDto;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
@@ -157,7 +158,9 @@ public class AprobacionServiceImpl implements AprobacionService {
 
     private String firmarPdf(Solicitud solicitud) {
 
-        return firmaService.firmarPdf(pdfDtoMapper.toPdfDto(solicitud));
+        PdfDto pdfDto = pdfDtoMapper.toPdfDto(solicitud);
+        logger.info("Datos de PdfDto enviados a firmar: {}", pdfDto);
+        return firmaService.firmarPdf(pdfDto);
 
     }
 
@@ -235,7 +238,9 @@ public class AprobacionServiceImpl implements AprobacionService {
 
         aprobacion.setUrlPdf(null);
 
-        String nuevaUrl = firmaService.firmarPdf(pdfDtoMapper.toPdfDto(solicitud));
+        PdfDto pdfDto = pdfDtoMapper.toPdfDto(solicitud);
+        logger.info("Datos de PdfDto enviados a firmar (reparación): {}", pdfDto);
+        String nuevaUrl = firmaService.firmarPdf(pdfDto);
 
         validarUrl(nuevaUrl);
 

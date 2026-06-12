@@ -1,21 +1,15 @@
 package com.newsolicitudes.newsolicitudes.services.solicitud;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.newsolicitudes.newsolicitudes.config.AppProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.DerivacionDto;
 import com.newsolicitudes.newsolicitudes.dto.ExisteSolicitudResponseDto;
@@ -29,25 +23,18 @@ import com.newsolicitudes.newsolicitudes.dto.SolicitudResponse;
 import com.newsolicitudes.newsolicitudes.dto.SubroganciaRequest;
 import com.newsolicitudes.newsolicitudes.dto.Trazabilidad;
 import com.newsolicitudes.newsolicitudes.dto.UpdateSolicitudRequest;
-import com.newsolicitudes.newsolicitudes.entities.Anulacion;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Postergacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
-import com.newsolicitudes.newsolicitudes.entities.SolicitudAnulacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
-import com.newsolicitudes.newsolicitudes.exceptions.AnulacionException;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
-import com.newsolicitudes.newsolicitudes.repositories.AnulacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
-import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
-import com.newsolicitudes.newsolicitudes.repositories.EntradaDerivacionRepository;
-import com.newsolicitudes.newsolicitudes.repositories.SolicitudAnulacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
@@ -56,18 +43,14 @@ import com.newsolicitudes.newsolicitudes.services.calculodias.CalculadoraDiasSer
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.derivacion.DerivacionService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
-import com.newsolicitudes.newsolicitudes.services.notificacion.NotificacionService;
 import com.newsolicitudes.newsolicitudes.services.subrogancia.SubroganciaService;
 import com.newsolicitudes.newsolicitudes.services.trazabilidad.TrazabilidadService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
-import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudServiceImpl implements SolicitudService {
-
-    private static final Logger logger = LoggerFactory.getLogger(SolicitudServiceImpl.class);
 
     private final FuncionarioService funcionarioService;
     private final SolicitudRepository solicitudRepository;
@@ -77,15 +60,11 @@ public class SolicitudServiceImpl implements SolicitudService {
     private final SolicitudMapper solicitudMapper;
     private final AprobacionRepository aprobacionRepository;
     private final PostergacionRepository postergacionRepository;
-    private final NotificacionService notificacionService;
     private final SubroganciaRepository subroganciaRepository;
     private final CalculadoraDiasService calculadoraDiasService;
     private final TrazabilidadService trazabilidadService;
-    private final AppProperties appProperties;
-    private final AnulacionRepository anulacionRepository;
-    private final DerivacionRepository derivacionRepository;
-    private final SolicitudAnulacionRepository solicitudAnulacionRepository;
-    private final EntradaDerivacionRepository entradaDerivacionRepository;
+    private final SolicitudAnulacionGestor solicitudAnulacionGestor;
+    private final SolicitudNotificador solicitudNotificador;
 
     public SolicitudServiceImpl(DerivacionService derivacionService, SolicitudRepository solicitudRepository,
             SubroganciaService subroganciaService,
@@ -94,15 +73,11 @@ public class SolicitudServiceImpl implements SolicitudService {
             SolicitudMapper solicitudMapper,
             AprobacionRepository aprobacionRepository,
             PostergacionRepository postergacionRepository,
-            NotificacionService notificacionService,
             SubroganciaRepository subroganciaRepository,
             CalculadoraDiasService calculadoraDiasService,
             TrazabilidadService trazabilidadService,
-            AppProperties appProperties,
-            AnulacionRepository anulacionRepository,
-            DerivacionRepository derivacionRepository,
-            SolicitudAnulacionRepository solicitudAnulacionRepository,
-            EntradaDerivacionRepository entradaDerivacionRepository) {
+            SolicitudAnulacionGestor solicitudAnulacionGestor,
+            SolicitudNotificador solicitudNotificador) {
         this.solicitudRepository = solicitudRepository;
         this.derivacionService = derivacionService;
         this.subroganciaService = subroganciaService;
@@ -111,15 +86,11 @@ public class SolicitudServiceImpl implements SolicitudService {
         this.solicitudMapper = solicitudMapper;
         this.aprobacionRepository = aprobacionRepository;
         this.postergacionRepository = postergacionRepository;
-        this.notificacionService = notificacionService;
         this.subroganciaRepository = subroganciaRepository;
         this.calculadoraDiasService = calculadoraDiasService;
         this.trazabilidadService = trazabilidadService;
-        this.appProperties = appProperties;
-        this.anulacionRepository = anulacionRepository;
-        this.derivacionRepository = derivacionRepository;
-        this.solicitudAnulacionRepository = solicitudAnulacionRepository;
-        this.entradaDerivacionRepository = entradaDerivacionRepository;
+        this.solicitudAnulacionGestor = solicitudAnulacionGestor;
+        this.solicitudNotificador = solicitudNotificador;
     }
 
     // Record privado para encapsular el resultado de la lógica de enrutamiento.
@@ -130,38 +101,42 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     @Transactional
     public SolicitudResponse createSolicitud(SolicitudRequest request) {
-        // 1. Obtener datos iniciales del funcionario y su departamento.
-        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
-        DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
+        try {
+            // 1. Obtener datos iniciales del funcionario y su departamento.
+            FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
+            DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
 
-        if (buscarSolicitudesPendientesAprobacion(request.getTipoSolicitud(), request.getRut())) {
-            throw new SolicitudException(
-                    "Tiene un formulario pendiente de firma.");
+            if (buscarSolicitudesPendientesAprobacion(request.getTipoSolicitud(), request.getRut())) {
+                throw new SolicitudException(
+                        "Tiene un formulario pendiente de firma.");
+            }
 
+            // 2. Determinar la ruta de derivación (departamento destino y tipo).
+            RutaDerivacion ruta = determinarRutaDerivacion(request, departamentoActual);
+
+            // 3. Calcular días y crear la entidad Solicitud principal.
+            double cantidadDias = calculadoraDiasService.calcularDias(request);
+            Solicitud solicitud = crearYGuardarSolicitud(request, funcionario.getRut(), funcionario.getCodDepto(),
+                    cantidadDias);
+
+            // 4. Crear entidades relacionadas (derivación y subrogancia).
+            derivacionService.createSolicitudDerivacion(solicitud, ruta.tipoDerivacion(),
+                    ruta.departamentoDestino().getId(),
+                    EstadoDerivacion.PENDIENTE);
+            if (request.getSubrogancia() != null) {
+                createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(),
+                        request.getDepto());
+            }
+
+            // 5. Enviar notificación de la nueva solicitud.
+            solicitudNotificador.enviarNotificacionNuevaSolicitud(solicitud, ruta.departamentoDestino(), funcionario, departamentoActual.getNombre());
+
+            return new SolicitudResponse(solicitud.getId(), ruta.departamentoDestino().getNombre());
+        } catch (SolicitudException | NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al procesar la creacion de la solicitud para RUT %s", request.getRut()), e);
         }
-
-        // 2. Determinar la ruta de derivación (departamento destino y tipo).
-        RutaDerivacion ruta = determinarRutaDerivacion(request, departamentoActual);
-
-        // 3. Calcular días y crear la entidad Solicitud principal.
-        double cantidadDias = calculadoraDiasService.calcularDias(request);
-        Solicitud solicitud = crearYGuardarSolicitud(request, funcionario.getRut(), funcionario.getCodDepto(),
-                cantidadDias);
-
-        // 4. Crear entidades relacionadas (derivación y subrogancia).
-        derivacionService.createSolicitudDerivacion(solicitud, ruta.tipoDerivacion(),
-                ruta.departamentoDestino().getId(),
-                EstadoDerivacion.PENDIENTE);
-        if (request.getSubrogancia() != null) {
-            createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(),
-                    request.getDepto());
-        }
-
-        // 5. Enviar notificación de la nueva solicitud.
-        enviarNotificacionNuevaSolicitud(solicitud, ruta.departamentoDestino(), funcionario,
-                departamentoActual.getNombre());
-
-        return new SolicitudResponse(solicitud.getId(), ruta.departamentoDestino().getNombre());
     }
 
     // Determina el departamento de destino y el tipo de derivación para una
@@ -213,84 +188,44 @@ public class SolicitudServiceImpl implements SolicitudService {
         subroganciaService.createSubrogancia(subrogancia, fechaInicio, fechaFin, idDepto);
     }
 
-    // Orquesta el envío de notificaciones para una nueva solicitud.
-    private void enviarNotificacionNuevaSolicitud(Solicitud solicitud, DepartamentoResponse departamentoDestino,
-            FuncionarioResponseApi funcionario, String nombreDepartamentoActual) {
-
-        // 1. Determinar el destinatario final (jefe o subrogante).
-        FuncionarioResponseApi destinatario = determinarDestinatarioNotificacion(departamentoDestino);
-
-        // 2. Preparar el contenido del correo.
-        String to = destinatario.getEmail();
-        String subject = String.format("Nueva Solicitud de %s", funcionario.getNombreCompleto());
-        Map<String, Object> body = prepararCuerpoNotificacion(destinatario, funcionario, solicitud,
-                nombreDepartamentoActual);
-
-        // 3. Enviar la notificación a través del servicio correspondiente.
-        notificacionService.enviarNotificacion(to, subject, "solicitud", body);
-    }
-
-    // Determina el destinatario final para una notificación, considerando la
-    // subrogancia activa.
-    private FuncionarioResponseApi determinarDestinatarioNotificacion(DepartamentoResponse departamentoDestino) {
-        Integer rutJefeDestino = departamentoDestino.getRutJefe();
-        LocalDate fechaReferencia = LocalDate.now();
-        List<Subrogancia> subrogancias = subroganciaRepository
-                .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino,
-                        fechaReferencia, fechaReferencia);
-
-        if (!subrogancias.isEmpty()) {
-            // Si hay subrogancia activa, el destinatario es el subrogante.
-            return funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante());
-        } else {
-            // De lo contrario, el destinatario es el jefe titular del departamento.
-            return funcionarioService.getFuncionarioByRut(rutJefeDestino);
-        }
-    }
-
-    // Prepara el cuerpo del correo con los datos necesarios para la plantilla de
-    // notificación.
-    private Map<String, Object> prepararCuerpoNotificacion(FuncionarioResponseApi destinatario,
-            FuncionarioResponseApi funcionarioSolicitante, Solicitud solicitud, String nombreDepartamentoActual) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("nombreJefe", destinatario.getNombreCompleto());
-        body.put("nombre", funcionarioSolicitante.getNombreCompleto());
-        body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
-        body.put("departamento", nombreDepartamentoActual);
-        body.put("link", appProperties.getLinkUrl());
-        return body;
-    }
-
     // Verifica si ya existe una solicitud para un funcionario en un rango de fechas
     // determinado.
     @Override
     public ExisteSolicitudResponseDto existeSolicitudByFechaAndTipo(Integer rut, LocalDate fechaInicio, String tipo) {
-        Optional<Solicitud> solicitudOptional = solicitudRepository
-                .findFirstByRutAndTipoSolicitudAndFechaInicioLessThanEqualAndFechaTerminoGreaterThanEqual(
-                        rut, Solicitud.TipoSolicitud.valueOf(tipo), fechaInicio, fechaInicio);
+        try {
+            Optional<Solicitud> solicitudOptional = solicitudRepository
+                    .findFirstByRutAndTipoSolicitudAndFechaInicioLessThanEqualAndFechaTerminoGreaterThanEqual(
+                            rut, Solicitud.TipoSolicitud.valueOf(tipo), fechaInicio, fechaInicio);
 
-        return solicitudOptional
-                .map(solicitudMapper::solicitudToExisteSolicitudResponseDto)
-                .orElse(new ExisteSolicitudResponseDto(false, null, null, null, null, null));
+            return solicitudOptional
+                    .map(solicitudMapper::solicitudToExisteSolicitudResponseDto)
+                    .orElse(new ExisteSolicitudResponseDto(false, null, null, null, null, null));
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al verificar existencia de solicitud para RUT %s y fecha %s", rut, fechaInicio), e);
+        }
     }
 
     // Obtiene una lista paginada de las solicitudes de un funcionario.
     @Override
     public PageMiSolicitudResponse getSolicitudesByRut(Integer rut, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<Solicitud> solicitudes = solicitudRepository.findByRut(rut, pageable);
-        List<MiSolicitudDto> miSolicitudes = solicitudes.getContent().stream()
-                .map(this::mapToMiSolicitudDto)
-                .toList();
+        try {
+            Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+            Page<Solicitud> solicitudes = solicitudRepository.findByRut(rut, pageable);
+            List<MiSolicitudDto> miSolicitudes = solicitudes.getContent().stream()
+                    .map(this::mapToMiSolicitudDto)
+                    .toList();
 
-        PageMiSolicitudResponse pageMiSolicitudResponse = new PageMiSolicitudResponse();
-        pageMiSolicitudResponse.setSolicitudes(miSolicitudes);
-        pageMiSolicitudResponse.setTotalPages(solicitudes.getTotalPages());
-        pageMiSolicitudResponse.setTotalElements(solicitudes.getTotalElements());
-        pageMiSolicitudResponse.setCurrentPage(solicitudes.getNumber());
-        pageMiSolicitudResponse.setPageSize(solicitudes.getSize());
+            PageMiSolicitudResponse pageMiSolicitudResponse = new PageMiSolicitudResponse();
+            pageMiSolicitudResponse.setSolicitudes(miSolicitudes);
+            pageMiSolicitudResponse.setTotalPages(solicitudes.getTotalPages());
+            pageMiSolicitudResponse.setTotalElements(solicitudes.getTotalElements());
+            pageMiSolicitudResponse.setCurrentPage(solicitudes.getNumber());
+            pageMiSolicitudResponse.setPageSize(solicitudes.getSize());
 
-        return pageMiSolicitudResponse;
+            return pageMiSolicitudResponse;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al obtener solicitudes paginadas para RUT %s", rut), e);
+        }
     }
 
     // Mapea una entidad Solicitud al DTO utilizado en la lista "Mis Solicitudes".
@@ -303,23 +238,29 @@ public class SolicitudServiceImpl implements SolicitudService {
     // Obtiene los detalles completos de una solicitud específica por su ID.
     @Override
     public SolicitudDetalleDto getSolicitudDetalleById(Long idSolicitud) {
-        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con id: " + idSolicitud));
+        try {
+            Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                    .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con id: " + idSolicitud));
 
-        FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
-        String nombreFuncionario = funcionario.getNombreCompleto();
+            FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
+            String nombreFuncionario = funcionario.getNombreCompleto();
 
-        DepartamentoResponse departamento = departamentoService.getDepartamentoById(solicitud.getIdDepto());
-        String nombreDepartamento = departamento.getNombre();
+            DepartamentoResponse departamento = departamentoService.getDepartamentoById(solicitud.getIdDepto());
+            String nombreDepartamento = departamento.getNombre();
 
-        String urlPdf = getUrlPdf(solicitud);
+            String urlPdf = getUrlPdf(solicitud);
 
-        List<DerivacionDto> derivaciones = solicitud.getDerivaciones().stream()
-                .map(this::mapToDerivacionDto)
-                .toList();
+            List<DerivacionDto> derivaciones = solicitud.getDerivaciones().stream()
+                    .map(this::mapToDerivacionDto)
+                    .toList();
 
-        return solicitudMapper.solicitudToSolicitudDetalleDto(solicitud, nombreFuncionario, nombreDepartamento,
-                urlPdf, derivaciones);
+            return solicitudMapper.solicitudToSolicitudDetalleDto(solicitud, nombreFuncionario, nombreDepartamento,
+                    urlPdf, derivaciones);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al obtener detalle de la solicitud ID %s", idSolicitud), e);
+        }
     }
 
     // Mapea una entidad Derivacion a su DTO, enriqueciendo con el nombre del
@@ -339,13 +280,19 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     @Transactional
     public void updateSolicitud(Long idSolicitud, UpdateSolicitudRequest request) {
-        Solicitud solicitud = solicitudRepository.findById(idSolicitud)
-                .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con id: " + idSolicitud));
+        try {
+            Solicitud solicitud = solicitudRepository.findById(idSolicitud)
+                    .orElseThrow(() -> new NotFoundException("Solicitud no encontrada con id: " + idSolicitud));
 
-        actualizarFechasSiEsNecesario(solicitud, request);
-        gestionarCambioDeEstado(solicitud, request);
+            actualizarFechasSiEsNecesario(solicitud, request);
+            gestionarCambioDeEstado(solicitud, request);
 
-        solicitudRepository.save(solicitud);
+            solicitudRepository.save(solicitud);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al actualizar la solicitud ID %s", idSolicitud), e);
+        }
     }
 
     // Actualiza las fechas de la solicitud y recalcula los días si han cambiado.
@@ -403,99 +350,53 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     @Override
     public boolean buscarSolicitudesPendientesAprobacion(String tipoSolicitud, Integer rutFuncionario) {
+        try {
+            TipoSolicitud tipoSol = (tipoSolicitud != null) ? TipoSolicitud.valueOf(tipoSolicitud) : null;
 
-        TipoSolicitud tipoSol = (tipoSolicitud != null) ? TipoSolicitud.valueOf(tipoSolicitud) : null;
-
-        List<Solicitud> solicitudesPendientes = solicitudRepository
-                .findByTipoSolicitudAndEstadoAndRut(tipoSol, EstadoSolicitud.PENDIENTE, rutFuncionario);
-        return !solicitudesPendientes.isEmpty();
+            List<Solicitud> solicitudesPendientes = solicitudRepository
+                    .findByTipoSolicitudAndEstadoAndRut(tipoSol, EstadoSolicitud.PENDIENTE, rutFuncionario);
+            return !solicitudesPendientes.isEmpty();
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al buscar solicitudes pendientes para RUT %s y tipo %s", rutFuncionario, tipoSolicitud), e);
+        }
     }
 
     @Override
     @Transactional
     public String anularSolicitud(Long idSolicitud, String motivo) {
-        logger.info("Iniciando anulación de solicitud ID: {}. Motivo: {}", idSolicitud, motivo);
-
-        Solicitud solicitud = getSolicitudById(idSolicitud);
-
-        if (solicitud.getEstado() == EstadoSolicitud.ANULADA) {
-            throw new AnulacionException("La solicitud ya se encuentra anulada.");
-        }
-
-        if(solicitudAnulacionRepository.existsBySolicitudId(idSolicitud)){
-            throw new AnulacionException("Ya existe una solicitud de anulación para esta solicitud.");
-        }
-
-        Optional<Derivacion> recepcionMasReciente = getRecepcionMasReciente(solicitud);
-
-        if (recepcionMasReciente.isPresent()) {
-            Derivacion derivacionTarget = recepcionMasReciente.get();
-            logger.info("La solicitud ID: {} ya fue recepcionada (Derivación más reciente ID: {}, Depto destino: {}). Se creará una solicitud de anulación.", 
-                    idSolicitud, derivacionTarget.getId(), derivacionTarget.getIdDepto());
-            
-            crearSolicitudAnulacion(solicitud, motivo, SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE);
-            
-           
-            // o guardar este idDepto dentro de la entidad SolicitudAnulacion para mostrarla en su bandeja de entrada.
-
-            return "REQUIERE_APROBACION"; // El frontend puede evaluar este string para mostrar un mensaje
-        } else {
-            logger.info("La solicitud ID: {} no ha sido recepcionada. Anulando directamente.", idSolicitud);
-            // Anulación directa
-            SolicitudAnulacion solAnulacion = crearSolicitudAnulacion(solicitud, motivo, SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
-            
-            Anulacion anulacion = new Anulacion();
-            anulacion.setSolicitud(solicitud);
-            anulacion.setSolicitudAnulacion(solAnulacion);
-            anulacion.setFechaAnulacion(FechaUtils.fechaActual());
-            anulacionRepository.save(anulacion);
-            
-            solicitud.setEstado(EstadoSolicitud.ANULADA);
-            solicitudRepository.save(solicitud);
-            
-            // Cambiar derivaciones a anuladas
-            solicitud.getDerivaciones().forEach(d -> {
-                d.setEstadoDerivacion(EstadoDerivacion.ANULADA);
-                derivacionRepository.save(d);
-            });
-            
-            return "ANULADA_DIRECTAMENTE";
+        try {
+            Solicitud solicitud = getSolicitudById(idSolicitud);
+            return solicitudAnulacionGestor.anular(solicitud, motivo);
+        } catch (NotFoundException | com.newsolicitudes.newsolicitudes.exceptions.AnulacionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al procesar la anulacion de la solicitud ID %s", idSolicitud), e);
         }
     }
 
     @Override
     @Transactional
-    public String resolverSolicitudAnulacion(Long idSolicitud, Integer rutAprobador, boolean aprueba) {
-        logger.info("Resolviendo solicitud de anulación para Solicitud ID: {}. RUT Aprobador: {}, Aprueba: {}", idSolicitud, rutAprobador, aprueba);
-
-        SolicitudAnulacion solAnulacion = solicitudAnulacionRepository.findBySolicitudId(idSolicitud)
-                .orElseThrow(() -> new NotFoundException("Solicitud de anulación no encontrada para la solicitud " + idSolicitud));
-                
-        if (solAnulacion.getEstado() != SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE) {
-            logger.warn("La solicitud de anulación para la Solicitud ID: {} ya fue resuelta anteriormente. Estado actual: {}", idSolicitud, solAnulacion.getEstado());
-            throw new AnulacionException("La solicitud de anulación ya ha sido resuelta.");
+    public String resolverSolicitudAnulacion(Long idSolicitud, Integer rutAprobador) {
+        try {
+            return solicitudAnulacionGestor.resolverAnulacion(idSolicitud, rutAprobador);
+        } catch (NotFoundException | com.newsolicitudes.newsolicitudes.exceptions.AnulacionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al resolver anulacion de la solicitud ID %s", idSolicitud), e);
         }
-        
-        if (aprueba) {
-            logger.info("Aprobando solicitud de anulación ID: {}", solAnulacion.getId());
-            solAnulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
-            
-            Anulacion anulacion = new Anulacion();
-            anulacion.setSolicitud(solAnulacion.getSolicitud());
-            anulacion.setSolicitudAnulacion(solAnulacion);
-            anulacion.setFechaAnulacion(FechaUtils.fechaActual());
-            anulacion.setRutAprobador(rutAprobador);
-            anulacionRepository.save(anulacion);
-            
-            Solicitud solicitud = solAnulacion.getSolicitud();
-            solicitud.setEstado(EstadoSolicitud.ANULADA);
-            solicitudRepository.save(solicitud);
-            
-            return "La solicitud ha sido anulada exitosamente.";
-        } else {
-            logger.info("Rechazando solicitud de anulación ID: {}", solAnulacion.getId());
-            solAnulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.RECHAZADA);
-            return "La solicitud de anulación ha sido rechazada.";
+    }
+
+    // Anula la solicitud de forma directa por un administrador
+    @Override
+    @Transactional
+    public String anularSolicitudDirecta(Long idSolicitud, String motivo, Integer rutAprobador) {
+        try {
+            Solicitud solicitud = getSolicitudById(idSolicitud);
+            return solicitudAnulacionGestor.anularDirecto(solicitud, motivo, rutAprobador);
+        } catch (NotFoundException | com.newsolicitudes.newsolicitudes.exceptions.AnulacionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new SolicitudException(String.format("Error al procesar la anulacion directa de la solicitud ID %s", idSolicitud), e);
         }
     }
 
@@ -505,23 +406,4 @@ public class SolicitudServiceImpl implements SolicitudService {
                 .orElseThrow(() -> new NotFoundException("No se encuentra la solicitud"));
     }
 
-    private Optional<Derivacion> getRecepcionMasReciente(Solicitud solicitud) {
-        if (solicitud.getDerivaciones() == null || solicitud.getDerivaciones().isEmpty()) {
-            return Optional.empty();
-        }
-        // Busca la derivación más reciente (ID más alto) que tenga una entrada de recepción
-        return solicitud.getDerivaciones().stream()
-                .sorted(Comparator.comparing(Derivacion::getId).reversed())
-                .filter(d -> entradaDerivacionRepository.existsByDerivacionId(d.getId()))
-                .findFirst();
-    }
-
-    private SolicitudAnulacion crearSolicitudAnulacion(Solicitud solicitud, String motivo, SolicitudAnulacion.EstadoSolicitudAnulacion estado) {
-        SolicitudAnulacion solicitudAnulacion = new SolicitudAnulacion();
-        solicitudAnulacion.setMotivo(motivo);
-        solicitudAnulacion.setSolicitud(solicitud);
-        solicitudAnulacion.setFechaSolicitud(FechaUtils.fechaActual());
-        solicitudAnulacion.setEstado(estado);
-        return solicitudAnulacionRepository.save(solicitudAnulacion);
-    }
 }

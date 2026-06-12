@@ -41,8 +41,8 @@ public class ResumenServiceImpl implements ResumenService {
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
     private final DerivacionRepository derivacionRepository; // Nueva inyección
-    public static final String DEFAULTVALUE = "Desconocido";
-    public static final String TIME_ZONE = "America/Santiago";
+    private static final String DEFAULT_VALUE = "Desconocido";
+    private static final String TIME_ZONE = "America/Santiago";
 
     public ResumenServiceImpl(SubroganciaRepository subroganciaRepository,
             SolicitudRepository solicitudRepository,
@@ -83,7 +83,7 @@ public class ResumenServiceImpl implements ResumenService {
         return subrogancias.stream()
                 .filter(s -> !today.isBefore(s.getFechaInicio()) && !today.isAfter(s.getFechaFin()))
                 .map(subrogancia -> {
-                    String nombreDepartamento = DEFAULTVALUE;
+                    String nombreDepartamento = DEFAULT_VALUE;
                     try {
                         DepartamentoResponse departamento = apiDepartamentoService
                                 .obtenerDepartamento(subrogancia.getIdDepto());
@@ -135,7 +135,7 @@ public class ResumenServiceImpl implements ResumenService {
         // 3. Convert the unique solicitations to DTOs
         return solicitudesMap.values().stream()
                 .map(solicitud -> {
-                    String nombreFuncionario = DEFAULTVALUE;
+                    String nombreFuncionario = DEFAULT_VALUE;
                     try {
                         FuncionarioResponseApi funcionario = apiExtFuncionarioService
                                 .obtenerDetalleColaborador(solicitud.getRut());
@@ -200,7 +200,7 @@ public class ResumenServiceImpl implements ResumenService {
     private List<ProximaAusenciaDTO> mapListToDtoList(List<Solicitud> solicitudes, LocalDate endOfMonth) {
         return solicitudes.stream().map(solicitud -> {
 
-            String nombreFuncionario = DEFAULTVALUE;
+            String nombreFuncionario = DEFAULT_VALUE;
             try {
                 FuncionarioResponseApi funcionario = apiExtFuncionarioService
                         .obtenerDetalleColaborador(solicitud.getRut());

@@ -383,6 +383,17 @@ public class PdfDto {
 
     }
 
+    @Override
+    public String toString() {
+        return "PdfDto [idSol=" + idSol + ", tipoSolicitud=" + tipoSolicitud + ", jornada=" + jornada + ", nroIniDia="
+                + nroIniDia + ", mesIni=" + mesIni + ", nroFinDia=" + nroFinDia + ", mesFin=" + mesFin
+                + ", diasTomados=" + diasTomados + ", rut=" + rut + ", vrut=" + vrut + ", paterno=" + paterno
+                + ", materno=" + materno + ", nombres=" + nombres + ", depto=" + depto + ", escalafon=" + escalafon
+                + ", grado=" + grado + ", telefono=" + telefono + ", rutJefe=" + rutJefe + ", nombreJefe=" + nombreJefe
+                + ", rutDirector=" + rutDirector + ", nombreDirector=" + nombreDirector + ", nombreSolicitud="
+                + nombreSolicitud + ", anio=" + anio + "]";
+    }
+
 
     
 
