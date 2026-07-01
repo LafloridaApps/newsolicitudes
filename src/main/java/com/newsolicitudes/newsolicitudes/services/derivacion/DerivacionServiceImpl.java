@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,10 +113,10 @@ public class DerivacionServiceImpl implements DerivacionService {
             // Determina el siguiente departamento en la jerarquía.
             DepartamentoResponse departamentoSiguiente = departamentoService.getDepartamentoDestino(
                     departamentoActual.getRutJefe(),
-                    departamentoActual, LocalDate.now(), LocalDate.now());
+                    departamentoActual, FechaUtils.fechaActual(), FechaUtils.fechaActual());
 
             // Determina si la siguiente derivación es para visación o para firma final.
-            TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, LocalDate.now());
+            TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, FechaUtils.fechaActual());
             logger.info("Tipo de derivacion determinado: {}", tipoSiguienteDerivacion);
 
             // Actualiza el estado de la derivación anterior.
@@ -153,7 +152,7 @@ public class DerivacionServiceImpl implements DerivacionService {
             List<Long> deptoIds = getDeptoIdsIncluyendoSubrogancias(idDepto, subroganciasActivas);
 
             // 3. Obtener los datos paginados del repositorio.
-            Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by("solicitud.id").descending());
+            Pageable pageable = PageRequest.of(pageNumber, 10);
             Page<Derivacion> derivacionesPage = fetchPaginaDerivaciones(deptoIds, noLeidas, pageable);
 
             // 4. Mapear las entidades a DTOs, pasando las subrogancias para enriquecer la información.
@@ -180,7 +179,7 @@ public class DerivacionServiceImpl implements DerivacionService {
         Derivacion derivacion = new Derivacion();
         derivacion.setSolicitud(solicitud);
         derivacion.setIdDepto(idDepto);
-        derivacion.setFechaDerivacion(LocalDate.now());
+        derivacion.setFechaDerivacion(FechaUtils.fechaActual());
         derivacion.setEstadoDerivacion(estadoDerivacion);
         derivacion.setTipo(tipo);
 

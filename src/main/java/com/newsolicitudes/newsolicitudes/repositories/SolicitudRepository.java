@@ -72,12 +72,14 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
                         @Param("hoy") LocalDate today);
 
         @Query(value = "select *  from solicitudes.solicitud\n" + //
-                        "where estado in (:estados) and id_depto in (:deptos) and fecha_inicio <= :fechaFin and fecha_termino >= :fechaInicio\t", nativeQuery = true)            
-      List<Solicitud> findAusenciasMes(
-        @Param("estados") List<String> estados,
-        @Param("deptos") Set<Long> deptos,
-        @Param("fechaInicio") LocalDate fechaInicio,
-        @Param("fechaFin") LocalDate fechaFin );
+                        "where estado in (:estados) and id_depto in (:deptos) and fecha_inicio <= :fechaFin and fecha_termino >= :fechaInicio\t", nativeQuery = true)
+        List<Solicitud> findAusenciasMes(
+                        @Param("estados") List<String> estados,
+                        @Param("deptos") Set<Long> deptos,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaFin") LocalDate fechaFin);
 
+        List<Solicitud> findByIdDeptoInAndFechaInicioBetween(List<Long> idsDepto, LocalDate fechaInicio,
+                        LocalDate fechaFin);
 
 }

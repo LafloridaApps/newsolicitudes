@@ -6,9 +6,9 @@ import com.newsolicitudes.newsolicitudes.dto.ResumenJefeDepartamentoDTO;
 import com.newsolicitudes.newsolicitudes.dto.SolicitudPendienteDTO;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
+import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
-import com.newsolicitudes.newsolicitudes.repositories.DerivacionRepository; // Nuevo import
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
@@ -27,8 +27,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 import java.util.HashSet;
 
 @Service
@@ -38,22 +38,22 @@ public class ResumenServiceImpl implements ResumenService {
 
     private final SubroganciaRepository subroganciaRepository;
     private final SolicitudRepository solicitudRepository;
+    private final DerivacionRepository derivacionRepository;
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
-    private final DerivacionRepository derivacionRepository; // Nueva inyección
     private static final String DEFAULT_VALUE = "Desconocido";
     private static final String TIME_ZONE = "America/Santiago";
 
     public ResumenServiceImpl(SubroganciaRepository subroganciaRepository,
             SolicitudRepository solicitudRepository,
+            DerivacionRepository derivacionRepository,
             ApiExtFuncionarioService apiExtFuncionarioService,
-            ApiDepartamentoService apiDepartamentoService,
-            DerivacionRepository derivacionRepository) {
+            ApiDepartamentoService apiDepartamentoService) {
         this.subroganciaRepository = subroganciaRepository;
         this.solicitudRepository = solicitudRepository;
+        this.derivacionRepository = derivacionRepository;
         this.apiExtFuncionarioService = apiExtFuncionarioService;
         this.apiDepartamentoService = apiDepartamentoService;
-        this.derivacionRepository = derivacionRepository;
     }
 
     @Override
@@ -103,22 +103,18 @@ public class ResumenServiceImpl implements ResumenService {
     private List<SolicitudPendienteDTO> getSolicitudesPendientes(List<Long> idDepartamentos) {
         Map<Long, Solicitud> solicitudesMap = new HashMap<>();
 
-        // 1. Get requests derived to the user's departments that are pending
         List<Long> idsDeSolicitudesDerivadas = derivacionRepository
                 .findSolicitudIdsByDeptoIdsAndEstadoPendiente(idDepartamentos);
         if (!idsDeSolicitudesDerivadas.isEmpty()) {
-            // We use findAllById as the previous query already filtered by PENDIENTE state
             List<Solicitud> solicitudesDerivadas = solicitudRepository.findAllById(idsDeSolicitudesDerivadas);
             solicitudesDerivadas.forEach(s -> solicitudesMap.put(s.getId(), s));
         }
 
-        // 2. Get pending requests with no derivations and check their original
-        // department
         List<Solicitud> solicitudesSinDerivacion = solicitudRepository
                 .findByEstadoAndDerivacionesIsEmpty(Solicitud.EstadoSolicitud.PENDIENTE);
         for (Solicitud solicitud : solicitudesSinDerivacion) {
             if (solicitudesMap.containsKey(solicitud.getId())) {
-                continue; // Already processed from the derived list
+                continue;
             }
             try {
                 FuncionarioResponseApi funcionario = apiExtFuncionarioService
@@ -132,7 +128,6 @@ public class ResumenServiceImpl implements ResumenService {
             }
         }
 
-        // 3. Convert the unique solicitations to DTOs
         return solicitudesMap.values().stream()
                 .map(solicitud -> {
                     String nombreFuncionario = DEFAULT_VALUE;

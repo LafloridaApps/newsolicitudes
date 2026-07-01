@@ -46,6 +46,7 @@ import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService
 import com.newsolicitudes.newsolicitudes.services.subrogancia.SubroganciaService;
 import com.newsolicitudes.newsolicitudes.services.trazabilidad.TrazabilidadService;
 import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 import jakarta.transaction.Transactional;
 
@@ -143,7 +144,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     // solicitud.
     private RutaDerivacion determinarRutaDerivacion(SolicitudRequest request, DepartamentoResponse deptoActual) {
         DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
-                deptoActual, LocalDate.now(), LocalDate.now());
+                deptoActual, FechaUtils.fechaActual(), FechaUtils.fechaActual());
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
         TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
 
@@ -151,7 +152,7 @@ public class SolicitudServiceImpl implements SolicitudService {
         // nivel de FIRMA
         // para otorgarle el permiso resolutivo en lugar de solo VISACION inicial.
         if (departamentoDestino.getRutJefe() != null) {
-            LocalDate hoy = LocalDate.now();
+            LocalDate hoy = FechaUtils.fechaActual();
             List<Subrogancia> subrogancias = subroganciaRepository
                     .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
                             departamentoDestino.getRutJefe(), hoy, hoy);
@@ -209,7 +210,7 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     public PageMiSolicitudResponse getSolicitudesByRut(Integer rut, int page, int size) {
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+            Pageable pageable = PageRequest.of(page, size, Sort.by(Solicitud::getId).descending());
             Page<Solicitud> solicitudes = solicitudRepository.findByRut(rut, pageable);
             List<MiSolicitudDto> miSolicitudes = solicitudes.getContent().stream()
                     .map(this::mapToMiSolicitudDto)
@@ -339,7 +340,7 @@ public class SolicitudServiceImpl implements SolicitudService {
                                     "No se puede postergar una solicitud que no ha sido aprobada."));
 
             Postergacion postergacion = new Postergacion();
-            postergacion.setFechaPostergacion(LocalDate.now());
+            postergacion.setFechaPostergacion(FechaUtils.fechaActual());
             postergacion.setRutPostergacion(aprobacion.getRut());
             postergacion.setSolicitud(solicitud);
             postergacion.setGlosa("Postergación a través del mantenedor de solicitudes.");
