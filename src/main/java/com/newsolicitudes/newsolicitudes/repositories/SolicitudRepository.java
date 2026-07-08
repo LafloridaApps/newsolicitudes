@@ -82,4 +82,16 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
         List<Solicitud> findByIdDeptoInAndFechaInicioBetween(List<Long> idsDepto, LocalDate fechaInicio,
                         LocalDate fechaFin);
 
+        @Query("SELECT s FROM Solicitud s WHERE "
+                        + "(:deptoIds IS NULL OR s.idDepto IN :deptoIds) AND "
+                        + "(:fechaInicio IS NULL OR s.fechaInicio >= :fechaInicio) AND "
+                        + "(:fechaTermino IS NULL OR s.fechaTermino <= :fechaTermino) AND "
+                        + "(:ruts IS NULL OR s.rut IN :ruts) "
+                        + "ORDER BY s.id DESC")
+        Page<Solicitud> buscarPorCriterios(@Param("deptoIds") List<Long> deptoIds,
+                        @Param("fechaInicio") LocalDate fechaInicio,
+                        @Param("fechaTermino") LocalDate fechaTermino,
+                        @Param("ruts") List<Integer> ruts,
+                        Pageable pageable);
+
 }

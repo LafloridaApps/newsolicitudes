@@ -14,8 +14,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
-    @Query("SELECT d FROM Derivacion d LEFT JOIN EntradaDerivacion e ON d.id = e.derivacion.id WHERE d.idDepto IN :deptoIds AND e.id IS NULL")
-    Page<Derivacion> findUnreadByIdDeptoIn(@Param("deptoIds") List<Long> deptoIds, Pageable pageable);
+    @Query("SELECT d FROM Derivacion d LEFT JOIN EntradaDerivacion e ON d.id = e.derivacion.id WHERE d.idDepto IN :deptoIds AND e.id IS NULL AND (:year IS NULL OR YEAR(d.solicitud.fechaSolicitud) = :year) ORDER BY d.solicitud.id DESC")
+    Page<Derivacion> findUnreadByIdDeptoIn(@Param("deptoIds") List<Long> deptoIds, @Param("year") Integer year, Pageable pageable);
 
     List<Derivacion> findByIdDepto(Long idDepto);
 
@@ -23,7 +23,8 @@ public interface DerivacionRepository extends JpaRepository<Derivacion, Long> {
 
     Page<Derivacion> findByIdDepto(Long idDepto, Pageable pageable);
 
-    Page<Derivacion> findByIdDeptoIn(List<Long> idDeptos, Pageable pageable);
+    @Query("SELECT d FROM Derivacion d WHERE d.idDepto IN :idDeptos AND (:year IS NULL OR YEAR(d.solicitud.fechaSolicitud) = :year) ORDER BY d.solicitud.id DESC")
+    Page<Derivacion> findByIdDeptoIn(@Param("idDeptos") List<Long> idDeptos, @Param("year") Integer year, Pageable pageable);
 
     List<Derivacion> findByIdDeptoIn(List<Long> idDeptos);
 

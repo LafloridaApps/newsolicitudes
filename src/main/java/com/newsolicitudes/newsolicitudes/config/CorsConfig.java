@@ -16,7 +16,8 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://localhost:3000",
                         "http://localhost:5173",
                         "https://appd2.laflorida.cl",
-                        "https://appx.laflorida.cl"
+                        "https://appx.laflorida.cl",
+                        "https://intranet.laflorida.cl"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH") // Métodos permitidos
                 .allowedHeaders("*") // Permite cualquier cabecera

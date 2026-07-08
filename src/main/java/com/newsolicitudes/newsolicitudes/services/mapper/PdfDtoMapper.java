@@ -2,6 +2,7 @@ package com.newsolicitudes.newsolicitudes.services.mapper;
 
 import java.time.format.TextStyle;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
@@ -10,9 +11,12 @@ import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.PdfDto;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud.TipoSolicitud;
+import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
+import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 import com.newsolicitudes.newsolicitudes.services.firmante.FirmanteService;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 @Component
 public class PdfDtoMapper {
@@ -20,20 +24,23 @@ public class PdfDtoMapper {
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
     private final FirmanteService firmanteService;
+    private final SubroganciaRepository subroganciaRepository;
 
     public PdfDtoMapper(ApiExtFuncionarioService apiExtFuncionarioService,
             ApiDepartamentoService apiDepartamentoService,
-            FirmanteService firmanteService) {
+            FirmanteService firmanteService,
+            SubroganciaRepository subroganciaRepository) {
         this.apiExtFuncionarioService = apiExtFuncionarioService;
         this.apiDepartamentoService = apiDepartamentoService;
         this.firmanteService = firmanteService;
+        this.subroganciaRepository = subroganciaRepository;
     }
 
     public PdfDto toPdfDto(Solicitud solicitud) {
         FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(solicitud.getRut());
         DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(solicitud.getIdDepto());
 
-        FuncionarioResponseApi jefe = validaJefe(departamento);
+        FuncionarioResponseApi jefe = validaJefe(departamento, solicitud);
 
         FuncionarioResponseApi director = apiExtFuncionarioService.obtenerDetalleColaborador(getRutFirma(solicitud));
 
@@ -63,11 +70,24 @@ public class PdfDtoMapper {
                 .build();
     }
 
-    private FuncionarioResponseApi validaJefe(DepartamentoResponse departamento) {
+    private FuncionarioResponseApi validaJefe(DepartamentoResponse departamento, Solicitud solicitud) {
 
         FuncionarioResponseApi jefe = new FuncionarioResponseApi();
         if (departamento.getRutJefe() != null) {
-            jefe = apiExtFuncionarioService.obtenerDetalleColaborador(departamento.getRutJefe());
+            Integer rutOficial = departamento.getRutJefe();
+
+            Optional<Subrogancia> subrogancia = subroganciaRepository
+                    .findFirstByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                            departamento.getRutJefe(), FechaUtils.fechaActual(), FechaUtils.fechaActual());
+
+            if (subrogancia.isPresent()) {
+                Integer rutSubrogante = subrogancia.get().getSubrogante();
+                if (!rutSubrogante.equals(solicitud.getRut())) {
+                    rutOficial = rutSubrogante;
+                }
+            }
+
+            jefe = apiExtFuncionarioService.obtenerDetalleColaborador(rutOficial);
         } else {
             jefe.setRut(0);
         }

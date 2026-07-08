@@ -40,7 +40,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +142,7 @@ public class DerivacionServiceImpl implements DerivacionService {
 
     // Obtiene una página de solicitudes basadas en las derivaciones de un departamento.
     @Override
-    public PageSolicitudesResponse getDerivacionesByDeptoId(Integer rut, Long idDepto, int pageNumber, Boolean noLeidas) {
+    public PageSolicitudesResponse getDerivacionesByDeptoId(Integer rut, Long idDepto, int pageNumber, Boolean noLeidas, Integer year) {
         try {
             // 1. Obtener subrogancias activas para el RUT del usuario.
             List<Subrogancia> subroganciasActivas = getSubroganciasActivasParaRut(rut);
@@ -153,12 +152,11 @@ public class DerivacionServiceImpl implements DerivacionService {
 
             // 3. Obtener los datos paginados del repositorio.
             Pageable pageable = PageRequest.of(pageNumber, 10);
-            Page<Derivacion> derivacionesPage = fetchPaginaDerivaciones(deptoIds, noLeidas, pageable);
+            Page<Derivacion> derivacionesPage = fetchPaginaDerivaciones(deptoIds, noLeidas, year, pageable);
 
             // 4. Mapear las entidades a DTOs, pasando las subrogancias para enriquecer la información.
             List<SolicitudDto> solicitudesDto = derivacionesPage.getContent().stream()
                     .map(derivacion -> mapDerivacionToSolicitudDto(derivacion, subroganciasActivas))
-                    .sorted(Comparator.comparing(SolicitudDto::getId, Comparator.reverseOrder()))
                     .toList();
 
             // 5. Construir y devolver la respuesta final paginada.
@@ -197,11 +195,11 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     // Obtiene la página de derivaciones desde el repositorio, aplicando el filtro de "no leídas" si es necesario.
-    private Page<Derivacion> fetchPaginaDerivaciones(List<Long> deptoIds, Boolean noLeidas, Pageable pageable) {
+    private Page<Derivacion> fetchPaginaDerivaciones(List<Long> deptoIds, Boolean noLeidas, Integer year, Pageable pageable) {
         if (Boolean.TRUE.equals(noLeidas)) {
-            return derivacionRepository.findUnreadByIdDeptoIn(deptoIds, pageable);
+            return derivacionRepository.findUnreadByIdDeptoIn(deptoIds, year, pageable);
         } else {
-            return derivacionRepository.findByIdDeptoIn(deptoIds, pageable);
+            return derivacionRepository.findByIdDeptoIn(deptoIds, year, pageable);
         }
     }
 
