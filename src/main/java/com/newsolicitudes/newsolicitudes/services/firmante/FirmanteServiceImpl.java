@@ -1,6 +1,5 @@
 package com.newsolicitudes.newsolicitudes.services.firmante;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -15,6 +14,7 @@ import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 @Service
 public class FirmanteServiceImpl implements FirmanteService {
@@ -110,7 +110,7 @@ public class FirmanteServiceImpl implements FirmanteService {
 
         Optional<Subrogancia> subrogancia = subroganciaRepository
                 .findFirstByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
-                        departamento.getRutJefe(), LocalDate.now(), LocalDate.now());
+                        departamento.getRutJefe(),  FechaUtils.fechaActual(),  FechaUtils.fechaActual());
 
         if (subrogancia.isPresent()) {
             Integer rutSubrogante = subrogancia.get().getSubrogante();

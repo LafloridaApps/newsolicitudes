@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class DocProperties {
 
     private String templatesPath;
+    private String volumePath;
 
     public String getTemplatesPath() {
         return templatesPath;
@@ -15,6 +16,14 @@ public class DocProperties {
 
     public void setTemplatesPath(String templatesPath) {
         this.templatesPath = templatesPath;
+    }
+
+    public String getVolumePath() {
+        return volumePath;
+    }
+
+    public void setVolumePath(String volumePath) {
+        this.volumePath = volumePath;
     }
 
 }

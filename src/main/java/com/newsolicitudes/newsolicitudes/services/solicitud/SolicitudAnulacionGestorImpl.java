@@ -82,7 +82,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
             SolicitudAnulacion anulacion = new SolicitudAnulacion();
             anulacion.setSolicitud(solicitud);
             anulacion.setMotivo(motivo);
-            anulacion.setFechaSolicitud(LocalDate.now());
+            anulacion.setFechaSolicitud( FechaUtils.fechaActual());
             anulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.PENDIENTE);
             anulacion.setRutSolicitante(solicitud.getRut());
             solicitudAnulacionRepository.save(anulacion);
@@ -99,7 +99,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
             SolicitudAnulacion anulacion = new SolicitudAnulacion();
             anulacion.setSolicitud(solicitud);
             anulacion.setMotivo(motivo);
-            anulacion.setFechaSolicitud(LocalDate.now());
+            anulacion.setFechaSolicitud( FechaUtils.fechaActual());
             anulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
             anulacion.setRutSolicitante(solicitud.getRut());
             solicitudAnulacionRepository.save(anulacion);
@@ -108,7 +108,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
             anulacionFinal.setSolicitudAnulacion(anulacion);
             anulacionFinal.setSolicitud(solicitud);
             anulacionFinal.setRutAprobador(solicitud.getRut()); // Auto-aprobada por el solicitante
-            anulacionFinal.setFechaAnulacion(LocalDate.now());
+            anulacionFinal.setFechaAnulacion( FechaUtils.fechaActual());
             anulacionRepository.save(anulacionFinal);
 
             enviarNotificacionResolucionAnulacion(anulacion);
@@ -134,7 +134,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         anulacion.setSolicitudAnulacion(solicitudAnulacion);
         anulacion.setSolicitud(solicitud);
         anulacion.setRutAprobador(rutAprobador);
-        anulacion.setFechaAnulacion(LocalDate.now());
+        anulacion.setFechaAnulacion( FechaUtils.fechaActual());
         anulacionRepository.save(anulacion);
 
         solicitudAnulacionRepository.save(solicitudAnulacion);
@@ -159,7 +159,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         SolicitudAnulacion anulacion = new SolicitudAnulacion();
         anulacion.setSolicitud(solicitud);
         anulacion.setMotivo(motivo);
-        anulacion.setFechaSolicitud(LocalDate.now());
+        anulacion.setFechaSolicitud( FechaUtils.fechaActual());
         anulacion.setEstado(SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA);
         anulacion.setRutSolicitante(solicitud.getRut());
         solicitudAnulacionRepository.save(anulacion);
@@ -168,7 +168,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         anulacionFinal.setSolicitudAnulacion(anulacion);
         anulacionFinal.setSolicitud(solicitud);
         anulacionFinal.setRutAprobador(rutAprobador);
-        anulacionFinal.setFechaAnulacion(LocalDate.now());
+        anulacionFinal.setFechaAnulacion( FechaUtils.fechaActual());
         anulacionRepository.save(anulacionFinal);
 
         enviarNotificacionResolucionAnulacion(anulacion);

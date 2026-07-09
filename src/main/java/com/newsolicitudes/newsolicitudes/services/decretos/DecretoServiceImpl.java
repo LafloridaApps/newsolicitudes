@@ -32,6 +32,8 @@ import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,18 +42,23 @@ import org.springframework.data.jpa.domain.Specification;
 @Service
 public class DecretoServiceImpl implements DecretoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(DecretoServiceImpl.class);
+    private static final String DECRETO_NOT_FOUND = "Decreto no encontrado con id: ";
+
     private final SolicitudRepository solicitudRepository;
     private final DecretoRepository decretoRepository;
     private final DecretoSolicitudRepository decretoSolicitudRepository;
     private final FuncionarioService funcionarioService;
     private final AprobacionesDecretadasMapper mapper;
     private final DocumentoDecretoService documentoDecretoService;
+    private final DocumentoExcelService documentoExcelService;
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private final com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository aprobacionRepository;
 
     public DecretoServiceImpl(SolicitudRepository solicitudRepository, DecretoRepository decretoRepository,
             DecretoSolicitudRepository decretoSolicitudRepository, FuncionarioService funcionarioService,
             AprobacionesDecretadasMapper mapper, DocumentoDecretoService documentoDecretoService,
+            DocumentoExcelService documentoExcelService,
             ApiExtFuncionarioService apiExtFuncionarioService,
             com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository aprobacionRepository) {
         this.solicitudRepository = solicitudRepository;
@@ -60,6 +67,7 @@ public class DecretoServiceImpl implements DecretoService {
         this.funcionarioService = funcionarioService;
         this.mapper = mapper;
         this.documentoDecretoService = documentoDecretoService;
+        this.documentoExcelService = documentoExcelService;
         this.apiExtFuncionarioService = apiExtFuncionarioService;
         this.aprobacionRepository = aprobacionRepository;
     }
@@ -67,8 +75,15 @@ public class DecretoServiceImpl implements DecretoService {
     @Override
     @Transactional
     public List<AprobacionList> decretar(Set<Long> ids, Integer rut, String template) {
+        logger.info("[decretar] Iniciando con {} ids, rut={}, template={}", ids.size(), rut, template);
 
         List<Solicitud> solicitudes = solicitudRepository.findAllById(ids);
+        logger.info("[decretar] {} solicitudes encontradas en BD", solicitudes.size());
+
+        if (solicitudes.size() != ids.size()) {
+            logger.warn("[decretar] Se solicitaron {} ids pero solo se encontraron {} en BD", ids.size(), solicitudes.size());
+        }
+
         List<AprobacionList> decretadas = new ArrayList<>();
 
         Decreto nuevoDecreto = new Decreto();
@@ -77,6 +92,7 @@ public class DecretoServiceImpl implements DecretoService {
         nuevoDecreto.setFechaHoraTransaccion(FechaUtils.getCurrentDateTime());
 
         Decreto decretoGuardado = decretoRepository.save(nuevoDecreto);
+        logger.info("[decretar] Decreto guardado con id: {}", decretoGuardado.getId());
 
         for (Solicitud solicitud : solicitudes) {
             solicitud.setEstado(Solicitud.EstadoSolicitud.DECRETADA);
@@ -84,20 +100,31 @@ public class DecretoServiceImpl implements DecretoService {
             DecretoSolicitud decretoSolicitud = new DecretoSolicitud(decretoGuardado, solicitud);
             decretoSolicitudRepository.save(decretoSolicitud);
 
-            // Map to AprobacionList DTO
             FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
+            logger.info("[decretar] Funcionario obtenido para solicitud {}: rut={}", solicitud.getId(), solicitud.getRut());
+
             AprobacionList dto = mapper.maptoAprobacionList(solicitud, funcionario, nuevoDecreto.getId());
             decretadas.add(dto);
         }
 
         List<AprobacionList> listaOrdenada = ordenarAprobaciones(decretadas);
 
-        byte[] generatedDocument = documentoDecretoService.generarDocumento(listaOrdenada, template);
-        nuevoDecreto.setDocumentoPdf(generatedDocument);
+        logger.info("[decretar] Generando documento Word con template: {}", template);
+        String documentoPath = documentoDecretoService.generarDocumento(listaOrdenada, template);
+        logger.info("[decretar] Documento Word generado en: {}", documentoPath);
+
+        logger.info("[decretar] Generando Excel");
+        documentoExcelService.generarExcel(listaOrdenada);
+        logger.info("[decretar] Excel generado");
+
+        nuevoDecreto.setDocumentoPath(documentoPath);
         decretoRepository.save(nuevoDecreto);
+        logger.info("[decretar] documentoPath actualizado en decreto {}", nuevoDecreto.getId());
 
         solicitudRepository.saveAll(solicitudes);
+        logger.info("[decretar] {} solicitudes actualizadas a estado DECRETADA", solicitudes.size());
 
+        logger.info("[decretar] Finalizado OK, {} aprobaciones decretadas", listaOrdenada.size());
         return listaOrdenada;
     }
 
@@ -117,7 +144,7 @@ public class DecretoServiceImpl implements DecretoService {
 
         for (Long decretoId : request.getIds()) {
             Decreto decreto = decretoRepository.findById(decretoId)
-                    .orElseThrow(() -> new NotFoundException("Decreto no encontrado con id: " + decretoId));
+                    .orElseThrow(() -> new NotFoundException(DECRETO_NOT_FOUND + decretoId));
 
             // Revertir solicitudes asociadas
             List<Solicitud> solicitudesARevertir = new ArrayList<>();
@@ -145,8 +172,41 @@ public class DecretoServiceImpl implements DecretoService {
     @Override
     public byte[] getDecretoDocumento(Long id) {
         Decreto decreto = decretoRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Decreto no encontrado con id: " + id));
-        return decreto.getDocumentoPdf();
+                .orElseThrow(() -> new NotFoundException(DECRETO_NOT_FOUND + id));
+        String path = decreto.getDocumentoPath();
+        if (path == null || path.isBlank()) {
+            throw new NotFoundException("No se encuentra el documento para el decreto: " + id);
+        }
+        try {
+            return java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path));
+        } catch (Exception e) {
+            logger.error("Error al leer el archivo del decreto {} desde {}: {}", id, path, e.getMessage());
+            throw new NotFoundException("No se encuentra el documento para el decreto: " + id);
+        }
+    }
+
+    @Override
+    public String getDecretoDocumentoPath(Long id) {
+        Decreto decreto = decretoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(DECRETO_NOT_FOUND + id));
+        return decreto.getDocumentoPath();
+    }
+
+    @Override
+    public byte[] getDecretoExcelDocumento(Long id) {
+        Decreto decreto = decretoRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(DECRETO_NOT_FOUND + id));
+        String path = decreto.getDocumentoPath();
+        if (path == null || path.isBlank()) {
+            throw new NotFoundException("No se encuentra el documento para el decreto: " + id);
+        }
+        String excelPath = path.replace("solicitudes.docx", "solicitudes.xlsx");
+        try {
+            return java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(excelPath));
+        } catch (Exception e) {
+            logger.error("Error al leer el Excel del decreto {} desde {}: {}", id, excelPath, e.getMessage());
+            throw new NotFoundException("No se encuentra el Excel para el decreto: " + id);
+        }
     }
 
     @Override
@@ -233,6 +293,24 @@ public class DecretoServiceImpl implements DecretoService {
                 decreto.getId(),
                 decreto.getFechaDecreto(),
                 solicitudInfos);
+    }
+
+    @Override
+    public String generarReporteSolicitudes(Long idDecreto, String template) {
+        Decreto decreto = decretoRepository.findById(idDecreto)
+                .orElseThrow(() -> new NotFoundException(DECRETO_NOT_FOUND + idDecreto));
+
+        List<AprobacionList> datos = new ArrayList<>();
+        for (DecretoSolicitud ds : decreto.getDecretoSolicitudes()) {
+            Solicitud solicitud = ds.getSolicitud();
+            FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(solicitud.getRut());
+            AprobacionList dto = mapper.maptoAprobacionList(solicitud, funcionario, decreto.getId());
+            datos.add(dto);
+        }
+
+        String nombreTemplate = (template != null && !template.isBlank()) ? template : "aprobaciones";
+        List<AprobacionList> listaOrdenada = ordenarAprobaciones(datos);
+        return documentoDecretoService.generarDocumento(listaOrdenada, nombreTemplate);
     }
 
     private java.util.List<Integer> getRutsByFuncionarioName(String nombreFuncionario) {

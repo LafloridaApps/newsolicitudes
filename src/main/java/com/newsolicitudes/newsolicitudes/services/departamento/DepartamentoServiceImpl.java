@@ -19,6 +19,7 @@ import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
 import com.newsolicitudes.newsolicitudes.services.apiausencias.ApiAusenciasService;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 @Service
 public class DepartamentoServiceImpl implements DepartamentoService {
@@ -55,8 +56,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         // Si es así, el flujo debe comenzar desde el superior del departamento
         // subrogado.
         List<Subrogancia> subroganciasActivas = subroganciaRepository
-                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante, LocalDate.now(),
-                        LocalDate.now());
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante, FechaUtils.fechaActual(),
+                        FechaUtils.fechaActual());
 
         if (!subroganciasActivas.isEmpty()) {
             Long idDeptoSubrogado = subroganciasActivas.get(0).getIdDepto();

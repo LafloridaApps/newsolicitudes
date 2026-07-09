@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionList;
 
-public interface DocumentoDecretoService {
+public interface DocumentoExcelService {
 
-    String generarDocumento(List<AprobacionList> aprobaciones, String templateName);
+    String generarExcel(List<AprobacionList> aprobaciones);
 
 }

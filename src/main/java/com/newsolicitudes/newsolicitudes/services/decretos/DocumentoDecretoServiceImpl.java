@@ -9,7 +9,11 @@ import org.springframework.stereotype.Service;
 import org.docx4j.XmlUtils;
 import jakarta.xml.bind.JAXBElement;
 
-import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import java.util.List;
 
@@ -34,35 +38,66 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
     }
 
     @Override
-    public byte[] generarDocumento(List<AprobacionList> aprobaciones, String templateName) {
-        logger.info("Iniciando la generación de documento con template: {}", templateName);
+    public String generarDocumento(List<AprobacionList> aprobaciones, String templateName) {
+        logger.info("[generarDocumento] Iniciando generación de documento con template: {}", templateName);
+
+        if (aprobaciones.isEmpty()) {
+            logger.error("[generarDocumento] No hay aprobaciones para generar el documento");
+            throw new DocumentException("No hay aprobaciones para generar el documento");
+        }
 
         DocTemplates docTemplate = docTemplatesRepository.findByNombre(templateName);
         if (docTemplate == null) {
-            logger.error("No se encontró el template con nombre: {}", templateName);
+            logger.error("[generarDocumento] No se encontró el template con nombre: {}", templateName);
             throw new DocumentException("No se encontró el template con nombre: " + templateName);
         }
-        logger.info("Template encontrado: {}", docTemplate.getDocFile());
+        logger.info("[generarDocumento] Template encontrado: {}", docTemplate.getDocFile());
 
+        Long nroDecreto = aprobaciones.get(0).getNroDecreto();
         String rutaPlantilla = docProperties.getTemplatesPath().concat(docTemplate.getDocFile());
-        logger.info("Ruta de la plantilla: {}", rutaPlantilla);
+        String rutaVolumen = docProperties.getVolumePath();
+        String nombreArchivo = "solicitudes.docx";
+        String rutaDestino = rutaVolumen + nroDecreto + "/" + nombreArchivo;
+        logger.info("[generarDocumento] Ruta plantilla: {}", rutaPlantilla);
+        logger.info("[generarDocumento] Ruta volumen: {}", rutaVolumen);
+        logger.info("[generarDocumento] Ruta destino: {}", rutaDestino);
+
+        // Verificar que el template existe
+        java.io.File plantillaFile = new java.io.File(rutaPlantilla);
+        if (!plantillaFile.exists()) {
+            logger.error("[generarDocumento] El archivo de plantilla NO existe: {}", rutaPlantilla);
+            throw new DocumentException("No se encuentra la plantilla: " + rutaPlantilla);
+        }
+        logger.info("[generarDocumento] Plantilla existe: {} ({} bytes)", rutaPlantilla, plantillaFile.length());
+
+        // Verificar que el directorio de volumen existe o crearlo
+        Path directorio = Paths.get(rutaVolumen);
+        if (!Files.exists(directorio)) {
+            logger.warn("[generarDocumento] El directorio de volumen NO existe, creando: {}", rutaVolumen);
+            try {
+                Files.createDirectories(directorio);
+            } catch (Exception e) {
+                logger.error("[generarDocumento] No se pudo crear el directorio de volumen: {}", rutaVolumen, e);
+                throw new DocumentException("No se puede crear el directorio de destino: " + rutaVolumen);
+            }
+        }
 
         try {
-            // 1. Cargar plantilla Word (colócala en resources/plantillas/aprobaciones.docx)
-            logger.info("Cargando plantilla Word desde: {}", rutaPlantilla);
+            Path directorioDecreto = Paths.get(rutaVolumen + nroDecreto);
+            Files.createDirectories(directorioDecreto);
+            logger.info("[generarDocumento] Directorio del decreto creado: {}", directorioDecreto);
+
             WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage
                     .load(new java.io.FileInputStream(rutaPlantilla));
             MainDocumentPart documentPart = wordMLPackage.getMainDocumentPart();
-            logger.info("Plantilla cargada correctamente.");
+            logger.info("[generarDocumento] Plantilla cargada correctamente.");
 
-            // 2. Buscar la primera tabla de forma recursiva
-            logger.info("Buscando tabla en el documento.");
             List<Object> tables = documentPart.getJAXBNodesViaXPath("//w:tbl", false);
             if (tables.isEmpty()) {
-                logger.error("No se encontró ninguna tabla en la plantilla.");
+                logger.error("[generarDocumento] No se encontró ninguna tabla en la plantilla.");
                 throw new DocumentException("No se encontró ninguna tabla en la plantilla");
             }
-            logger.info("Tabla encontrada.");
+            logger.info("[generarDocumento] {} tabla(s) encontrada(s)", tables.size());
             Object obj = tables.get(0);
             Tbl tabla;
             if (obj instanceof JAXBElement) {
@@ -71,16 +106,13 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
                 tabla = (Tbl) obj;
             }
 
-            // 3. Tomar la segunda fila como plantilla (fila 0 = encabezado)
             Tr filaEjemplo = (Tr) tabla.getContent().get(1);
-            logger.info("Fila de ejemplo obtenida.");
+            logger.info("[generarDocumento] Fila de ejemplo obtenida.");
 
-            // 4. Limpiar filas previas (dejamos solo encabezado)
             tabla.getContent().remove(1);
-            logger.info("Filas previas limpiadas.");
+            logger.info("[generarDocumento] Filas previas limpiadas.");
 
-            // 5. Rellenar filas
-            logger.info("Iniciando el relleno de filas.");
+            logger.info("[generarDocumento] Rellenando {} filas...", aprobaciones.size());
             int contador = 1;
             for (AprobacionList a : aprobaciones) {
                 Tr nuevaFila = XmlUtils.deepCopy(filaEjemplo);
@@ -98,18 +130,20 @@ public class DocumentoDecretoServiceImpl implements DocumentoDecretoService {
                 tabla.getContent().add(nuevaFila);
                 contador++;
             }
-            logger.info("Relleno de filas completado.");
+            logger.info("[generarDocumento] Relleno de filas completado.");
 
-            // 6. Guardar como Word
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            wordMLPackage.save(out);
-            logger.info("Documento guardado en ByteArrayOutputStream.");
+            try (OutputStream out = new FileOutputStream(rutaDestino)) {
+                wordMLPackage.save(out);
+            }
+            logger.info("[generarDocumento] Documento guardado exitosamente en: {}", rutaDestino);
 
-            return out.toByteArray();
+            return rutaDestino;
 
+        } catch (DocumentException e) {
+            throw e;
         } catch (Exception e) {
-            e.printStackTrace(); // Imprime el stack trace completo para depuración
-            throw new DocumentException("Error generando documento", e);
+            logger.error("[generarDocumento] Error generando documento", e);
+            throw new DocumentException("Error generando documento: " + e.getMessage(), e);
         }
 
     }

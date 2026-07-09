@@ -12,6 +12,7 @@ import com.newsolicitudes.newsolicitudes.dto.SearchSubroganciResponse;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoService;
 import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 
 @Component
 public class SearchMapper {
@@ -64,7 +65,7 @@ public class SearchMapper {
     }
 
     private String estado(LocalDate fechaFin) {
-        return LocalDate.now().isAfter(fechaFin) ? "FINALIZADA" : "ACTIVA";
+        return  FechaUtils.fechaActual().isAfter(fechaFin) ? "FINALIZADA" : "ACTIVA";
     }
 
 }

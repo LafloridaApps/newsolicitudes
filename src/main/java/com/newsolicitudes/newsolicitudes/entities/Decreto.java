@@ -32,6 +32,8 @@ public class Decreto {
     @Lob
     private byte[] documentoPdf;
 
+    private String documentoPath;
+
     // Getters and Setters
 
     public Long getId() {
@@ -80,5 +82,13 @@ public class Decreto {
 
     public void setDocumentoPdf(byte[] documentoPdf) {
         this.documentoPdf = documentoPdf;
+    }
+
+    public String getDocumentoPath() {
+        return documentoPath;
+    }
+
+    public void setDocumentoPath(String documentoPath) {
+        this.documentoPath = documentoPath;
     }
 }
