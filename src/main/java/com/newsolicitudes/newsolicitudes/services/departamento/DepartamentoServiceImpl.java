@@ -109,12 +109,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
             Integer rutSubrogante = subroganciaActiva.get().getSubrogante();
 
             if (!rutSubrogante.equals(rutSolicitante)) {
-                // Se encontró un subrogante. El destino es el departamento del subrogante.
-                FuncionarioResponseApi funcionarioSubrogante = funcionarioService.getFuncionarioByRut(rutSubrogante);
-                DepartamentoResponse dptoSubrogante = getDepartamentoById(funcionarioSubrogante.getCodDepto());
-                logger.info("Jefe {} ausente, pero se encontró subrogante {}. Redirigiendo a departamento {}.",
-                        dptoActual.getNombre(), funcionarioSubrogante.getNombreCompleto(), dptoSubrogante.getNombre());
-                return dptoSubrogante;
+                logger.info("Jefe {} ausente con subrogante {}. La solicitud se deriva al departamento superior.",
+                        dptoActual.getNombre(), rutSubrogante);
             } else {
                 logger.info("El subrogante es el mismo solicitante. Buscando en jerarquía superior.");
             }
