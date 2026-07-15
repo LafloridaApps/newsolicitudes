@@ -2,6 +2,7 @@ package com.newsolicitudes.newsolicitudes.services.mapper;
 
 import java.time.format.TextStyle;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
@@ -44,6 +45,15 @@ public class PdfDtoMapper {
 
         FuncionarioResponseApi director = apiExtFuncionarioService.obtenerDetalleColaborador(getRutFirma(solicitud));
 
+        if (jefe != null && jefe.getRut() != null && director != null && jefe.getRut().equals(director.getRut())) {
+            jefe = null;
+        }
+
+        String rutJefe = jefe != null && jefe.getRut() != null ? String.valueOf(jefe.getRut()) : null;
+        String nombreJefe = jefe != null && jefe.getNombre() != null ? jefe.getNombre() + " " + Objects.toString(jefe.getApellidoPaterno(), "") : null;
+        String rutDirector = director != null && director.getRut() != null ? String.valueOf(director.getRut()) : null;
+        String nombreDirector = director != null && director.getNombre() != null ? director.getNombre() + " " + Objects.toString(director.getApellidoPaterno(), "") : null;
+
         return PdfDto.builder()
                 .idSol(solicitud.getId())
                 .jornada(getJornada(solicitud))
@@ -61,10 +71,10 @@ public class PdfDtoMapper {
                 .escalafon(funcionario.getTipoContrato())
                 .grado(funcionario.getGrado().toString())
                 .telefono("0")
-                .rutJefe(String.valueOf(jefe.getRut()))
-                .nombreJefe(jefe.getNombre() + " " + jefe.getApellidoPaterno())
-                .rutDirector(String.valueOf(director.getRut()))
-                .nombreDirector(director.getNombre() + " " + director.getApellidoPaterno())
+                .rutJefe(rutJefe)
+                .nombreJefe(nombreJefe)
+                .rutDirector(rutDirector)
+                .nombreDirector(nombreDirector)
                 .tipoSolicitud(getTipoSolicitud(solicitud.getTipoSolicitud()))
                 .anio(String.valueOf(solicitud.getFechaTermino().getYear()))
                 .build();

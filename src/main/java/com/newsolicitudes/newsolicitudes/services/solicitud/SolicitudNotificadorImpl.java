@@ -65,7 +65,7 @@ public class SolicitudNotificadorImpl implements SolicitudNotificador {
             body.put("nombre", funcionario.getNombreCompleto());
             body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
             body.put("departamento", nombreDepartamentoActual);
-            body.put("link", "https://appx.laflorida.cl/login");
+            body.put("link", "https://intranet.laflorida.cl");
             body.put("idSolicitud", solicitud.getId());
 
             notificacionService.enviarNotificacion(
