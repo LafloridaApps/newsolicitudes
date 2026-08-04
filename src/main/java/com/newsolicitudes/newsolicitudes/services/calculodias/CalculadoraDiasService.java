@@ -56,7 +56,7 @@ public class CalculadoraDiasService {
 
         while (!fecha.isAfter(fin)) {
             if (esDiaHabil(fecha)) {
-                dias++;
+                dias+=1;
             }
             fecha = fecha.plusDays(1);
         }
@@ -66,7 +66,7 @@ public class CalculadoraDiasService {
 
     private boolean esDiaHabil(LocalDate fecha) {
         DayOfWeek dia = fecha.getDayOfWeek();
-        boolean esFinDeSemana = (dia == DayOfWeek.SATURDAY || dia == DayOfWeek.SUNDAY);
+        boolean esFinDeSemana = (dia.equals(DayOfWeek.SATURDAY) || dia.equals(DayOfWeek.SUNDAY));
         boolean esFeriado = feriadoRepository.existsByFecha(fecha);
 
         return !esFinDeSemana && !esFeriado;

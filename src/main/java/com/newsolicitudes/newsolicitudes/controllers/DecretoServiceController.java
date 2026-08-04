@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class DecretoServiceController {
 
     private static final Logger log = LoggerFactory.getLogger(DecretoServiceController.class);
+    private static final String MESSAGE = "message";
+
 
     private final DecretoService decretoService;
     private final com.newsolicitudes.newsolicitudes.services.decretos.MigracionDocumentosService migracionService;
@@ -84,7 +86,7 @@ public class DecretoServiceController {
             log.error("Request: ids={}, rut={}, template={}", request.getIds(), request.getRut(), request.getTemplate());
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", true);
-            errorResponse.put("mensaje", e.getMessage());
+            errorResponse.put(MESSAGE, e.getMessage());
             errorResponse.put("tipo", e.getClass().getSimpleName());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
@@ -95,7 +97,7 @@ public class DecretoServiceController {
 
         decretoService.revertirDecreto(request);
 
-        Map<String, Object> response = Map.of("message", "Decreto eliminado correctamente");
+        Map<String, Object> response = Map.of(MESSAGE, "Decreto eliminado correctamente");
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

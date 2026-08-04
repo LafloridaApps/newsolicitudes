@@ -46,7 +46,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final AprobacionRepository aprobacionRepository;
     private final ApiExtFuncionarioService apiExtFuncionarioService;
     private static final int MONTH_INICIO = 1;
-    private static final int MONTH_FIN= 12;
+    private static final int MONTH_FIN = 12;
 
     // Colores de Bootstrap para asignar secuencialmente a los departamentos en los
     // gráficos
@@ -90,6 +90,8 @@ public class DashboardServiceImpl implements DashboardService {
                     .map(DepartamentoResponse::getId)
                     .toList();
         }
+
+        
 
         // 4. Obtener las solicitudes de la base de datos dentro del año indicado
         LocalDate inicioAnio = LocalDate.of(anio, MONTH_INICIO, 1);
@@ -142,9 +144,9 @@ public class DashboardServiceImpl implements DashboardService {
 
         for (Solicitud solicitud : solicitudes) {
             EstadoSolicitud estado = solicitud.getEstado();
-            if (estado == EstadoSolicitud.APROBADA || 
-                "DECRETADA".equals(estado.name()) || 
-                "FORMULARIO_EN_RRHH".equals(estado.name())) {
+            if (estado == EstadoSolicitud.APROBADA ||
+                    "DECRETADA".equals(estado.name()) ||
+                    "FORMULARIO_EN_RRHH".equals(estado.name())) {
                 aprobadas++;
             } else if (estado == EstadoSolicitud.ANULADA || "RECHAZADA".equals(estado.name())) {
                 // Se considera anulada/rechazada como parte del rechazo en el KPI

@@ -1,6 +1,5 @@
 package com.newsolicitudes.newsolicitudes.services.aprobacion;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,8 +193,8 @@ public class AprobacionServiceImpl implements AprobacionService {
 
     private boolean isSubrogandoComoDirector(Integer rutJefe) {
         List<Subrogancia> subrogancias = subroganciaRepository
-                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, LocalDate.now(),
-                        LocalDate.now());
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, FechaUtils.fechaActual(),
+                        FechaUtils.fechaActual());
         if (subrogancias.isEmpty()) {
             return false;
         }

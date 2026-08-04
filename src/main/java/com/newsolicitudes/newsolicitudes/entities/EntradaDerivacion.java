@@ -3,6 +3,8 @@ package com.newsolicitudes.newsolicitudes.entities;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -70,7 +72,7 @@ public class EntradaDerivacion {
 
     @PrePersist
     public void prePersist() {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = FechaUtils.getCurrentDateTime();
     }
 
     public void setTimestamp(LocalDateTime timestamp) {

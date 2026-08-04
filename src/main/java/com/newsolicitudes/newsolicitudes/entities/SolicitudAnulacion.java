@@ -2,6 +2,8 @@ package com.newsolicitudes.newsolicitudes.entities;
 
 import java.time.LocalDate;
 
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -49,7 +51,7 @@ public class SolicitudAnulacion {
     @PrePersist
     public void prePersist() {
         if (this.fechaSolicitud == null) {
-            this.fechaSolicitud = LocalDate.now();
+            this.fechaSolicitud = FechaUtils.fechaActual();
         }
         if (this.estado == null) {
             this.estado = EstadoSolicitudAnulacion.PENDIENTE;

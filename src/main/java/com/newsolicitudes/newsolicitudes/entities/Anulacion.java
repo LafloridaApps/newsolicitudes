@@ -2,6 +2,8 @@ package com.newsolicitudes.newsolicitudes.entities;
 
 import java.time.LocalDate;
 
+import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -38,7 +40,7 @@ public class Anulacion {
     @PrePersist
     public void prePersist() {
         if (this.fechaAnulacion == null) {
-            this.fechaAnulacion = LocalDate.now();
+            this.fechaAnulacion = FechaUtils.fechaActual();
         }
     }
 
