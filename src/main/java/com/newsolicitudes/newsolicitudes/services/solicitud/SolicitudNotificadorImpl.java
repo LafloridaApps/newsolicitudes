@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
+import com.newsolicitudes.newsolicitudes.config.AppProperties;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 import com.newsolicitudes.newsolicitudes.repositories.SubroganciaRepository;
@@ -27,13 +28,16 @@ public class SolicitudNotificadorImpl implements SolicitudNotificador {
     private final NotificacionService notificacionService;
     private final FuncionarioService funcionarioService;
     private final SubroganciaRepository subroganciaRepository;
+    private final AppProperties appProperties;
 
     public SolicitudNotificadorImpl(NotificacionService notificacionService,
             FuncionarioService funcionarioService,
-            SubroganciaRepository subroganciaRepository) {
+            SubroganciaRepository subroganciaRepository,
+            AppProperties appProperties) {
         this.notificacionService = notificacionService;
         this.funcionarioService = funcionarioService;
         this.subroganciaRepository = subroganciaRepository;
+        this.appProperties = appProperties;
 
     }
 
@@ -65,7 +69,7 @@ public class SolicitudNotificadorImpl implements SolicitudNotificador {
             body.put("nombre", funcionario.getNombreCompleto());
             body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
             body.put("departamento", nombreDepartamentoActual);
-            body.put("link", "https://intranet.laflorida.cl");
+            body.put("link", appProperties.getIntranetUrl());
             body.put("idSolicitud", solicitud.getId());
 
             notificacionService.enviarNotificacion(

@@ -13,7 +13,9 @@ services:
       - FUNCIONARIO=api-funcionarios-container
       - DEPARTAMENTO=api-departamentos-container
       - FIRMA=api-firma-container
-      - MAIL=api-mail-container 
+      - MAIL=api-mail-container
+      - APP_LINK_URL=https://appx.laflorida.cl/login
+      - INTRANET_URL=https://intranet.laflorida.cl
     extra_hosts:
       - "host.docker.internal:host-gateway" # ESTO ES LO QUE FALTA PARA EL HOST
     restart: always

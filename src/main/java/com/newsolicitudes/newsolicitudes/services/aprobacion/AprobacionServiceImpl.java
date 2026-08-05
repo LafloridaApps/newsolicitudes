@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.newsolicitudes.newsolicitudes.dto.AprobacionRequest;
+import com.newsolicitudes.newsolicitudes.config.AppProperties;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.PdfDto;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
@@ -51,7 +52,7 @@ public class AprobacionServiceImpl implements AprobacionService {
     private final FirmaService firmaService;
     private final FuncionarioService funcionarioService;
     private final NotificacionService notificacionService;
-    private static final String URL_LOGIN = "https://appx.laflorida.cl/login";
+    private final AppProperties appProperties;
     private static final String SUBJECT_MAIL = "Aprobación de Solicitud";
     private static final String TEMPLATE_MAIL = "aprobacion";
     private static final String ERROR_MESSAGE_FIRMA = "No se puede firmar la solicitud. Su firma podría no estar vigente o existe un error de conexión";
@@ -66,7 +67,8 @@ public class AprobacionServiceImpl implements AprobacionService {
             PdfDtoMapper pdfDtoMapper,
             FirmaService firmaService,
             FuncionarioService funcionarioService,
-            NotificacionService notificacionService) {
+            NotificacionService notificacionService,
+            AppProperties appProperties) {
         this.aprobacionRepository = aprobacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.derivacionRepository = derivacionRepository;
@@ -77,6 +79,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         this.firmaService = firmaService;
         this.funcionarioService = funcionarioService;
         this.notificacionService = notificacionService;
+        this.appProperties = appProperties;
     }
 
     @Override
@@ -149,7 +152,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         String subject = SUBJECT_MAIL;
         String templateName = TEMPLATE_MAIL;
         Map<String, Object> body = new HashMap<>();
-        body.put("link", URL_LOGIN);
+        body.put("link", appProperties.getLinkUrl());
         body.put("idSolicitud", idSolicitud);
 
         notificacionService.enviarNotificacion(to, subject, templateName, body);

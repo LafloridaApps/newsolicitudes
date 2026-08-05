@@ -2,6 +2,7 @@ package com.newsolicitudes.newsolicitudes.services.solicitud;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
+import com.newsolicitudes.newsolicitudes.config.AppProperties;
 import com.newsolicitudes.newsolicitudes.entities.Anulacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion;
 import com.newsolicitudes.newsolicitudes.entities.Solicitud;
@@ -42,6 +43,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
     private final SubroganciaRepository subroganciaRepository;
     private final AnulacionRepository anulacionRepository;
     private final EntradaDerivacionRepository entradaDerivacionRepository;
+    private final AppProperties appProperties;
 
     public SolicitudAnulacionGestorImpl(SolicitudAnulacionRepository solicitudAnulacionRepository,
                                         SolicitudRepository solicitudRepository,
@@ -50,7 +52,8 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
                                         DepartamentoService departamentoService,
                                         SubroganciaRepository subroganciaRepository,
                                         AnulacionRepository anulacionRepository,
-                                        EntradaDerivacionRepository entradaDerivacionRepository) {
+                                        EntradaDerivacionRepository entradaDerivacionRepository,
+                                        AppProperties appProperties) {
         this.solicitudAnulacionRepository = solicitudAnulacionRepository;
         this.solicitudRepository = solicitudRepository;
         this.notificacionService = notificacionService;
@@ -59,6 +62,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         this.subroganciaRepository = subroganciaRepository;
         this.anulacionRepository = anulacionRepository;
         this.entradaDerivacionRepository = entradaDerivacionRepository;
+        this.appProperties = appProperties;
     }
 
     @Override
@@ -204,7 +208,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         body.put("nombre", solicitante.getNombreCompleto());
         body.put("motivo", anulacion.getMotivo());
         body.put("tipoPermiso", solicitud.getTipoSolicitud().name());
-        body.put("link", "https://appx.laflorida.cl/login");
+        body.put("link", appProperties.getLinkUrl());
 
         try {
             notificacionService.enviarNotificacion(
@@ -225,7 +229,7 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         body.put("nombre", solicitante.getNombreCompleto());
         body.put("estado", anulacion.getEstado().name());
         body.put("tipoPermiso", anulacion.getSolicitud().getTipoSolicitud().name());
-        body.put("link", "https://appx.laflorida.cl/login");
+        body.put("link", appProperties.getLinkUrl());
 
         String templateName = anulacion.getEstado() == SolicitudAnulacion.EstadoSolicitudAnulacion.APROBADA
                 ? "aprobacion-anulacion"

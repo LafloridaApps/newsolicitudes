@@ -1,6 +1,7 @@
 package com.newsolicitudes.newsolicitudes.services.derivacion;
 
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
+import com.newsolicitudes.newsolicitudes.config.AppProperties;
 import com.newsolicitudes.newsolicitudes.dto.DerivacionDto;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
@@ -61,6 +62,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     private final AprobacionRepository aprobacionRepository;
     private final VisacionService visacionService;
     private final SolicitudAnulacionRepository solicitudAnulacionRepository;
+    private final AppProperties appProperties;
 
     public DerivacionServiceImpl(
             DerivacionRepository derivacionRepository,
@@ -72,7 +74,8 @@ public class DerivacionServiceImpl implements DerivacionService {
             NotificacionService notificacionService,
             AprobacionRepository aprobacionRepository,
             VisacionService visacionService,
-            SolicitudAnulacionRepository solicitudAnulacionRepository) {
+            SolicitudAnulacionRepository solicitudAnulacionRepository,
+            AppProperties appProperties) {
         this.derivacionRepository = derivacionRepository;
         this.entradaDerivacionRepository = entradaDerivacionRepository;
         this.solicitudMapper = solicitudDtoMapper;
@@ -83,6 +86,7 @@ public class DerivacionServiceImpl implements DerivacionService {
         this.aprobacionRepository = aprobacionRepository;
         this.visacionService = visacionService;
         this.solicitudAnulacionRepository = solicitudAnulacionRepository;
+        this.appProperties = appProperties;
     }
 
     // Crea la derivación inicial para una nueva solicitud.
@@ -282,7 +286,7 @@ public class DerivacionServiceImpl implements DerivacionService {
             body.put("nombre", funcionario.getNombreCompleto());
             body.put("tipoPermiso", derivacion.getSolicitud().getTipoSolicitud().name());
             body.put("departamento", deptoOrigen.getNombre());
-            body.put("link", "https://appx.laflorida.cl/login");
+            body.put("link", appProperties.getLinkUrl());
             notificacionService.enviarNotificacion(to, subject, "solicitud", body);
         } catch (Exception e) {
             logger.error("Error al enviar notificación de nueva derivación (Derivación ID: {}): {}", derivacion.getId(), e.getMessage(), e);
