@@ -31,4 +31,6 @@ public interface ApiDepartamentoService {
 
     Object agregarDepartamento(RecordDepartamentoRequest request);
 
+    List<String> obtenerCodigoExternos(List<Long> ids);
+
 }

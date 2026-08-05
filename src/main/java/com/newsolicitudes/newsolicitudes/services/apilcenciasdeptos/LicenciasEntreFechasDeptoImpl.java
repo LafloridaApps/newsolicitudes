@@ -26,6 +26,9 @@ public class LicenciasEntreFechasDeptoImpl implements LicenciasEntreFechasDepto{
 
     @Override
     public List<LicenciasDeptos> obtenerLicencias(List<String> deptos, LocalDate fechaInicio, LocalDate fechaTermino) {
+        if (deptos == null || deptos.isEmpty()) {
+            return List.of();
+        }
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/api/funcionario/licencias-entre-fechas")
                         .queryParam("deptos", deptos.toArray())

@@ -21,11 +21,15 @@ import org.springframework.stereotype.Service;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoResponse;
 import com.newsolicitudes.newsolicitudes.dto.FuncionarioResponseApi;
 import com.newsolicitudes.newsolicitudes.dto.DashboardAusenciaDto;
+import com.newsolicitudes.newsolicitudes.dto.DashboardAusenciasResponseDto;
 import com.newsolicitudes.newsolicitudes.dto.DashboardResponseDto;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoDropdownDto;
+import com.newsolicitudes.newsolicitudes.dto.DepartamentoDto;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoJerarquiaDTO;
 import com.newsolicitudes.newsolicitudes.dto.DepartamentoMetricaDto;
 import com.newsolicitudes.newsolicitudes.dto.KpisDto;
+import com.newsolicitudes.newsolicitudes.dto.LicenciaDeptoDto;
+import com.newsolicitudes.newsolicitudes.dto.LicenciasDeptos;
 import com.newsolicitudes.newsolicitudes.dto.MesMetricaDto;
 import com.newsolicitudes.newsolicitudes.dto.PeriodoDto;
 import com.newsolicitudes.newsolicitudes.entities.Aprobacion;
@@ -34,7 +38,9 @@ import com.newsolicitudes.newsolicitudes.entities.Solicitud.EstadoSolicitud;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
 import com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService;
+import com.newsolicitudes.newsolicitudes.services.apiextdepartamentos.DepartamentoExternoService;
 import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
+import com.newsolicitudes.newsolicitudes.services.apilcenciasdeptos.LicenciasEntreFechasDepto;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
@@ -45,6 +51,8 @@ public class DashboardServiceImpl implements DashboardService {
     private final SolicitudRepository solicitudRepository;
     private final AprobacionRepository aprobacionRepository;
     private final ApiExtFuncionarioService apiExtFuncionarioService;
+    private final LicenciasEntreFechasDepto licenciasEntreFechasDepto;
+    private final DepartamentoExternoService departamentoExternoService;
     private static final int MONTH_INICIO = 1;
     private static final int MONTH_FIN = 12;
 
@@ -56,11 +64,15 @@ public class DashboardServiceImpl implements DashboardService {
     public DashboardServiceImpl(ApiDepartamentoService apiDepartamentoService,
             SolicitudRepository solicitudRepository,
             AprobacionRepository aprobacionRepository,
-            ApiExtFuncionarioService apiExtFuncionarioService) {
+            ApiExtFuncionarioService apiExtFuncionarioService,
+            LicenciasEntreFechasDepto licenciasEntreFechasDepto,
+            DepartamentoExternoService departamentoExternoService) {
         this.apiDepartamentoService = apiDepartamentoService;
         this.solicitudRepository = solicitudRepository;
         this.aprobacionRepository = aprobacionRepository;
         this.apiExtFuncionarioService = apiExtFuncionarioService;
+        this.licenciasEntreFechasDepto = licenciasEntreFechasDepto;
+        this.departamentoExternoService = departamentoExternoService;
     }
 
     @Override
@@ -99,12 +111,18 @@ public class DashboardServiceImpl implements DashboardService {
         List<Solicitud> solicitudes = solicitudRepository
                 .findByIdDeptoInAndFechaInicioBetween(idsDepartamentosAConsultar, inicioAnio, finAnio);
 
+
+        //obtener licencias medicas segun jerarquia
+        List<DashboardAusenciaDto> licenciasPeridio = getAusenciasPorDepartamento(codDeptoUsuario, inicioAnio).getAusencias();
+
+
         // 5. Procesar los datos y ensamblar la respuesta
         DashboardResponseDto response = new DashboardResponseDto();
         response.setKpis(calcularKpis(solicitudes));
         response.setPorMes(calcularMetricasPorMes(solicitudes));
         response.setPorDepartamento(calcularMetricasPorDepartamento(solicitudes, familiaDepartamentos));
         response.setDepartamentosDropdown(construirDropdownDepartamentos(familiaDepartamentos));
+        response.setLicenciasPeriodo(licenciasPeridio);
 
         return response;
     }
@@ -237,7 +255,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public List<DashboardAusenciaDto> getAusenciasPorDepartamento(Long departamentoId, LocalDate fecha) {
+    public DashboardAusenciasResponseDto getAusenciasPorDepartamento(Long departamentoId, LocalDate fecha) {
         DepartamentoJerarquiaDTO deptoJerarquia = apiDepartamentoService.getJerarquiaPorId(departamentoId);
 
         LocalDate primerDia = primerDiaDelMes(fecha);
@@ -250,8 +268,27 @@ public class DashboardServiceImpl implements DashboardService {
         List<Solicitud> solicitudes = solicitudRepository.findAusenciasMes(
                 List.of("APROBADA", "DECRETADA"), deptoIds, primerDia, ultimoDia);
 
-        return solicitudes.stream().map(solicitud -> mapToDashboardDto(solicitud, deptoNombres))
+        List<DashboardAusenciaDto> ausencias = solicitudes.stream()
+                .map(solicitud -> mapToDashboardDto(solicitud, deptoNombres))
                 .toList();
+
+        List<String> codigosExternos = obtenerCodigoExternos(new ArrayList<>(deptoIds));
+        logger.info("IDs enviados a obtenerCodigoExternos para el depto {}: {}", departamentoId, deptoIds);
+        logger.info("Códigos externos obtenidos para el depto {}: {}", departamentoId, codigosExternos);
+        List<LicenciasDeptos> licencias = (codigosExternos == null || codigosExternos.isEmpty())
+                ? List.of()
+                : licenciasEntreFechasDepto.obtenerLicencias(codigosExternos, primerDia, ultimoDia);
+        logger.info("Licencias obtenidas para el período {} a {}: {}", primerDia, ultimoDia, licencias);
+
+        Map<String, String> nombrePorCodigo = departamentoExternoService.getDepartamentosExternosList().stream()
+                .collect(Collectors.toMap(DepartamentoDto::depto, DepartamentoDto::nombre, (n1, n2) -> n1));
+
+        List<LicenciaDeptoDto> licenciasConNombre = licencias.stream()
+                .map(l -> new LicenciaDeptoDto(nombrePorCodigo.getOrDefault(l.depto(), ""), obtenerNombreFuncionario(l.rut()),
+                        l.fechaInicio(), l.fechaTermino(), l.depto(), l.ident(), l.rut()))
+                .toList();
+
+        return new DashboardAusenciasResponseDto(ausencias, licenciasConNombre);
     }
 
     private void collectDeptoInfo(DepartamentoJerarquiaDTO depto, Set<Long> ids, Map<Long, String> nombres) {
@@ -295,7 +332,23 @@ public class DashboardServiceImpl implements DashboardService {
         return fecha.withDayOfMonth(1);
     }
 
+    private String obtenerNombreFuncionario(Integer rut) {
+        if (rut == null) {
+            return "";
+        }
+        FuncionarioResponseApi funcionario = apiExtFuncionarioService.obtenerDetalleColaborador(rut);
+        if (funcionario == null) {
+            return "";
+        }
+        return funcionario.getNombre() + " " + funcionario.getApellidoPaterno() + " "
+                + funcionario.getApellidoMaterno();
+    }
+
     private LocalDate ultimoDiaDelMes(LocalDate fecha) {
         return fecha.withDayOfMonth(fecha.lengthOfMonth());
+    }
+
+    private List<String> obtenerCodigoExternos(List<Long> ids) {
+        return apiDepartamentoService.obtenerCodigoExternos(ids);
     }
 }

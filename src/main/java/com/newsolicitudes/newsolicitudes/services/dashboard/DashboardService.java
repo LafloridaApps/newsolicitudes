@@ -1,14 +1,13 @@
 package com.newsolicitudes.newsolicitudes.services.dashboard;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import com.newsolicitudes.newsolicitudes.dto.DashboardAusenciaDto;
+import com.newsolicitudes.newsolicitudes.dto.DashboardAusenciasResponseDto;
 import com.newsolicitudes.newsolicitudes.dto.DashboardResponseDto;
 
 public interface DashboardService {
 
-    List<DashboardAusenciaDto> getAusenciasPorDepartamento(Long departamentoId, LocalDate fecha);
+    DashboardAusenciasResponseDto getAusenciasPorDepartamento(Long departamentoId, LocalDate fecha);
     
     /**
      * Obtiene las métricas necesarias para el dashboard de informes, restringido a la Dirección del usuario.

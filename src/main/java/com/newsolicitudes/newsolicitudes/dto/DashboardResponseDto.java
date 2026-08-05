@@ -8,6 +8,7 @@ public class DashboardResponseDto {
     private List<MesMetricaDto> porMes;
     private List<DepartamentoMetricaDto> porDepartamento;
     private List<DepartamentoDropdownDto> departamentosDropdown;
+    private List<DashboardAusenciaDto> licenciasPeriodo;
 
     public KpisDto getKpis() {
         return kpis;
@@ -39,6 +40,14 @@ public class DashboardResponseDto {
 
     public void setDepartamentosDropdown(List<DepartamentoDropdownDto> departamentosDropdown) {
         this.departamentosDropdown = departamentosDropdown;
+    }
+
+    public List<DashboardAusenciaDto> getLicenciasPeriodo() {
+        return licenciasPeriodo;
+    }
+
+    public void setLicenciasPeriodo(List<DashboardAusenciaDto> licenciasPeriodo) {
+        this.licenciasPeriodo = licenciasPeriodo;
     }
 
 }

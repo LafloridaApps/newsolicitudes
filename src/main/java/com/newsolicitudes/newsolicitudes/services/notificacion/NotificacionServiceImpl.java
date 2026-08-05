@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.newsolicitudes.newsolicitudes.services.mail.APiMailService;
 
 @Service
-@Primary
+
 public class NotificacionServiceImpl implements NotificacionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificacionServiceImpl.class);

@@ -231,4 +231,22 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
                 return response;
         }
 
+        @Override
+        public List<String> obtenerCodigoExternos(List<Long> ids) {
+                return webClient.post()
+                                .uri(uriBuilder -> uriBuilder.path("/api/departamentos/codigos-externos").build())
+                                .bodyValue(ids)
+                                .retrieve()
+                                .onStatus(HttpStatusCode::is4xxClientError,
+                                                response1 -> response1.createException().flatMap(Mono::error))
+                                .bodyToMono(new ParameterizedTypeReference<List<String>>() {
+                                })
+                                .onErrorResume(e -> {
+                                        logger.error("Error al llamar a la API externa para obtener codigos externos",
+                                                        e);
+                                        return Mono.empty();
+                                })
+                                .block();
+        }
+
 }
