@@ -2,6 +2,8 @@ package com.newsolicitudes.newsolicitudes.controllers.handlerexceptions;
 
 import java.io.IOException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -24,6 +26,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @ControllerAdvice
 public class HandlerExceptions {
+
+  private static final Logger logger = LoggerFactory.getLogger(HandlerExceptions.class);
 
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<Object> handlerNotFoundException(NotFoundException e, HttpServletRequest request) {
@@ -134,6 +138,8 @@ public class HandlerExceptions {
   }
 
   private <T extends Exception> ErrorResponse maptoErrorResponse(T e, HttpServletRequest request, HttpStatus status) {
+
+    logger.error("Error HTTP {} en [{}]: {}", status.value(), request.getRequestURI(), e.getMessage(), e);
 
     return ErrorResponse.builder()
         .timestamp(FechaUtils.getCurrentDateTime())

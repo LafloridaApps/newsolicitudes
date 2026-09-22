@@ -60,9 +60,10 @@ public class SolicitudNotificadorImpl implements SolicitudNotificador {
                     .findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy,
                             hoy);
 
-            FuncionarioResponseApi destinatario = !subrogancias.isEmpty()
-                    ? funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante())
-                    : funcionarioService.getFuncionarioByRut(rutJefeDestino);
+            Integer rutDestinatario = !subrogancias.isEmpty()
+                    ? subrogancias.get(0).getSubrogante()
+                    : rutJefeDestino;
+            FuncionarioResponseApi destinatario = funcionarioService.getFuncionarioByRut(rutDestinatario);
 
             Map<String, Object> body = new HashMap<>();
             body.put("nombreJefe", destinatario.getNombreCompleto());

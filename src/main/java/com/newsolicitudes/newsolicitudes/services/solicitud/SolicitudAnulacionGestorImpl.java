@@ -197,9 +197,10 @@ public class SolicitudAnulacionGestorImpl implements SolicitudAnulacionGestor {
         LocalDate hoy = FechaUtils.fechaActual();
         List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeDestino, hoy, hoy);
         
-        FuncionarioResponseApi destinatario = !subrogancias.isEmpty()
-                ? funcionarioService.getFuncionarioByRut(subrogancias.get(0).getSubrogante())
-                : funcionarioService.getFuncionarioByRut(rutJefeDestino);
+        Integer rutDestinatario = !subrogancias.isEmpty()
+                ? subrogancias.get(0).getSubrogante()
+                : rutJefeDestino;
+        FuncionarioResponseApi destinatario = funcionarioService.getFuncionarioByRut(rutDestinatario);
 
         FuncionarioResponseApi solicitante = funcionarioService.getFuncionarioByRut(solicitud.getRut());
 

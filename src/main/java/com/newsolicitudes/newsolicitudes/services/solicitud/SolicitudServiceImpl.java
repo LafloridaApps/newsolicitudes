@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,7 @@ import com.newsolicitudes.newsolicitudes.entities.Derivacion.EstadoDerivacion;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 import com.newsolicitudes.newsolicitudes.exceptions.NotFoundException;
 import com.newsolicitudes.newsolicitudes.exceptions.SolicitudException;
+import com.newsolicitudes.newsolicitudes.exceptions.SubroganciaException;
 import com.newsolicitudes.newsolicitudes.repositories.AprobacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.PostergacionRepository;
 import com.newsolicitudes.newsolicitudes.repositories.SolicitudRepository;
@@ -52,6 +55,8 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class SolicitudServiceImpl implements SolicitudService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SolicitudServiceImpl.class);
 
     private final FuncionarioService funcionarioService;
     private final SolicitudRepository solicitudRepository;
@@ -102,6 +107,11 @@ public class SolicitudServiceImpl implements SolicitudService {
     @Override
     @Transactional
     public SolicitudResponse createSolicitud(SolicitudRequest request) {
+        if (request == null || request.getRut() == null) {
+            throw new SolicitudException("La solicitud o el RUT no pueden ser nulos.");
+        }
+
+        logger.info("Iniciando creación de solicitud para RUT: {}, tipo: {}", request.getRut(), request.getTipoSolicitud());
         try {
             // 1. Obtener datos iniciales del funcionario y su departamento.
             FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
@@ -124,20 +134,57 @@ public class SolicitudServiceImpl implements SolicitudService {
             derivacionService.createSolicitudDerivacion(solicitud, ruta.tipoDerivacion(),
                     ruta.departamentoDestino().getId(),
                     EstadoDerivacion.PENDIENTE);
-            if (request.getSubrogancia() != null) {
-                createSubroganciaSol(request.getSubrogancia(), request.getFechaInicio(), request.getFechaFin(),
-                        request.getDepto());
-            }
+
+            String mensajeSubrogancia = procesarSubroganciaSiCorresponde(request);
 
             // 5. Enviar notificación de la nueva solicitud.
             solicitudNotificador.enviarNotificacionNuevaSolicitud(solicitud, ruta.departamentoDestino(), funcionario, departamentoActual.getNombre());
 
-            return new SolicitudResponse(solicitud.getId(), ruta.departamentoDestino().getNombre());
+            logger.info("Solicitud creada exitosamente ID: {} para RUT: {}", solicitud.getId(), request.getRut());
+            SolicitudResponse response = new SolicitudResponse(solicitud.getId(), ruta.departamentoDestino().getNombre());
+            if (mensajeSubrogancia != null) {
+                response.setMensaje(mensajeSubrogancia);
+            }
+            return response;
         } catch (SolicitudException | NotFoundException e) {
             throw e;
         } catch (Exception e) {
-            throw new SolicitudException(String.format("Error al procesar la creacion de la solicitud para RUT %s", request.getRut()), e);
+            String causaStr = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            throw new SolicitudException(String.format("Error al procesar la creacion de la solicitud para RUT %s: %s", request.getRut(), causaStr), e);
         }
+    }
+
+    // Procesa la creación de la subrogancia si el request la incluye y no existe previamente en el período.
+    private String procesarSubroganciaSiCorresponde(SolicitudRequest request) {
+        if (request.getSubrogancia() == null) {
+            return null;
+        }
+
+        Integer rutJefe = request.getSubrogancia().getRutJefe() != null
+                ? request.getSubrogancia().getRutJefe()
+                : request.getRut();
+        Long idDepto = request.getDepto();
+        LocalDate fechaInicio = request.getFechaInicio();
+        LocalDate fechaFin = request.getFechaFin();
+
+        boolean yaExisteSubrogancia = subroganciaRepository
+                .existeSubrogancia(rutJefe, fechaInicio, fechaFin, idDepto)
+                .isPresent();
+
+        if (yaExisteSubrogancia) {
+            logger.info("El RUT {} ya tiene una subrogancia creada para el depto {} en el período {} - {}. Se omite grabación de subrogancia.",
+                    rutJefe, idDepto, fechaInicio, fechaFin);
+            return "No se generó subrogancia porque ya tenía una creada en el período.";
+        }
+
+        try {
+            createSubroganciaSol(request.getSubrogancia(), fechaInicio, fechaFin, idDepto);
+        } catch (SubroganciaException e) {
+            logger.info("Subrogancia previa detectada por SubroganciaException: {}", e.getMessage());
+            return "No se generó subrogancia porque ya tenía una creada en el período.";
+        }
+
+        return null;
     }
 
     // Determina el departamento de destino y el tipo de derivación para una

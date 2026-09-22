@@ -56,7 +56,8 @@ public class DepartamentoServiceImpl implements DepartamentoService {
         // Si es así, el flujo debe comenzar desde el superior del departamento
         // subrogado.
         List<Subrogancia> subroganciasActivas = subroganciaRepository
-                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante, FechaUtils.fechaActual(),
+                .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutSolicitante,
+                        FechaUtils.fechaActual(),
                         FechaUtils.fechaActual());
 
         if (!subroganciasActivas.isEmpty()) {
@@ -109,8 +110,10 @@ public class DepartamentoServiceImpl implements DepartamentoService {
             Integer rutSubrogante = subroganciaActiva.get().getSubrogante();
 
             if (!rutSubrogante.equals(rutSolicitante)) {
-                logger.info("Jefe {} ausente con subrogante {}. La solicitud se deriva al departamento superior.",
+                logger.info(
+                        "Jefe de {} ausente. Existe subrogante (RUT: {}). Retornando departamento para atención por subrogancia.",
                         dptoActual.getNombre(), rutSubrogante);
+                return dptoActual;
             } else {
                 logger.info("El subrogante es el mismo solicitante. Buscando en jerarquía superior.");
             }

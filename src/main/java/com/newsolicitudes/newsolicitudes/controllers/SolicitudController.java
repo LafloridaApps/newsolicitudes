@@ -37,9 +37,8 @@ public class SolicitudController {
 
     @PostMapping("/crear")
     public ResponseEntity<Object> crearSolicitud(@RequestBody SolicitudRequest solicitud) {
-
+        logger.info("Recibida petición POST /solicitudes/solicitudes/crear para RUT: {}", solicitud != null ? solicitud.getRut() : "null");
         return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.createSolicitud(solicitud));
-
     }
 
     @GetMapping("/existe")
