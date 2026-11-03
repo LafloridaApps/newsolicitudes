@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.1</version>
+		<version>4.1.2</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.newsolicitudes</groupId>
@@ -94,10 +94,12 @@
 			<artifactId>docx4j-export-fo</artifactId>
 			<version>11.5.4</version>
 		</dependency>
+		<!-- Source: https://mvnrepository.com/artifact/org.docx4j/docx4j-core -->
 		<dependency>
-			<groupId>org.glassfish.jaxb</groupId>
-			<artifactId>jaxb-runtime</artifactId>
-			<version>4.0.7</version>
+			<groupId>org.docx4j</groupId>
+			<artifactId>docx4j-core</artifactId>
+			<version>17.3.4</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
