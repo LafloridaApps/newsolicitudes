@@ -21,6 +21,8 @@ public interface ApiDepartamentoService {
 
     DepartamentoJerarquiaDTO getJerarquiaPorId(Long id);
 
+    DepartamentoJerarquiaDTO getJerarquiaDireccionPorId(Long id);
+
     Object updateJefeDepartamento(Long idDepto, Integer rut);
 
     Object updateNombreDepartamento(Long idDepto, String nombre);

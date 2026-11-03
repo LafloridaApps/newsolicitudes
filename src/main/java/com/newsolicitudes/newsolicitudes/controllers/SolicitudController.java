@@ -28,16 +28,43 @@ import com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudService;
 public class SolicitudController {
 
     private final SolicitudService solicitudService;
+    private final com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudTercerosService tercerosService;
+    private final com.newsolicitudes.newsolicitudes.repositories.UsuarioRepository usuarioRepository;
     private static final String KEY="message";
     private static final Logger logger = LoggerFactory.getLogger(SolicitudController.class);
 
-    public SolicitudController(SolicitudService solicitudService) {
+    public SolicitudController(SolicitudService solicitudService,
+            com.newsolicitudes.newsolicitudes.repositories.UsuarioRepository usuarioRepository,
+            com.newsolicitudes.newsolicitudes.services.solicitud.SolicitudTercerosService tercerosService) {
+        this.tercerosService = tercerosService;
+        this.usuarioRepository = usuarioRepository;
         this.solicitudService = solicitudService;
     }
 
     @PostMapping("/crear")
     public ResponseEntity<Object> crearSolicitud(@RequestBody SolicitudRequest solicitud) {
+        if (solicitud != null) solicitud.setRutIngresadoPor(solicitud.getRut());
         logger.info("Recibida petición POST /solicitudes/solicitudes/crear para RUT: {}", solicitud != null ? solicitud.getRut() : "null");
+        return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.createSolicitud(solicitud));
+    }
+
+    @PostMapping("/crear-tercero")
+    public ResponseEntity<Object> crearSolicitudTercero(@RequestBody SolicitudRequest solicitud,
+            @RequestParam String rutGestor) {
+        var usuario = usuarioRepository.findByRut(rutGestor).orElse(null);
+        boolean autorizado = usuario != null && usuario.getModulos().stream()
+                .anyMatch(modulo -> "SOLICITUD POR TERCEROS".equals(modulo.getNombre()));
+        if (!autorizado) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(KEY, "No tiene permiso para realizar solicitudes por terceros."));
+        }
+        tercerosService.validarSolicitante(rutGestor, solicitud.getRut());
+        try {
+            solicitud.setRutIngresadoPor(Integer.valueOf(rutGestor.replace(".", "").split("-")[0].trim()));
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.badRequest().body(Map.of(KEY, "El RUT de quien ingresa la solicitud no es válido."));
+        }
+        logger.info("Solicitud por terceros: gestor {}, solicitante {}", rutGestor, solicitud.getRut());
         return ResponseEntity.status(HttpStatus.CREATED).body(solicitudService.createSolicitud(solicitud));
     }
 

@@ -16,6 +16,11 @@ import org.springframework.data.domain.Page;
 
 public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
 
+        @org.springframework.transaction.annotation.Transactional
+        @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true)
+        @Query("UPDATE Solicitud s SET s.rutIngresadoPor = s.rut WHERE s.rutIngresadoPor IS NULL AND s.rut IS NOT NULL")
+        int completarRutIngresadoPor();
+
         Optional<Solicitud> findByRutAndFechaInicioAndTipoSolicitud(Integer rut, LocalDate fechaInicio,
                         TipoSolicitud tipo);
 

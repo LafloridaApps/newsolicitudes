@@ -4,6 +4,18 @@ import java.time.LocalDate;
 
 public class SolicitudRequest {
 
+    // RUT de quien ingresó la solicitud; distinto del funcionario beneficiario.
+    private Integer rutIngresadoPor;
+
+    public Integer getRutIngresadoPor() {
+        return rutIngresadoPor;
+    }
+
+    public void setRutIngresadoPor(Integer rutIngresadoPor) {
+        this.rutIngresadoPor = rutIngresadoPor;
+    }
+
+
     private Integer rut;
     private LocalDate fechaSolicitud;
     private LocalDate fechaInicio;

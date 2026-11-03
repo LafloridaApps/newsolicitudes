@@ -84,4 +84,15 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
                 .block();
     }
 
+
+    @Override
+    public SearchViewFuncionarioResponse buscarFuncionarioViewNombreEnDepartamentos(String pattern, int pageNumber,
+            java.util.Set<Long> deptos) {
+        return webClient.get()
+                .uri(builder -> builder.path("/api/funcionario/search-view-direccion")
+                        .queryParam("pattern", pattern).queryParam("pageNumber", pageNumber)
+                        .queryParam("deptos", deptos.toArray()).build())
+                .header(HEADER_NAME, HEADER_VALUES).retrieve()
+                .bodyToMono(SearchViewFuncionarioResponse.class).block();
+    }
 }

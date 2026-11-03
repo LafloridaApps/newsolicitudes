@@ -8,6 +8,8 @@ public class DepartamentoJerarquiaDTO {
     private String nivel;
     private List<DepartamentoJerarquiaDTO> hijos;
 
+    public DepartamentoJerarquiaDTO() {}
+
     public DepartamentoJerarquiaDTO(Long id, String nombre, String nivel, List<DepartamentoJerarquiaDTO> hijos) {
         this.id = id;
         this.nombre = nombre;

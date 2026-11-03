@@ -27,6 +27,12 @@ import jakarta.servlet.http.HttpServletRequest;
 @ControllerAdvice
 public class HandlerExceptions {
 
+  @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+  public ResponseEntity<Object> handlerResponseStatus(org.springframework.web.server.ResponseStatusException e) {
+    return ResponseEntity.status(e.getStatusCode()).body(java.util.Map.of("message",
+        e.getReason() != null ? e.getReason() : "No fue posible procesar la solicitud."));
+  }
+
   private static final Logger logger = LoggerFactory.getLogger(HandlerExceptions.class);
 
   @ExceptionHandler(NotFoundException.class)

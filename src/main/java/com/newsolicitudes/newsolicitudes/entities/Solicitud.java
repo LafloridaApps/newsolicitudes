@@ -14,6 +14,18 @@ import jakarta.persistence.OneToMany;
 @Entity
 public class Solicitud {
 
+    // RUT de quien ingresó la solicitud; distinto del funcionario beneficiario.
+    private Integer rutIngresadoPor;
+
+    public Integer getRutIngresadoPor() {
+        return rutIngresadoPor;
+    }
+
+    public void setRutIngresadoPor(Integer rutIngresadoPor) {
+        this.rutIngresadoPor = rutIngresadoPor;
+    }
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

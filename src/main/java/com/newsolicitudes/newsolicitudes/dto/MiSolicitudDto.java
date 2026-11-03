@@ -4,6 +4,18 @@ import java.util.List;
 
 public class MiSolicitudDto {
 
+    // RUT de quien ingresó la solicitud; distinto del funcionario beneficiario.
+    private Integer rutIngresadoPor;
+
+    public Integer getRutIngresadoPor() {
+        return rutIngresadoPor;
+    }
+
+    public void setRutIngresadoPor(Integer rutIngresadoPor) {
+        this.rutIngresadoPor = rutIngresadoPor;
+    }
+
+
     private Long id;
     private String tipoSolicitud;
     private String fechaSolicitud;

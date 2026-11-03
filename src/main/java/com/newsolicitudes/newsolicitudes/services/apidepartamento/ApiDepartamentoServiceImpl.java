@@ -125,6 +125,15 @@ public class ApiDepartamentoServiceImpl implements ApiDepartamentoService {
         }
 
         @Override
+        public DepartamentoJerarquiaDTO getJerarquiaDireccionPorId(Long id) {
+                return webClient.get()
+                                .uri(builder -> builder.path("/api/departamentos/jerarquia-direccion/{id}").build(id))
+                                .retrieve()
+                                .bodyToMono(DepartamentoJerarquiaDTO.class)
+                                .block();
+        }
+
+        @Override
         public Object updateJefeDepartamento(Long idDepto, Integer rut) {
 
                 Object response = webClient.put()

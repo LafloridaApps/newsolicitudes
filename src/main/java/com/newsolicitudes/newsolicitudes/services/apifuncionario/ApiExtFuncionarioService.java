@@ -12,4 +12,6 @@ public interface ApiExtFuncionarioService {
 
     SearchViewFuncionarioResponse buscarFuncionarioViewNombre(String pattern, int pageNumber);
 
+    SearchViewFuncionarioResponse buscarFuncionarioViewNombreEnDepartamentos(String pattern, int pageNumber, java.util.Set<Long> deptos);
+
 }

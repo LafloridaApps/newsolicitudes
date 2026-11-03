@@ -23,6 +23,7 @@ public class SolicitudMapper {
             DepartamentoResponse departamento, String urlPdf) {
         SolicitudDto dto = new SolicitudDto();
         dto.setId(solicitud.getId());
+        dto.setRutIngresadoPor(solicitud.getRutIngresadoPor());
         dto.setFechaSolicitud(solicitud.getFechaSolicitud().toString());
         dto.setFechaInicio(solicitud.getFechaInicio().toString());
         dto.setFechaFin(solicitud.getFechaTermino().toString());
@@ -56,6 +57,7 @@ public class SolicitudMapper {
         solicitud.setFechaTermino(request.getFechaFin());
         solicitud.setIdDepto(idDepto);
         solicitud.setRut(solicitante);
+        solicitud.setRutIngresadoPor(request.getRutIngresadoPor() != null ? request.getRutIngresadoPor() : solicitante);
         solicitud.setTipoSolicitud(Solicitud.TipoSolicitud.valueOf(request.getTipoSolicitud()));
         solicitud.setEstado(Solicitud.EstadoSolicitud.PENDIENTE);
         solicitud.setJornadaInicio(
@@ -70,6 +72,7 @@ public class SolicitudMapper {
             String nombreDepartamento, String urlPdf, List<DerivacionDto> derivaciones) {
         SolicitudDetalleDto detalleDto = new SolicitudDetalleDto();
         detalleDto.setIdSolicitud(solicitud.getId());
+        detalleDto.setRutIngresadoPor(solicitud.getRutIngresadoPor());
         detalleDto.setRutFuncionario(solicitud.getRut());
         detalleDto.setNombreFuncionario(nombreFuncionario);
         detalleDto.setTipoSolicitud(solicitud.getTipoSolicitud().name());
@@ -99,6 +102,7 @@ public class SolicitudMapper {
             List<Trazabilidad> trazabilidad) {
         MiSolicitudDto miSolicitudDto = new MiSolicitudDto();
         miSolicitudDto.setId(solicitud.getId());
+        miSolicitudDto.setRutIngresadoPor(solicitud.getRutIngresadoPor());
         miSolicitudDto.setFechaSolicitud(solicitud.getFechaSolicitud().toString());
         miSolicitudDto.setFechaInicio(solicitud.getFechaInicio().toString());
         miSolicitudDto.setFechaFin(solicitud.getFechaTermino().toString());
