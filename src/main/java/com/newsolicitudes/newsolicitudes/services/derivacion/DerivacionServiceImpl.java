@@ -119,7 +119,8 @@ public class DerivacionServiceImpl implements DerivacionService {
                     departamentoActual, FechaUtils.fechaActual(), FechaUtils.fechaActual());
 
             // Determina si la siguiente derivación es para visación o para firma final.
-            TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, FechaUtils.fechaActual());
+            TipoDerivacion tipoSiguienteDerivacion = determinaTipoDerivacionFinal(departamentoSiguiente, FechaUtils.fechaActual(),
+                    funcionarioService.getFuncionarioByRut(solicitud.getRut()).getTipoContrato());
             logger.info("Tipo de derivacion determinado: {}", tipoSiguienteDerivacion);
 
             // Actualiza el estado de la derivación anterior.
@@ -295,24 +296,24 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     // Determina si la derivación es de tipo VISACION o FIRMA, considerando la jerarquía y subrogancias.
-    private TipoDerivacion determinaTipoDerivacionFinal(DepartamentoResponse deptoDestino, LocalDate fechaChequeo) {
-        logger.debug("Determinando tipo de derivacion final para deptoDestino: {} (RutJefe: {}), fechaChequeo: {}",
-                deptoDestino.getNombre(), deptoDestino.getRutJefe(), fechaChequeo);
+    private TipoDerivacion determinaTipoDerivacionFinal(DepartamentoResponse deptoDestino, LocalDate fechaChequeo, String tipoContrato) {
+        logger.debug("Determinando tipo de derivacion final para deptoDestino: {} (RutJefe: {}), fechaChequeo: {}, tipoContrato: {}",
+                deptoDestino.getNombre(), deptoDestino.getRutJefe(), fechaChequeo, tipoContrato);
 
         // 1. Determinar el tipo por defecto segun el nivel del depto destino.
         NivelDepartamento nivelDeptoDestino = DepartamentoUtils.getNivelDepartamento(deptoDestino);
-        TipoDerivacion tipoFinal = DepartamentoUtils.tipoPorNivel(nivelDeptoDestino);
+        TipoDerivacion tipoFinal = DepartamentoUtils.tipoPorNivel(nivelDeptoDestino, tipoContrato);
         logger.debug("Tipo por defecto segun nivel ({}): {}", nivelDeptoDestino, tipoFinal);
 
         // 2. Verificar si el jefe del depto destino esta subrogando a un director.
-        TipoDerivacion tipoPorSubroganciaJefe = getTipoSiJefeEsSubroganteDirector(deptoDestino.getRutJefe(), fechaChequeo);
+        TipoDerivacion tipoPorSubroganciaJefe = getTipoSiJefeEsSubroganteDirector(deptoDestino.getRutJefe(), fechaChequeo, tipoContrato);
         if (tipoPorSubroganciaJefe == TipoDerivacion.FIRMA) {
             logger.debug("Tipo determinado por subrogancia (jefe es subrogante de director): FIRMA");
             return TipoDerivacion.FIRMA;
         }
 
         // 3. Verificar si el jefe del depto destino esta SIENDO subrogado por un director.
-        TipoDerivacion tipoPorJefeSubrogado = getTipoSiJefeEstaSiendoSubrogadoPorDirector(deptoDestino.getRutJefe(), fechaChequeo);
+        TipoDerivacion tipoPorJefeSubrogado = getTipoSiJefeEstaSiendoSubrogadoPorDirector(deptoDestino.getRutJefe(), fechaChequeo, tipoContrato);
         if (tipoPorJefeSubrogado == TipoDerivacion.FIRMA) {
             logger.debug("Tipo determinado por subrogancia (jefe esta siendo subrogado por director): FIRMA");
             return TipoDerivacion.FIRMA;
@@ -323,7 +324,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     // Verifica si un jefe es subrogante de un cargo directivo, lo que implicaría firma.
-    private TipoDerivacion getTipoSiJefeEsSubroganteDirector(Integer rutJefe, LocalDate fechaChequeo) {
+    private TipoDerivacion getTipoSiJefeEsSubroganteDirector(Integer rutJefe, LocalDate fechaChequeo, String tipoContrato) {
         logger.debug("Verificando si jefe {} es subrogante de director para fecha {}", rutJefe, fechaChequeo);
         List<Subrogancia> subrogancias = subroganciaRepository.findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, fechaChequeo, fechaChequeo);
         if (subrogancias.isEmpty()) return null;
@@ -332,7 +333,7 @@ public class DerivacionServiceImpl implements DerivacionService {
             DepartamentoResponse deptoSubrogado = departamentoService.getDepartamentoById(subrogancia.getIdDepto());
             if (deptoSubrogado != null) {
                 NivelDepartamento nivel = DepartamentoUtils.getNivelDepartamento(deptoSubrogado);
-                if (DepartamentoUtils.tipoPorNivel(nivel) == TipoDerivacion.FIRMA) {
+                if (DepartamentoUtils.tipoPorNivel(nivel, tipoContrato) == TipoDerivacion.FIRMA) {
                     return TipoDerivacion.FIRMA;
                 }
             }
@@ -341,7 +342,7 @@ public class DerivacionServiceImpl implements DerivacionService {
     }
 
     // Verifica si un jefe está siendo subrogado por un directivo, lo que implicaría firma.
-    private TipoDerivacion getTipoSiJefeEstaSiendoSubrogadoPorDirector(Integer rutJefeOriginal, LocalDate fechaChequeo) {
+    private TipoDerivacion getTipoSiJefeEstaSiendoSubrogadoPorDirector(Integer rutJefeOriginal, LocalDate fechaChequeo, String tipoContrato) {
         logger.debug("Verificando si jefe {} esta siendo subrogado por director para fecha {}", rutJefeOriginal, fechaChequeo);
         List<Subrogancia> subrogancias = subroganciaRepository.findByJefeDepartamentoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefeOriginal, fechaChequeo, fechaChequeo);
         if (subrogancias.isEmpty()) return null;
@@ -352,7 +353,7 @@ public class DerivacionServiceImpl implements DerivacionService {
                 DepartamentoResponse deptoSubrogante = departamentoService.getDepartamentoById(funcionarioSubrogante.getCodDepto());
                 if (deptoSubrogante != null) {
                     NivelDepartamento nivelSubrogante = DepartamentoUtils.getNivelDepartamento(deptoSubrogante);
-                    if (DepartamentoUtils.tipoPorNivel(nivelSubrogante) == TipoDerivacion.FIRMA) {
+                    if (DepartamentoUtils.tipoPorNivel(nivelSubrogante, tipoContrato) == TipoDerivacion.FIRMA) {
                         return TipoDerivacion.FIRMA;
                     }
                 }

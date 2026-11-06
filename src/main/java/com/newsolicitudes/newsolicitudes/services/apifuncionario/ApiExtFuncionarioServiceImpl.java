@@ -21,6 +21,8 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
     private static final Logger logger = LoggerFactory.getLogger(ApiExtFuncionarioServiceImpl.class);
     private static final String HEADER_NAME = "Accept";
     private static final String HEADER_VALUES = "application/json";
+    private static final String QUERY_PARAM_PATTERN = "pattern";
+    private static final String QUERY_PARAM_PAGE_NUMBER = "pageNumber";
 
     public ApiExtFuncionarioServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
         this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
@@ -57,8 +59,8 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/funcionario/search")
-                        .queryParam("pattern", pattern)
-                        .queryParam("pageNumber", pageNumber)
+                        .queryParam(QUERY_PARAM_PATTERN, pattern)
+                        .queryParam(QUERY_PARAM_PAGE_NUMBER, pageNumber)
                         .build())
                 .header(HEADER_NAME, HEADER_VALUES)
                 .retrieve()
@@ -73,8 +75,8 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/funcionario/search-view")
-                        .queryParam("pattern", pattern)
-                        .queryParam("pageNumber", pageNumber)
+                        .queryParam(QUERY_PARAM_PATTERN, pattern)
+                        .queryParam(QUERY_PARAM_PAGE_NUMBER, pageNumber)
                         .build())
                 .header(HEADER_NAME, HEADER_VALUES)
                 .retrieve()
@@ -90,7 +92,7 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
             java.util.Set<Long> deptos) {
         return webClient.get()
                 .uri(builder -> builder.path("/api/funcionario/search-view-direccion")
-                        .queryParam("pattern", pattern).queryParam("pageNumber", pageNumber)
+                        .queryParam(QUERY_PARAM_PATTERN, pattern).queryParam(QUERY_PARAM_PAGE_NUMBER, pageNumber)
                         .queryParam("deptos", deptos.toArray()).build())
                 .header(HEADER_NAME, HEADER_VALUES).retrieve()
                 .bodyToMono(SearchViewFuncionarioResponse.class).block();
