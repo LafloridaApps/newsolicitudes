@@ -2,6 +2,8 @@ package com.newsolicitudes.newsolicitudes.services.modulo;
 
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,12 @@ public class ModuloServiceImpl implements ModuloService {
 
     public ModuloServiceImpl(ModuloRepository moduloRepository) {
         this.moduloRepository = moduloRepository;
+    }
+
+    @Override
+    public Page<ModuloDto> listarPagina(String busqueda, Pageable pageable) {
+        return moduloRepository.findByNombreContainingIgnoreCase(busqueda, pageable)
+                .map(modulo -> new ModuloDto(modulo.getNombre(), modulo.getId()));
     }
 
     @Override

@@ -1,6 +1,10 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +28,13 @@ public class ModuloController {
 
     public ModuloController(ModuloService moduloService) {
         this.moduloService = moduloService;
+    }
+
+    @GetMapping("/pagina")
+    public ResponseEntity<Page<ModuloDto>> listarPagina(
+            @RequestParam(defaultValue = "") String busqueda,
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(moduloService.listarPagina(busqueda.trim(), pageable));
     }
 
     @PostMapping("/crear")

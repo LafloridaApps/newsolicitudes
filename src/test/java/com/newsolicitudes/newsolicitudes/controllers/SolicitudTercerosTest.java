@@ -19,6 +19,30 @@ class SolicitudTercerosTest {
     private final SolicitudController controller = new SolicitudController(servicio, usuarios, terceros);
 
     @Test
+    void historialValidaAmbitoAntesDeConsultarSolicitudes() {
+        assertEquals(200, controller.getSolicitudesTercero("123", 456, 0, 10).getStatusCode().value());
+        var orden = inOrder(terceros, servicio);
+        orden.verify(terceros).validarSolicitante("123", 456);
+        orden.verify(servicio).getSolicitudesByRut(456, 0, 10);
+    }
+
+    @Test
+    void historialBloqueaSolicitanteFueraDelAmbito() {
+        doThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN))
+                .when(terceros).validarSolicitante("123", 456);
+        org.junit.jupiter.api.Assertions.assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> controller.getSolicitudesTercero("123", 456, 0, 10));
+        verifyNoInteractions(servicio);
+    }
+
+    @Test
+    void historialRechazaPaginacionInvalida() {
+        assertEquals(400, controller.getSolicitudesTercero("123", 456, -1, 10).getStatusCode().value());
+        assertEquals(400, controller.getSolicitudesTercero("123", 456, 0, 101).getStatusCode().value());
+        verifyNoInteractions(servicio);
+    }
+
+    @Test
     void rechazaUsuarioSinPermiso() {
         when(usuarios.findByRut("123")).thenReturn(Optional.of(new Usuario()));
         assertEquals(403, controller.crearSolicitudTercero(new SolicitudRequest(), "123").getStatusCode().value());

@@ -84,6 +84,17 @@ public class SolicitudController {
 
     }
 
+    @GetMapping("/rut-tercero")
+    public ResponseEntity<Object> getSolicitudesTercero(@RequestParam String rutGestor,
+            @RequestParam Integer rut, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        tercerosService.validarSolicitante(rutGestor, rut);
+        if (page < 0 || size < 1 || size > 100) {
+            return ResponseEntity.badRequest().body(Map.of(KEY, "Página o tamaño de consulta inválidos."));
+        }
+        return ResponseEntity.ok(solicitudService.getSolicitudesByRut(rut, page, size));
+    }
+
     @GetMapping("by-id")
     public ResponseEntity<Object> getSolicitudById(@RequestParam Long id) {
         SolicitudDetalleDto solicitudDetalleDto = solicitudService.getSolicitudDetalleById(id);

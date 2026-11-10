@@ -38,6 +38,14 @@ class SolicitudTercerosDireccionTest {
         var destino = persona(456, 40L); when(funcionarios.getFuncionarioInfo(456)).thenReturn(destino);
         assertSame(destino, service.validarSolicitante("123", 456));
     }
+    @Test void completaDepartamentoDelSolicitanteCuandoElDetalleNoLoIncluye() {
+        var destino = persona(456, 40L);
+        when(funcionarios.getFuncionarioInfo(456)).thenReturn(destino);
+        var departamento = new DepartamentoResponse();
+        departamento.setNombre("Sección de Administración");
+        when(departamentos.obtenerDepartamento(40L)).thenReturn(departamento);
+        assertEquals("Sección de Administración", service.validarSolicitante("123", 456).getDepartamento());
+    }
     @Test void bloqueaOtraDireccion() {
         when(funcionarios.getFuncionarioInfo(456)).thenReturn(persona(456, 99L));
         assertEquals(403, assertThrows(ResponseStatusException.class, () -> service.validarSolicitante("123", 456)).getStatusCode().value());
@@ -60,6 +68,56 @@ class SolicitudTercerosDireccionTest {
         var destino = persona(456, 20L);
         when(funcionarios.getFuncionarioInfo(456)).thenReturn(destino);
         assertSame(destino, service.validarSolicitante("123", 456));
+    }
+    @Test void permiteTodaAdministracionMunicipal() {
+        when(departamentos.getJerarquiaDireccionPorId(30L)).thenReturn(
+                new DepartamentoJerarquiaDTO(2L, "Administración Municipal", "ADMINISTRACION", List.of(
+                    new DepartamentoJerarquiaDTO(30L, "Estadio", "DEPARTAMENTO", List.of()),
+                    new DepartamentoJerarquiaDTO(40L, "Otra unidad", "DEPARTAMENTO", List.of()))));
+        var destino = persona(456, 40L);
+        when(funcionarios.getFuncionarioInfo(456)).thenReturn(destino);
+        assertSame(destino, service.validarSolicitante("123", 456));
+        var resultado = new SearchViewFuncionarioResponse(); resultado.setFuncionarios(List.of());
+        when(busqueda.buscarFuncionarioViewNombreEnDepartamentos("ross", 0, Set.of(2L, 30L, 40L))).thenReturn(resultado);
+        assertSame(resultado, service.buscarPorNombre("123", "ross", 0));
+    }
+    @Test void alcaldiaExcluyeAdministracionYSusDirecciones() {
+        when(departamentos.getJerarquiaDireccionPorId(30L)).thenReturn(
+                new DepartamentoJerarquiaDTO(1L, "Alcaldía", "ALCALDIA", List.of(
+                    new DepartamentoJerarquiaDTO(30L, "Unidad directa", "DEPARTAMENTO", List.of()),
+                    new DepartamentoJerarquiaDTO(2L, "Administración", "ADMINISTRACION", List.of(
+                        new DepartamentoJerarquiaDTO(40L, "Dirección", "DIRECCION", List.of()))))));
+        when(funcionarios.getFuncionarioInfo(456)).thenReturn(persona(456, 40L));
+        assertEquals(403, assertThrows(ResponseStatusException.class,
+                () -> service.validarSolicitante("123", 456)).getStatusCode().value());
+        when(funcionarios.getFuncionarioInfo(457)).thenReturn(persona(457, 2L));
+        assertEquals(403, assertThrows(ResponseStatusException.class,
+                () -> service.validarSolicitante("123", 457)).getStatusCode().value());
+        var resultado = new SearchViewFuncionarioResponse(); resultado.setFuncionarios(List.of());
+        when(busqueda.buscarFuncionarioViewNombreEnDepartamentos("ross", 0, Set.of(1L, 30L))).thenReturn(resultado);
+        assertSame(resultado, service.buscarPorNombre("123", "ross", 0));
+        when(funcionarios.getFuncionarioInfo(789)).thenReturn(persona(789, 99L));
+        assertEquals(403, assertThrows(ResponseStatusException.class,
+                () -> service.validarSolicitante("123", 789)).getStatusCode().value());
+    }
+    @Test void administracionExcluyeDireccionesAunqueLaApiDevuelvaElOrganigramaCompleto() {
+        when(departamentos.getJerarquiaDireccionPorId(30L)).thenReturn(
+                new DepartamentoJerarquiaDTO(2L, "Administración", "ADMINISTRACION", List.of(
+                    new DepartamentoJerarquiaDTO(30L, "Estadio", "DEPARTAMENTO", List.of(
+                        new DepartamentoJerarquiaDTO(31L, "Sección propia", "SECCION", List.of()))),
+                    new DepartamentoJerarquiaDTO(10L, "Obras", "DIRECCION", List.of(
+                        new DepartamentoJerarquiaDTO(11L, "Departamento de Obras", "DEPARTAMENTO", List.of()))))));
+        var resultado = new SearchViewFuncionarioResponse(); resultado.setFuncionarios(List.of());
+        when(busqueda.buscarFuncionarioViewNombreEnDepartamentos("r", 0, Set.of(2L, 30L, 31L))).thenReturn(resultado);
+        assertSame(resultado, service.buscarPorNombre("123", "r", 0));
+        for (long depto : new long[]{10L, 11L}) {
+            when(funcionarios.getFuncionarioInfo(456)).thenReturn(persona(456, depto));
+            assertEquals(403, assertThrows(ResponseStatusException.class,
+                    () -> service.validarSolicitante("123", 456)).getStatusCode().value());
+        }
+        var propia = persona(457, 31L);
+        when(funcionarios.getFuncionarioInfo(457)).thenReturn(propia);
+        assertSame(propia, service.validarSolicitante("123", 457));
     }
     @Test void filtraAntesDePaginar() {
         var resultado = new SearchViewFuncionarioResponse(); resultado.setFuncionarios(List.of());

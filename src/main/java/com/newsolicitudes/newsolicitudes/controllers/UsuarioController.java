@@ -1,6 +1,10 @@
 package com.newsolicitudes.newsolicitudes.controllers;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -26,6 +30,13 @@ public class UsuarioController {
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
+    }
+
+    @GetMapping("/pagina")
+    public ResponseEntity<Page<UsuarioDto>> listarPagina(
+            @RequestParam(defaultValue = "") String busqueda,
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return ResponseEntity.ok(usuarioService.listarPagina(busqueda.trim(), pageable));
     }
 
     @PostMapping("/permisos")

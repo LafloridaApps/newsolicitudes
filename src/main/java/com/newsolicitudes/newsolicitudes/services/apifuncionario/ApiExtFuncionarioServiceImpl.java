@@ -18,13 +18,16 @@ import reactor.core.publisher.Mono;
 public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
 
     private final WebClient webClient;
+    private final com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService departamentos;
     private static final Logger logger = LoggerFactory.getLogger(ApiExtFuncionarioServiceImpl.class);
     private static final String HEADER_NAME = "Accept";
     private static final String HEADER_VALUES = "application/json";
     private static final String QUERY_PARAM_PATTERN = "pattern";
     private static final String QUERY_PARAM_PAGE_NUMBER = "pageNumber";
 
-    public ApiExtFuncionarioServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties) {
+    public ApiExtFuncionarioServiceImpl(WebClient.Builder webClientBuilder, ApiProperties apiProperties,
+            com.newsolicitudes.newsolicitudes.services.apidepartamento.ApiDepartamentoService departamentos) {
+        this.departamentos = departamentos;
         this.webClient = webClientBuilder.baseUrl(apiProperties.getFuncionarioUrl()).build();
     }
 
@@ -72,7 +75,7 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
 
     @Override
     public SearchViewFuncionarioResponse buscarFuncionarioViewNombre(String pattern, int pageNumber) {
-        return webClient.get()
+        return agregarDepartamentos(webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/funcionario/search-view")
                         .queryParam(QUERY_PARAM_PATTERN, pattern)
@@ -83,18 +86,35 @@ public class ApiExtFuncionarioServiceImpl implements ApiExtFuncionarioService {
                 .onStatus(HttpStatusCode::is4xxClientError, responseStatus -> Mono.empty())
                 .bodyToMono(SearchViewFuncionarioResponse.class)
                 .onErrorResume(Exception.class, e -> Mono.empty())
-                .block();
+                .block());
     }
 
 
     @Override
     public SearchViewFuncionarioResponse buscarFuncionarioViewNombreEnDepartamentos(String pattern, int pageNumber,
             java.util.Set<Long> deptos) {
-        return webClient.get()
+        return agregarDepartamentos(webClient.get()
                 .uri(builder -> builder.path("/api/funcionario/search-view-direccion")
                         .queryParam(QUERY_PARAM_PATTERN, pattern).queryParam(QUERY_PARAM_PAGE_NUMBER, pageNumber)
                         .queryParam("deptos", deptos.toArray()).build())
                 .header(HEADER_NAME, HEADER_VALUES).retrieve()
-                .bodyToMono(SearchViewFuncionarioResponse.class).block();
+                .bodyToMono(SearchViewFuncionarioResponse.class).block());
+    }
+
+    private SearchViewFuncionarioResponse agregarDepartamentos(SearchViewFuncionarioResponse resultado) {
+        if (resultado == null || resultado.getFuncionarios() == null) return resultado;
+        var nombres = new java.util.HashMap<Long, String>();
+        resultado.setFuncionarios(resultado.getFuncionarios().stream().map(persona -> {
+            String nombre = persona.departamento();
+            if ((nombre == null || nombre.isBlank()) && persona.codDepto() != null) {
+                nombre = nombres.computeIfAbsent(persona.codDepto(), id -> {
+                    var departamento = departamentos.obtenerDepartamento(id);
+                    return departamento != null && departamento.getNombre() != null ? departamento.getNombre() : "";
+                });
+            }
+            return new com.newsolicitudes.newsolicitudes.dto.SearchnNombreDto(persona.nombreCompleto(),
+                    persona.rut(), persona.vrut(), persona.codDepto(), nombre);
+        }).toList());
+        return resultado;
     }
 }

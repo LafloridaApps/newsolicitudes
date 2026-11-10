@@ -2,6 +2,8 @@ package com.newsolicitudes.newsolicitudes.services.usuario;
 
 import java.util.HashSet;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -15,22 +17,44 @@ import com.newsolicitudes.newsolicitudes.entities.Usuario;
 import com.newsolicitudes.newsolicitudes.repositories.ModuloRepository;
 import com.newsolicitudes.newsolicitudes.repositories.UsuarioRepository;
 import com.newsolicitudes.newsolicitudes.services.funcionarioapi.FuncionarioApiService;
+import com.newsolicitudes.newsolicitudes.services.apifuncionario.ApiExtFuncionarioService;
 import com.newsolicitudes.newsolicitudes.utlils.RepositoryUtils;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
 
+    private final ApiExtFuncionarioService busquedaFuncionarios;
     private final UsuarioRepository usuarioRepository;
     private final ModuloRepository moduloRepository;
     private final UsuarioDtoMapper usuarioDtoMapper;
     private final FuncionarioApiService funcionarioApiService;
 
     public UsuarioServiceImpl(UsuarioRepository usuarioRepository, ModuloRepository moduloRepository,
-            UsuarioDtoMapper usuarioDtoMapper, FuncionarioApiService funcionarioApiService) {
+            UsuarioDtoMapper usuarioDtoMapper, FuncionarioApiService funcionarioApiService,
+            ApiExtFuncionarioService busquedaFuncionarios) {
+        this.busquedaFuncionarios = busquedaFuncionarios;
         this.usuarioRepository = usuarioRepository;
         this.moduloRepository = moduloRepository;
         this.usuarioDtoMapper = usuarioDtoMapper;
         this.funcionarioApiService = funcionarioApiService;
+    }
+
+    @Override
+    public Page<UsuarioDto> listarPagina(String busqueda, Pageable pageable) {
+        Set<String> ruts = new HashSet<>();
+        // Los nombres pertenecen a la API de funcionarios, no a la entidad Usuario.
+        if (!busqueda.isBlank() && !busqueda.matches("[0-9.-]+")) {
+            int pagina = 0;
+            int totalPaginas;
+            do {
+                var resultado = busquedaFuncionarios.buscarFuncionarioByNombre(busqueda, pagina);
+                resultado.getFuncionarios().forEach(funcionario -> ruts.add(String.valueOf(funcionario.getRut())));
+                totalPaginas = resultado.getTotalPages();
+                pagina++;
+            } while (pagina < totalPaginas);
+        }
+        if (ruts.isEmpty()) ruts.add("");
+        return usuarioRepository.buscarPagina(busqueda, ruts, pageable).map(usuarioDtoMapper::mapToUsuarioDto);
     }
 
     @Override

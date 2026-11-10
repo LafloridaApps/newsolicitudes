@@ -51,7 +51,9 @@ public class SolicitudTercerosServiceImpl implements SolicitudTercerosService {
                     "No se pudo consultar la dirección o subdirección de tu departamento. Intenta nuevamente.");
         }
         if (jerarquia == null || jerarquia.getId() == null
-                || !("DIRECCION".equals(jerarquia.getNivel()) || "SUBDIRECCION".equals(jerarquia.getNivel()))) {
+                || !("DIRECCION".equals(jerarquia.getNivel()) || "SUBDIRECCION".equals(jerarquia.getNivel())
+                        || "ADMINISTRACION".equals(jerarquia.getNivel())
+                        || "ALCALDIA".equals(jerarquia.getNivel()))) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "No se pudo determinar la dirección o subdirección del usuario.");
         }
@@ -66,7 +68,15 @@ public class SolicitudTercerosServiceImpl implements SolicitudTercerosService {
 
     private void agregarDepartamentos(DepartamentoJerarquiaDTO nodo, Set<Long> ids) {
         if (nodo == null || nodo.getId() == null || !ids.add(nodo.getId())) return;
-        if (nodo.getHijos() != null) nodo.getHijos().forEach(hijo -> agregarDepartamentos(hijo, ids));
+        if (nodo.getHijos() != null) {
+            nodo.getHijos().stream()
+                    .filter(hijo -> hijo != null && !esAmbitoIndependiente(hijo.getNivel()))
+                    .forEach(hijo -> agregarDepartamentos(hijo, ids));
+        }
+    }
+
+    private boolean esAmbitoIndependiente(String nivel) {
+        return "DIRECCION".equals(nivel) || "ADMINISTRACION".equals(nivel) || "ALCALDIA".equals(nivel);
     }
 
     @Override
@@ -79,6 +89,10 @@ public class SolicitudTercerosServiceImpl implements SolicitudTercerosService {
         if (persona.getCodDepto() == null || !permitidos.contains(persona.getCodDepto())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Solo puedes realizar solicitudes para funcionarios de tu dirección.");
+        }
+        if (persona.getDepartamento() == null || persona.getDepartamento().isBlank()) {
+            var departamento = departamentos.obtenerDepartamento(persona.getCodDepto());
+            if (departamento != null) persona.setDepartamento(departamento.getNombre());
         }
         return persona;
     }
