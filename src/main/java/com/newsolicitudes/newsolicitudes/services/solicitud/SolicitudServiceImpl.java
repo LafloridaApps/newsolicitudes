@@ -192,9 +192,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     private RutaDerivacion determinarRutaDerivacion(SolicitudRequest request, DepartamentoResponse deptoActual) {
         DepartamentoResponse departamentoDestino = departamentoService.getDepartamentoDestino(request.getRut(),
                 deptoActual, FechaUtils.fechaActual(), FechaUtils.fechaActual());
-        String tipoContrato = funcionarioService.getFuncionarioByRut(request.getRut()).getTipoContrato();
         NivelDepartamento nivelDepartamento = DepartamentoUtils.getNivelDepartamento(departamentoDestino);
-        TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento, tipoContrato);
+        TipoDerivacion tipoDerivacion = DepartamentoUtils.tipoPorNivel(nivelDepartamento);
 
         // Validar si el jefe del departamento destino está subrogando a un cargo con
         // nivel de FIRMA
@@ -209,7 +208,7 @@ public class SolicitudServiceImpl implements SolicitudService {
                 DepartamentoResponse deptoSubrogado = departamentoService.getDepartamentoById(subrogancia.getIdDepto());
                 if (deptoSubrogado != null) {
                     NivelDepartamento nivelSubrogado = DepartamentoUtils.getNivelDepartamento(deptoSubrogado);
-                    TipoDerivacion tipoSubrogado = DepartamentoUtils.tipoPorNivel(nivelSubrogado, tipoContrato);
+                    TipoDerivacion tipoSubrogado = DepartamentoUtils.tipoPorNivel(nivelSubrogado);
                     if (tipoSubrogado == TipoDerivacion.FIRMA) {
                         tipoDerivacion = TipoDerivacion.FIRMA;
                         break;

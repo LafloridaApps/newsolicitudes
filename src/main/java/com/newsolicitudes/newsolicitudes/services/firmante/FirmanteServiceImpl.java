@@ -1,10 +1,6 @@
 package com.newsolicitudes.newsolicitudes.services.firmante;
 
 import java.util.Optional;
-import com.newsolicitudes.newsolicitudes.services.funcionario.FuncionarioService;
-import com.newsolicitudes.newsolicitudes.utlils.DepartamentoUtils;
-import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
-import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,15 +19,13 @@ import com.newsolicitudes.newsolicitudes.utlils.FechaUtils;
 @Service
 public class FirmanteServiceImpl implements FirmanteService {
 
-    private final FuncionarioService funcionarioService;
     private final ApiDepartamentoService apiDepartamentoService;
     private final SubroganciaRepository subroganciaRepository;
     private final AprobacionRepository aprobacionRepository;
     private static final Logger logger = LoggerFactory.getLogger(FirmanteServiceImpl.class);
 
 
-    public FirmanteServiceImpl(ApiDepartamentoService apiDepartamentoService, SubroganciaRepository subroganciaRepository, AprobacionRepository aprobacionRepository, FuncionarioService funcionarioService) {
-        this.funcionarioService = funcionarioService;
+    public FirmanteServiceImpl(ApiDepartamentoService apiDepartamentoService, SubroganciaRepository subroganciaRepository, AprobacionRepository aprobacionRepository) {
         this.apiDepartamentoService = apiDepartamentoService;
         this.subroganciaRepository = subroganciaRepository;
         this.aprobacionRepository = aprobacionRepository;
@@ -62,13 +56,12 @@ public class FirmanteServiceImpl implements FirmanteService {
     }
 
     private Integer calculateRutFirmante(Solicitud solicitud) {
-        String tipoContrato = funcionarioService.getFuncionarioByRut(solicitud.getRut()).getTipoContrato();
         DepartamentoResponse departamento = apiDepartamentoService.obtenerDepartamento(solicitud.getIdDepto());
         while (departamento != null) {
             logger.info("Procesando departamento: idDepto={}, nombre={}, rutJefe={}, nivelDepartamento={}",
                 departamento.getId(), departamento.getNombre(), departamento.getRutJefe(), departamento.getNivelDepartamento());
 
-            if (isSigningDepartment(departamento, tipoContrato)) {
+            if (isSigningDepartment(departamento)) {
                 logger.info("Departamento {} es firmante. Solicitud: fechaInicio={}, fechaTermino={}",
                     departamento.getNombre(), solicitud.getFechaInicio(), solicitud.getFechaTermino());
                 
@@ -102,13 +95,13 @@ public class FirmanteServiceImpl implements FirmanteService {
         return departamento.getRutJefe() != null && departamento.getRutJefe().equals(solicitud.getRut());
     }
 
-    private boolean isSigningDepartment(DepartamentoResponse departamento, String tipoContrato) {
+    private boolean isSigningDepartment(DepartamentoResponse departamento) {
         if (departamento == null || departamento.getNivelDepartamento() == null) {
             return false;
         }
         String nivel = departamento.getNivelDepartamento();
-        return DepartamentoUtils.tipoPorNivel(
-                NivelDepartamento.valueOf(nivel.toUpperCase(java.util.Locale.ROOT)), tipoContrato) == TipoDerivacion.FIRMA;
+        return nivel.equalsIgnoreCase("DIRECCION") || nivel.equalsIgnoreCase("ALCALDIA")
+                || nivel.equalsIgnoreCase("ADMINISTRACION") || nivel.equalsIgnoreCase("SUBDIRECCION");
     }
 
     private Integer findSignerInDepartment(DepartamentoResponse departamento, Solicitud solicitud) {

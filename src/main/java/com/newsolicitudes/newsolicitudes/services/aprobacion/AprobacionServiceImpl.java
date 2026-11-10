@@ -175,9 +175,8 @@ public class AprobacionServiceImpl implements AprobacionService {
         if (derivacion.getTipo() == TipoDerivacion.FIRMA) {
             return true;
         }
-        String tipoContrato = funcionarioService.getFuncionarioByRut(solicitud.getRut()).getTipoContrato();
         // Condition 1: Approver is a substitute director
-        if (isSubrogandoComoDirector(approverRut, tipoContrato)) {
+        if (isSubrogandoComoDirector(approverRut)) {
             return true;
         }
 
@@ -187,7 +186,7 @@ public class AprobacionServiceImpl implements AprobacionService {
             DepartamentoResponse superiorDepto = departamentoService
                     .getDepartamentoById(requesterDepto.getIdDeptoSuperior());
             NivelDepartamento nivelSuperior = DepartamentoUtils.getNivelDepartamento(superiorDepto);
-            if (DepartamentoUtils.tipoPorNivel(nivelSuperior, tipoContrato) == TipoDerivacion.FIRMA) {
+            if (DepartamentoUtils.tipoPorNivel(nivelSuperior) == TipoDerivacion.FIRMA) {
                 return true;
             }
         }
@@ -195,7 +194,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         return false;
     }
 
-    private boolean isSubrogandoComoDirector(Integer rutJefe, String tipoContrato) {
+    private boolean isSubrogandoComoDirector(Integer rutJefe) {
         List<Subrogancia> subrogancias = subroganciaRepository
                 .findBySubroganteAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(rutJefe, FechaUtils.fechaActual(),
                         FechaUtils.fechaActual());
@@ -206,7 +205,7 @@ public class AprobacionServiceImpl implements AprobacionService {
         for (Subrogancia subrogancia : subrogancias) {
             DepartamentoResponse deptoSubrogado = departamentoService.getDepartamentoById(subrogancia.getIdDepto());
             NivelDepartamento nivel = DepartamentoUtils.getNivelDepartamento(deptoSubrogado);
-            if (DepartamentoUtils.tipoPorNivel(nivel, tipoContrato) == TipoDerivacion.FIRMA) {
+            if (DepartamentoUtils.tipoPorNivel(nivel) == TipoDerivacion.FIRMA) {
                 return true;
             }
         }

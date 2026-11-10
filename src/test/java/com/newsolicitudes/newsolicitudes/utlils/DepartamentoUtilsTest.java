@@ -2,28 +2,20 @@ package com.newsolicitudes.newsolicitudes.utlils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import com.newsolicitudes.newsolicitudes.dto.NivelDepartamento;
 import com.newsolicitudes.newsolicitudes.entities.Derivacion.TipoDerivacion;
 
 class DepartamentoUtilsTest {
     @ParameterizedTest
-    @ValueSource(strings = {"PLANTA", "CONTRATA", "SUPLENCIA", " planta "})
-    void subdireccionFirmaParaContratosPermitidos(String contrato) {
-        assertEquals(TipoDerivacion.FIRMA,
-                DepartamentoUtils.tipoPorNivel(NivelDepartamento.SUBDIRECCION, contrato));
+    @EnumSource(value = NivelDepartamento.class, names = {"SUBDIRECCION", "DIRECCION", "ALCALDIA", "ADMINISTRACION"})
+    void unidadesFirmantesSinDistincionDeContrato(NivelDepartamento nivel) {
+        assertEquals(TipoDerivacion.FIRMA, DepartamentoUtils.tipoPorNivel(nivel));
     }
 
     @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = {"HONORARIOS", "CODIGO DEL TRABAJO", "OTRO"})
-    void otrosContratosRequierenVisacionDeSubdireccionYFirmaDeDireccion(String contrato) {
-        assertEquals(TipoDerivacion.VISACION,
-                DepartamentoUtils.tipoPorNivel(NivelDepartamento.SUBDIRECCION, contrato));
-        assertEquals(TipoDerivacion.FIRMA,
-                DepartamentoUtils.tipoPorNivel(NivelDepartamento.DIRECCION, contrato));
-        assertEquals(TipoDerivacion.VISACION,
-                DepartamentoUtils.tipoPorNivel(NivelDepartamento.DEPARTAMENTO, contrato));
+    @EnumSource(value = NivelDepartamento.class, names = {"DEPARTAMENTO", "SECCION", "OFICINA"})
+    void unidadesVisadoras(NivelDepartamento nivel) {
+        assertEquals(TipoDerivacion.VISACION, DepartamentoUtils.tipoPorNivel(nivel));
     }
 }

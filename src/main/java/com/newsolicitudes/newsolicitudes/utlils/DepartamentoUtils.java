@@ -14,21 +14,6 @@ public class DepartamentoUtils {
         return NivelDepartamento.valueOf(departamento.getNivelDepartamento());
     }
 
-    public static TipoDerivacion tipoPorNivel(NivelDepartamento nivel, String tipoContrato) {
-        if (nivel == NivelDepartamento.SUBDIRECCION && !permiteFirmaSubdireccion(tipoContrato)) {
-            return TipoDerivacion.VISACION;
-        }
-        return tipoPorNivel(nivel);
-    }
-
-    private static boolean permiteFirmaSubdireccion(String tipoContrato) {
-        if (tipoContrato == null) return false;
-        return switch (tipoContrato.trim().toUpperCase(java.util.Locale.ROOT)) {
-            case "PLANTA", "CONTRATA", "SUPLENCIA" -> true;
-            default -> false;
-        };
-    }
-
     public static TipoDerivacion tipoPorNivel(NivelDepartamento nivel) {
         return switch (nivel) {
             case DEPARTAMENTO, SECCION, OFICINA -> TipoDerivacion.VISACION;
