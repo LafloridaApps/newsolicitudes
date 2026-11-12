@@ -2,6 +2,7 @@ package com.newsolicitudes.newsolicitudes.entities;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,7 +25,20 @@ public class Subrogancia {
 
     private Long idDepto;
 
+    private Long solicitudId;
+
     
+
+    private String ceroPapelEstado;
+
+    private Long ceroPapelPerfilId;
+
+    private Long ceroPapelTareaId;
+
+    private Long ceroPapelSubroganciaId;
+
+    @Column(length = 2000)
+    private String ceroPapelDetalle;
 
     public Subrogancia() {
     }
@@ -78,12 +92,60 @@ public class Subrogancia {
         this.jefeDepartamento = jefeDepartamento;
     }
 
+    public Long getSolicitudId() {
+        return solicitudId;
+    }
+
+    public void setSolicitudId(Long solicitudId) {
+        this.solicitudId = solicitudId;
+    }
+
     public Long getIdDepto() {
         return idDepto;
     }
 
     public void setIdDepto(Long idDepto) {
         this.idDepto = idDepto;
+    }
+
+    public String getCeroPapelEstado() {
+        return ceroPapelEstado;
+    }
+
+    public void setCeroPapelEstado(String ceroPapelEstado) {
+        this.ceroPapelEstado = ceroPapelEstado;
+    }
+
+    public Long getCeroPapelPerfilId() {
+        return ceroPapelPerfilId;
+    }
+
+    public void setCeroPapelPerfilId(Long ceroPapelPerfilId) {
+        this.ceroPapelPerfilId = ceroPapelPerfilId;
+    }
+
+    public Long getCeroPapelTareaId() {
+        return ceroPapelTareaId;
+    }
+
+    public void setCeroPapelTareaId(Long ceroPapelTareaId) {
+        this.ceroPapelTareaId = ceroPapelTareaId;
+    }
+
+    public Long getCeroPapelSubroganciaId() {
+        return ceroPapelSubroganciaId;
+    }
+
+    public void setCeroPapelSubroganciaId(Long ceroPapelSubroganciaId) {
+        this.ceroPapelSubroganciaId = ceroPapelSubroganciaId;
+    }
+
+    public String getCeroPapelDetalle() {
+        return ceroPapelDetalle;
+    }
+
+    public void setCeroPapelDetalle(String ceroPapelDetalle) {
+        this.ceroPapelDetalle = ceroPapelDetalle;
     }
 
 }

@@ -9,6 +9,15 @@ public class SubroganciaRequest {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private Long idDepto;
+    private boolean grabarCeroPapel;
+
+    public boolean isGrabarCeroPapel() {
+        return grabarCeroPapel;
+    }
+
+    public void setGrabarCeroPapel(boolean grabarCeroPapel) {
+        this.grabarCeroPapel = grabarCeroPapel;
+    }
 
     public LocalDate getFechaInicio() {
         return fechaInicio;

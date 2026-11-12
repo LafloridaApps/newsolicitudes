@@ -7,10 +7,22 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 import com.newsolicitudes.newsolicitudes.entities.Subrogancia;
 
 public interface SubroganciaRepository extends JpaRepository<Subrogancia, Long>, JpaSpecificationExecutor<Subrogancia> {
+
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("select s from Subrogancia s where s.id = :id")
+        Optional<Subrogancia> findForUpdate(@Param("id") Long id);
+
+        Optional<Subrogancia> findBySolicitudId(Long solicitudId);
+
+        List<Subrogancia> findByJefeDepartamentoAndIdDeptoAndFechaInicioAndFechaFin(
+                        Integer jefeDepartamento, Long idDepto, LocalDate fechaInicio, LocalDate fechaFin);
 
         List<Subrogancia> findByIdDepto(Long idDepto);
 
