@@ -4,17 +4,20 @@ import java.time.LocalDate;
 
 public class SearchSubroganciResponse {
 
-        private String nombreJefe;
-        private String subrogante;
-        private String departamento;
-        private LocalDate fechaInicio;
-        private LocalDate fechaFin;
-        private String estado;
-        private Integer rutJefe;
-        private Character vrutJefe;
-        private Integer rutSubrogante;
-        private Character vrutSubrogante;
-        private Long idSubrogancia;
+        private final String nombreJefe;
+        private final String subrogante;
+        private final String departamento;
+        private final LocalDate fechaInicio;
+        private final LocalDate fechaFin;
+        private final String estado;
+        private final Integer rutJefe;
+        private final Character vrutJefe;
+        private final Integer rutSubrogante;
+        private final Character vrutSubrogante;
+        private final Long idSubrogancia;
+        private final String ceroPapelEstado;
+        private final String ceroPapelDetalle;
+        private final boolean puedeResolverCeroPapel;
 
         public String getNombreJefe() {
                 return nombreJefe;
@@ -60,6 +63,10 @@ public class SearchSubroganciResponse {
                 return idSubrogancia;
         }
 
+        public String getCeroPapelEstado() { return ceroPapelEstado; }
+        public String getCeroPapelDetalle() { return ceroPapelDetalle; }
+        public boolean isPuedeResolverCeroPapel() { return puedeResolverCeroPapel; }
+
         private SearchSubroganciResponse(Builder builder) {
                 this.nombreJefe = builder.nombreJefe;
                 this.subrogante = builder.subrogante;
@@ -72,6 +79,9 @@ public class SearchSubroganciResponse {
                 this.rutSubrogante = builder.rutSubrogante;
                 this.vrutSubrogante = builder.vrutSubrogante;
                 this.idSubrogancia = builder.idSubrogancia;
+                this.ceroPapelEstado = builder.ceroPapelEstado;
+                this.ceroPapelDetalle = builder.ceroPapelDetalle;
+                this.puedeResolverCeroPapel = builder.puedeResolverCeroPapel;
 
         }
 
@@ -88,6 +98,9 @@ public class SearchSubroganciResponse {
                 private Integer rutSubrogante;
                 private Character vrutSubrogante;
                 private Long idSubrogancia;
+                private String ceroPapelEstado;
+                private String ceroPapelDetalle;
+                private boolean puedeResolverCeroPapel;
 
                 public Builder nombreJefe(String nombreJefe) {
                         this.nombreJefe = nombreJefe;
@@ -144,6 +157,13 @@ public class SearchSubroganciResponse {
                         return this;
                 }
 
+
+                public Builder ceroPapel(String estado, String detalle, boolean puedeResolver) {
+                        this.ceroPapelEstado = estado;
+                        this.ceroPapelDetalle = detalle;
+                        this.puedeResolverCeroPapel = puedeResolver;
+                        return this;
+                }
 
                 public SearchSubroganciResponse build() {
                         return new SearchSubroganciResponse(this);

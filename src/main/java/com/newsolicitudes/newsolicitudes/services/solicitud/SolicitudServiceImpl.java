@@ -115,6 +115,12 @@ public class SolicitudServiceImpl implements SolicitudService {
         try {
             // 1. Obtener datos iniciales del funcionario y su departamento.
             FuncionarioResponseApi funcionario = funcionarioService.getFuncionarioByRut(request.getRut());
+            if (funcionario == null || funcionario.getCodDepto() == null
+                    || funcionario.getConfiguracionDepartamento() == null
+                    || !funcionario.getConfiguracionDepartamento().permiteSolicitudes()) {
+                throw new SolicitudException("No puede crear solicitudes hasta validar la asociación de su departamento. "
+                        + "Reintente la validación o contacte a un administrador.");
+            }
             DepartamentoResponse departamentoActual = departamentoService.getDepartamentoById(funcionario.getCodDepto());
 
             if (buscarSolicitudesPendientesAprobacion(request.getTipoSolicitud(), request.getRut())) {
@@ -233,7 +239,8 @@ public class SolicitudServiceImpl implements SolicitudService {
     // asociado a la solicitud.
     private void createSubroganciaSol(SubroganciaRequest subrogancia, LocalDate fechaInicio, LocalDate fechaFin,
             Long idDepto) {
-        subroganciaService.createSubrogancia(subrogancia, fechaInicio, fechaFin, idDepto);
+        subroganciaService.createSubrogancia(subrogancia, fechaInicio, fechaFin, idDepto,
+                com.newsolicitudes.newsolicitudes.services.ceropapel.SubroganciaCeroPapelEvent.Origen.AUTOMATICO_SOLICITUD);
     }
 
     // Verifica si ya existe una solicitud para un funcionario en un rango de fechas

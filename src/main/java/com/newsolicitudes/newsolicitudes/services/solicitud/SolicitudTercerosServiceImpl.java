@@ -100,7 +100,7 @@ public class SolicitudTercerosServiceImpl implements SolicitudTercerosService {
     @Override
     public SearchViewFuncionarioResponse buscarPorNombre(String rutGestor, String pattern, int pageNumber) {
         var permitidos = departamentosPermitidos(rutGestor);
-        if (pattern == null || pattern.isBlank() || pageNumber < 0) {
+        if (pattern == null || pageNumber < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ingresa un nombre y una página válidos.");
         }
         try {

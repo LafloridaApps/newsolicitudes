@@ -6,7 +6,10 @@ import com.newsolicitudes.newsolicitudes.dto.SubroganciaRequest;
 
 public interface SubroganciaService {
 
-    void createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin, Long idDepto);
+    Long createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin, Long idDepto);
+
+    Long createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin,
+            Long idDepto, com.newsolicitudes.newsolicitudes.services.ceropapel.SubroganciaCeroPapelEvent.Origen origen);
 
     void borrarSubrogancia(Long idSubrogancia);
 

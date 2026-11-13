@@ -28,9 +28,21 @@ public class SubroganciaServiceImpl implements SubroganciaService {
 
         @Override
         @Transactional
-        public void createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin,
+        public Long createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin,
                         Long idDepto) {
+                return guardarSubrogancia(request, fechaInicio, fechaFin, idDepto,
+                                SubroganciaCeroPapelEvent.Origen.MANUAL);
+        }
 
+        @Override
+        @Transactional
+        public Long createSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin,
+                        Long idDepto, SubroganciaCeroPapelEvent.Origen origen) {
+                return guardarSubrogancia(request, fechaInicio, fechaFin, idDepto, origen);
+        }
+
+        private Long guardarSubrogancia(SubroganciaRequest request, LocalDate fechaInicio, LocalDate fechaFin,
+                        Long idDepto, SubroganciaCeroPapelEvent.Origen origen) {
                 if (tieneSubroganciaPeriodo(request.getRutJefe(), fechaInicio, fechaFin, idDepto)) {
                         throw new SubroganciaException("Ya existe una subrogancia para este rut en el período dado");
                 }
@@ -38,13 +50,10 @@ public class SubroganciaServiceImpl implements SubroganciaService {
                 Subrogancia subrogancia = new Subrogancia(request.getRutSubrogante(), fechaInicio, fechaFin,
                                 request.getRutJefe(),
                                 idDepto);
-                if (request.isGrabarCeroPapel()) {
-                        subrogancia.setCeroPapelEstado("PENDIENTE_ENVIO");
-                }
+                subrogancia.setCeroPapelEstado("PENDIENTE_ENVIO");
                 subroganciaRepository.save(subrogancia);
-                if (request.isGrabarCeroPapel()) {
-                        events.publishEvent(new SubroganciaCeroPapelEvent(subrogancia.getId()));
-                }
+                events.publishEvent(new SubroganciaCeroPapelEvent(subrogancia.getId(), origen));
+                return subrogancia.getId();
 
         }
 

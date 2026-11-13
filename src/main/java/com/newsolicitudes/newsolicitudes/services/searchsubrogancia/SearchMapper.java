@@ -47,6 +47,9 @@ public class SearchMapper {
                     .rutSobrogante(subrogante.getRut())
                     .vrutSubrogante(vrutSubrogante)
                     .idSubrogancia(s.getId())
+                    .ceroPapel(s.getCeroPapelEstado(), s.getCeroPapelDetalle(),
+                            "PENDIENTE_PERFIL".equals(s.getCeroPapelEstado())
+                            || ("ERROR".equals(s.getCeroPapelEstado()) && s.getCeroPapelPerfilId() == null))
                     .build();
 
         }

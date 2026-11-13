@@ -24,17 +24,26 @@ import com.newsolicitudes.newsolicitudes.services.departamento.DepartamentoServi
 
 @RestController
 @RequestMapping("/solicitudes/departamentos")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://appx.laflorida.cl", "https://intranet.laflorida.cl"},
+        allowCredentials = "true")
 public class DepartamentoController {
 
+    private final com.newsolicitudes.newsolicitudes.services.departamento.PermisoAsociacionDepartamentoService permisos;
     private final DepartamentoService departamentoService;
     private final DepartamentoExternoService departamentoExternoService;
     private static final String MESSAGE = "message";
 
     public DepartamentoController(DepartamentoService departamentoService,
-            DepartamentoExternoService departamentoExternoService) {
+            DepartamentoExternoService departamentoExternoService,
+            com.newsolicitudes.newsolicitudes.services.departamento.PermisoAsociacionDepartamentoService permisos) {
+        this.permisos = permisos;
         this.departamentoService = departamentoService;
         this.departamentoExternoService = departamentoExternoService;
+    }
+
+    @GetMapping("/permiso-asociacion")
+    public Map<String, Boolean> permisoAsociacion(jakarta.servlet.http.HttpServletRequest request) {
+        return Map.of("permitido", permisos.puedeAdministrar(request));
     }
 
     @GetMapping("/list")
@@ -71,10 +80,10 @@ public class DepartamentoController {
 
     @PutMapping("/{idDepto}/codex")
     public ResponseEntity<Object> updateCodigoExternoDepartamento(@PathVariable Long idDepto,
-            @RequestParam String codEx) {
-
-        if (codEx == null || codEx.isBlank() || codEx.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of(MESSAGE, "El codigo no puede ser blanco o nulo"));
+            @RequestParam String codEx, jakarta.servlet.http.HttpServletRequest request) {
+        permisos.exigirAdministrador(request);
+        if (idDepto == null || idDepto <= 0 || codEx == null || !codEx.matches("[0-9]{1,10}")) {
+            return ResponseEntity.badRequest().body(Map.of(MESSAGE, "Indique un departamento y un código externo numérico de hasta 10 dígitos."));
         }
 
         try {
@@ -100,7 +109,9 @@ public class DepartamentoController {
     }
 
     @DeleteMapping("/{idDepto}/codex")
-    public ResponseEntity<Object> deleteCodigoExtgernoByIdDepto(@PathVariable Long idDepto) {
+    public ResponseEntity<Object> deleteCodigoExtgernoByIdDepto(@PathVariable Long idDepto,
+            jakarta.servlet.http.HttpServletRequest request) {
+        permisos.exigirAdministrador(request);
         departamentoService.delteCodigoExternoByIdDepto(idDepto);
         return ResponseEntity.status(HttpStatus.OK).body(Map.of(MESSAGE, "Código eliminado con éxito"));
     }

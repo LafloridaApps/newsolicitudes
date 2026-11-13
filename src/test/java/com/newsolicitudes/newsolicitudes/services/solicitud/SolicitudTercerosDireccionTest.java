@@ -125,6 +125,12 @@ class SolicitudTercerosDireccionTest {
         assertSame(resultado, service.buscarPorNombre("123", " Ana ", 2));
         verify(busqueda).buscarFuncionarioViewNombreEnDepartamentos("Ana", 2, Set.of(10L,20L,30L,40L));
     }
+    @Test void listaDireccionSinFiltroDeNombre() {
+        var resultado = new SearchViewFuncionarioResponse();
+        resultado.setFuncionarios(List.of());
+        when(busqueda.buscarFuncionarioViewNombreEnDepartamentos("", 0, Set.of(10L,20L,30L,40L))).thenReturn(resultado);
+        assertSame(resultado, service.buscarPorNombre("123", "", 0));
+    }
     @Test void bloqueaUsuarioSinPermiso() {
         when(usuarios.findByRut("123")).thenReturn(Optional.of(new Usuario()));
         assertEquals(403, assertThrows(ResponseStatusException.class, () -> service.buscarPorNombre("123", "Ana", 0)).getStatusCode().value());

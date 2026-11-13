@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.reactive.resource.NoResourceFoundException;
 
 import com.newsolicitudes.newsolicitudes.dto.ErrorResponse;
@@ -27,13 +28,28 @@ import jakarta.servlet.http.HttpServletRequest;
 @ControllerAdvice
 public class HandlerExceptions {
 
+  private static final String MESSAGE = "message";
+
   @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
   public ResponseEntity<Object> handlerResponseStatus(org.springframework.web.server.ResponseStatusException e) {
-    return ResponseEntity.status(e.getStatusCode()).body(java.util.Map.of("message",
+    return ResponseEntity.status(e.getStatusCode()).body(java.util.Map.of(MESSAGE,
         e.getReason() != null ? e.getReason() : "No fue posible procesar la solicitud."));
   }
 
   private static final Logger logger = LoggerFactory.getLogger(HandlerExceptions.class);
+
+  @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+  public ResponseEntity<Object> handlerDatosInvalidos() {
+    // No incluir valores rechazados: la petición puede contener contraseñas.
+    return ResponseEntity.badRequest()
+        .body(java.util.Map.of(MESSAGE, "Revise los campos obligatorios y sus longitudes."));
+  }
+
+  @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+  public ResponseEntity<Object> handlerEdicionConcurrente() {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(java.util.Map.of(MESSAGE, "La configuración cambió. Actualice antes de guardar."));
+  }
 
   @ExceptionHandler(NotFoundException.class)
   public ResponseEntity<Object> handlerNotFoundException(NotFoundException e, HttpServletRequest request) {
@@ -80,6 +96,14 @@ public class HandlerExceptions {
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
 
+  }
+
+  @ExceptionHandler(AsyncRequestNotUsableException.class)
+  public void handlerRespuestaNoDisponible(HttpServletRequest request,
+      jakarta.servlet.http.HttpServletResponse response) {
+    // La conexión ya no admite escritura; no intentar enviar otro cuerpo de error.
+    logger.warn("Respuesta HTTP interrumpida: metodo={} ruta={} respuestaConfirmada={}",
+        request.getMethod(), request.getRequestURI(), response.isCommitted());
   }
 
   @ExceptionHandler(IOException.class)
@@ -131,7 +155,6 @@ public class HandlerExceptions {
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 
   }
-
 
   @ExceptionHandler(SubroganciaException.class)
   public ResponseEntity<Object> handeleSubroganciaException(SubroganciaException e,

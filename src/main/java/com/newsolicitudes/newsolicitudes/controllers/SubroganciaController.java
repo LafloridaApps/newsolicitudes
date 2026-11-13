@@ -15,6 +15,8 @@ import com.newsolicitudes.newsolicitudes.dto.SubroganciaRequest;
 import com.newsolicitudes.newsolicitudes.services.searchsubrogancia.SubroganciasSearch;
 import com.newsolicitudes.newsolicitudes.services.subrogancia.SubroganciaService;
 
+import com.newsolicitudes.newsolicitudes.services.ceropapel.CeroPapelSubroganciaService;
+import com.newsolicitudes.newsolicitudes.dto.SubroganciaCreadaResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -28,17 +30,41 @@ public class SubroganciaController {
 
     private final SubroganciaService subroganciaService;
     private final SubroganciasSearch subroganciasSearch;
+    private final CeroPapelSubroganciaService ceroPapel;
 
-    public SubroganciaController(SubroganciaService subroganciaService, SubroganciasSearch subroganciasSearch) {
+    public SubroganciaController(SubroganciaService subroganciaService, SubroganciasSearch subroganciasSearch,
+            CeroPapelSubroganciaService ceroPapel) {
         this.subroganciaService = subroganciaService;
         this.subroganciasSearch = subroganciasSearch;
+        this.ceroPapel = ceroPapel;
     }
 
     @PostMapping("/create")
     public ResponseEntity<Object> createSubrogancia(@RequestBody SubroganciaRequest request) {
-        subroganciaService.createSubrogancia(request, request.getFechaInicio(), request.getFechaFin(),
+        Long id = subroganciaService.createSubrogancia(request, request.getFechaInicio(), request.getFechaFin(),
                 request.getIdDepto());
-        return ResponseEntity.ok(Map.of("message", "Subrogancia creada existosamente"));
+        return ResponseEntity.ok(resultado(id));
+    }
+
+    private SubroganciaCreadaResponse resultado(Long id) {
+        var registro = ceroPapel.consultarRegistro(id);
+        return new SubroganciaCreadaResponse(
+                "Subrogancia guardada localmente", id,
+                registro.getCeroPapelEstado(), registro.getCeroPapelDetalle());
+    }
+
+    @GetMapping("/{id}/perfiles-ceropapel")
+    public Object consultarPerfiles(@PathVariable Long id) {
+        return ceroPapel.consultarOpciones(id);
+    }
+
+    public record ConfirmarPerfilRequest(Long perfilId) {
+    }
+
+    @PostMapping("/{id}/perfil-ceropapel")
+    public Object confirmarPerfil(@PathVariable Long id, @RequestBody ConfirmarPerfilRequest request) {
+        ceroPapel.confirmarPerfil(id, request.perfilId());
+        return resultado(id);
     }
 
     @GetMapping("/search")
@@ -53,10 +79,10 @@ public class SubroganciaController {
     }
 
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<Object> deleteSubroganciaById(@PathVariable Long id){
+    public ResponseEntity<Object> deleteSubroganciaById(@PathVariable Long id) {
 
         subroganciaService.borrarSubrogancia(id);
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("message","Subrogancia eliminada correctamente"));
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "Subrogancia eliminada correctamente"));
 
     }
 
