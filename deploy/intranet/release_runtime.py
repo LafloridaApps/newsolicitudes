@@ -165,7 +165,11 @@ def deploy_one(manifest, service):
     name = service['container']
     backup = name + '-backup-' + manifest['release']
     if exists(backup):
-        raise RuntimeError('Ya existe el contenedor de respaldo: ' + backup)
+        if exists(name) and inspect(name)['Config']['Image'] == service['image']:
+            wait_health(service)
+            print(service['directory'] + ': la entrega ya está activa y saludable', flush=True)
+            return
+        raise RuntimeError('Ya existe el contenedor de respaldo y el estado requiere revisión: ' + backup)
     if inspect(name)['Image'] != original['Image']:
         raise RuntimeError('El contenedor cambió desde el respaldo: ' + name)
     run('docker', 'image', 'inspect', service['image'])
@@ -243,7 +247,7 @@ def main():
                 deploy_one(manifest, service)
             save_json(HERE / 'activated.json', {'activatedAt': stamp(), 'release': manifest['release']})
         except BaseException:
-            for service in reversed(manifest['services']):
+            for service in reversed(services):
                 rollback_one(manifest, service)
             raise
     elif mode == 'rollback':

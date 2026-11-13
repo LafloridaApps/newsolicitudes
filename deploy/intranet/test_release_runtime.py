@@ -27,6 +27,14 @@ class ReleaseRuntimeTest(unittest.TestCase):
         (self.directory / 'before').mkdir()
         (self.directory / 'before/servicio-container.json').write_text(json.dumps(self.original))
 
+    def test_repetir_deploy_saludable_no_reemplaza_ni_revierte_contenedores(self):
+        current = {'Config': {'Image': self.service['image']}}
+        with patch.object(runtime, 'HERE', self.directory), patch.object(runtime, 'exists', return_value=True), patch.object(runtime, 'inspect', return_value=current), \
+                patch.object(runtime, 'wait_health') as health, patch.object(runtime, 'run') as run:
+            runtime.deploy_one(self.manifest, self.service)
+            health.assert_called_once_with(self.service)
+            run.assert_not_called()
+
     def test_rechaza_contenedor_modificado_despues_del_respaldo(self):
         with patch.object(runtime, 'HERE', self.directory), patch.object(runtime, 'exists', return_value=False), \
                 patch.object(runtime, 'inspect', return_value={'Image': 'sha256:otra'}), patch.object(runtime, 'run') as run:
